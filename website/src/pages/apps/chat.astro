@@ -1,0 +1,470 @@
+---
+import AppStandalone from '../../layouts/AppStandalone.astro'
+import Head from '../../components/Head.astro'
+import quantumTunneling from '../../apps/chat/replays/quantum-tunneling.json'
+import summarizeArticle from '../../apps/chat/replays/summarize-article.json'
+import pythonCsv from '../../apps/chat/replays/python-csv.json'
+import privacyModel from '../../apps/chat/replays/privacy-model.json'
+
+const replays = [quantumTunneling, summarizeArticle, pythonCsv, privacyModel]
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <Head
+      title="Chat — PAI"
+      description="Chat with a local AI model running entirely on your PAI USB — no cloud, no tracking, no data sent anywhere."
+      ogImage="/og/chat.png"
+    />
+    <link rel="icon" type="image/svg+xml" href="/icons/chat.svg" />
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { height: 100%; font-family: system-ui, sans-serif; background: #0f0f1a; color: #e0e0e0; }
+      body { display: flex; flex-direction: column; overflow: hidden; }
+      #app-root { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+
+      /* ── Replay banner ── */
+      .replay-banner {
+        background: rgba(251, 191, 36, 0.12);
+        border-bottom: 1px solid rgba(251, 191, 36, 0.3);
+        color: #fbbf24;
+        font-size: 0.75rem;
+        padding: 0.4rem 1rem;
+        text-align: center;
+        flex-shrink: 0;
+        letter-spacing: 0.01em;
+      }
+      .replay-banner strong { font-weight: 600; }
+
+      /* ── Layout: sidebar + main ── */
+      .owui-shell {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+      }
+
+      /* ── Sidebar ── */
+      .owui-sidebar {
+        width: 240px;
+        flex-shrink: 0;
+        background: rgba(10, 10, 20, 0.8);
+        border-right: 1px solid rgba(255, 255, 255, 0.07);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .owui-sidebar-header {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-shrink: 0;
+      }
+      .owui-sidebar-logo {
+        width: 22px;
+        height: 22px;
+        border-radius: 4px;
+      }
+      .owui-sidebar-brand {
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: #e0e0e0;
+        letter-spacing: 0.02em;
+      }
+      .owui-sidebar-section {
+        padding: 0.5rem 0.75rem 0.25rem;
+        font-size: 0.6875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #666;
+        flex-shrink: 0;
+      }
+      .owui-conv-list {
+        overflow-y: auto;
+        flex: 1;
+        padding: 0.25rem 0.5rem;
+      }
+      .owui-conv-item {
+        padding: 0.5rem 0.625rem;
+        border-radius: 6px;
+        font-size: 0.8125rem;
+        color: #aaa;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        user-select: none;
+      }
+      .owui-conv-item:hover { background: rgba(255,255,255,0.05); color: #e0e0e0; }
+      .owui-conv-item.active { background: rgba(122,162,247,0.15); color: #7aa2f7; }
+
+      /* ── Main panel ── */
+      .owui-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+      }
+
+      /* ── Topbar ── */
+      .owui-topbar {
+        border-bottom: 1px solid rgba(255,255,255,0.07);
+        padding: 0.625rem 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+        background: rgba(10,10,20,0.5);
+      }
+      .owui-model-picker {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .owui-model-label {
+        font-size: 0.75rem;
+        color: #7aa2f7;
+        font-weight: 500;
+      }
+      .owui-model-select {
+        background: rgba(15, 15, 26, 0.8);
+        border: 1px solid rgba(122, 162, 247, 0.3);
+        color: #e0e0e0;
+        padding: 0.25rem 0.5rem;
+        border-radius: 5px;
+        font-size: 0.8125rem;
+        font-family: inherit;
+        cursor: pointer;
+      }
+      .owui-model-select:focus {
+        outline: none;
+        border-color: #7aa2f7;
+      }
+      .owui-controls {
+        display: flex;
+        gap: 0.375rem;
+      }
+      .owui-btn {
+        padding: 0.3rem 0.7rem;
+        border-radius: 5px;
+        font-size: 0.75rem;
+        border: 1px solid rgba(255,255,255,0.12);
+        background: rgba(255,255,255,0.05);
+        color: #aaa;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s;
+        user-select: none;
+      }
+      .owui-btn:hover { background: rgba(255,255,255,0.1); color: #e0e0e0; }
+      .owui-btn:disabled { opacity: 0.35; cursor: default; }
+      .owui-btn--primary {
+        background: rgba(122,162,247,0.2);
+        border-color: rgba(122,162,247,0.4);
+        color: #7aa2f7;
+      }
+      .owui-btn--primary:hover { background: rgba(122,162,247,0.35); color: #a8c5ff; }
+
+      /* ── Messages ── */
+      .owui-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.5rem 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+        scroll-behavior: smooth;
+      }
+      .owui-messages::-webkit-scrollbar { width: 5px; }
+      .owui-messages::-webkit-scrollbar-track { background: transparent; }
+      .owui-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+      /* ── Play screen ── */
+      .owui-play-screen {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.25rem;
+        background: rgba(10,10,20,0.92);
+        z-index: 10;
+        backdrop-filter: blur(4px);
+      }
+      .owui-play-title {
+        font-size: 0.9375rem;
+        color: #aaa;
+        text-align: center;
+        max-width: 340px;
+        line-height: 1.5;
+        padding: 0 1rem;
+      }
+      .owui-play-title strong { color: #e0e0e0; display: block; margin-bottom: 0.25rem; }
+      .owui-play-btn {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        border: 2px solid rgba(122,162,247,0.5);
+        background: rgba(122,162,247,0.15);
+        color: #7aa2f7;
+        font-size: 1.5rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s, border-color 0.2s, transform 0.1s;
+      }
+      .owui-play-btn:hover { background: rgba(122,162,247,0.3); border-color: #7aa2f7; transform: scale(1.05); }
+
+      /* ── Message bubbles ── */
+      .owui-message {
+        display: flex;
+        gap: 0.75rem;
+        align-items: flex-start;
+        max-width: 720px;
+        width: 100%;
+        margin: 0 auto;
+      }
+      .owui-message--user { flex-direction: row-reverse; }
+      .owui-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.625rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        margin-top: 2px;
+      }
+      .owui-message--user .owui-avatar {
+        background: rgba(122,162,247,0.25);
+        color: #7aa2f7;
+      }
+      .owui-message--assistant .owui-avatar {
+        background: rgba(74,222,128,0.15);
+        color: #4ade80;
+      }
+      .owui-bubble {
+        padding: 0.625rem 0.875rem;
+        border-radius: 10px;
+        font-size: 0.875rem;
+        line-height: 1.6;
+        max-width: calc(100% - 44px);
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .owui-message--user .owui-bubble {
+        background: rgba(122,162,247,0.15);
+        border: 1px solid rgba(122,162,247,0.25);
+        color: #dde5ff;
+        border-radius: 10px 10px 2px 10px;
+      }
+      .owui-message--assistant .owui-bubble {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        color: #d4d4d4;
+        border-radius: 10px 10px 10px 2px;
+      }
+
+      /* ── Input bar ── */
+      .owui-inputbar {
+        padding: 0.75rem 1rem;
+        border-top: 1px solid rgba(255,255,255,0.07);
+        flex-shrink: 0;
+        background: rgba(10,10,20,0.5);
+      }
+      .owui-input-wrapper {
+        max-width: 720px;
+        margin: 0 auto;
+        display: flex;
+        gap: 0.5rem;
+        align-items: flex-end;
+      }
+      .owui-input {
+        flex: 1;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 8px;
+        color: #555;
+        font-size: 0.875rem;
+        padding: 0.625rem 0.875rem;
+        font-family: inherit;
+        resize: none;
+        cursor: not-allowed;
+        line-height: 1.4;
+      }
+      .owui-send-btn {
+        padding: 0.625rem 1rem;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.1);
+        background: rgba(255,255,255,0.05);
+        color: #444;
+        font-size: 0.875rem;
+        cursor: not-allowed;
+        flex-shrink: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <AppStandalone appId="chat" />
+    <div id="app-root">
+      <div class="replay-banner">
+        <strong>Replay</strong> — this is a recording. In PAI, this runs 100% locally on your machine.
+      </div>
+      <div class="owui-shell">
+        <!-- Sidebar -->
+        <nav class="owui-sidebar" aria-label="Conversations">
+          <div class="owui-sidebar-header">
+            <img class="owui-sidebar-logo" src="/logo/favicon-32.png" alt="PAI" />
+            <span class="owui-sidebar-brand">Open WebUI</span>
+          </div>
+          <div class="owui-sidebar-section">Demo conversations</div>
+          <div class="owui-conv-list" id="conv-list"></div>
+        </nav>
+
+        <!-- Chat panel -->
+        <div class="owui-main">
+          <div class="owui-topbar">
+            <div class="owui-model-picker">
+              <label for="chat-model-select" class="owui-model-label">Model</label>
+              <select id="chat-model-select" class="owui-model-select">
+                <option value="llama3.2:3b" selected>Llama 3.2 (3B) — default</option>
+                <option value="llama3.2:1b">Llama 3.2 (1B) — fast</option>
+                <option value="mistral:7b">Mistral 7B</option>
+                <option value="phi3:mini">Phi-3 Mini</option>
+                <option value="gemma3:4b">Gemma 3 (4B)</option>
+                <option value="qwen2.5:7b">Qwen 2.5 (7B)</option>
+              </select>
+            </div>
+            <div class="owui-controls">
+              <button class="owui-btn" id="btn-restart" title="Restart" aria-label="Restart replay">↺ Restart</button>
+              <button class="owui-btn" id="btn-pause-resume" title="Pause / Resume" aria-label="Pause replay">⏸ Pause</button>
+              <button class="owui-btn" id="btn-skip" title="Skip typing animation" aria-label="Skip typing animation">⏭ Skip</button>
+            </div>
+          </div>
+
+          <div class="owui-messages" id="messages" aria-live="polite" aria-label="Chat messages"></div>
+
+          <!-- Play screen overlay -->
+          <div class="owui-play-screen" id="play-screen" aria-label="Click to start replay">
+            <div class="owui-play-title" id="play-title">
+              <strong>Click Play to begin</strong>
+              Select a conversation from the sidebar
+            </div>
+            <button class="owui-play-btn" id="btn-play" aria-label="Play replay">▶</button>
+          </div>
+
+          <!-- Disabled input (visual only) -->
+          <div class="owui-inputbar" aria-hidden="true">
+            <div class="owui-input-wrapper">
+              <textarea
+                class="owui-input"
+                rows="1"
+                disabled
+                placeholder="Replay mode — open PAI to send real messages"
+                aria-label="Input disabled in replay mode"
+              ></textarea>
+              <button class="owui-send-btn" disabled aria-hidden="true">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+<script define:vars={{ replays }}>
+  import { ReplayPlayer } from '../../apps/chat/player.js'
+
+  const convList = document.getElementById('conv-list')
+  const messages = document.getElementById('messages')
+  const playScreen = document.getElementById('play-screen')
+  const playTitle = document.getElementById('play-title')
+  const modelSelect = document.getElementById('chat-model-select')
+  const btnPlay = document.getElementById('btn-play')
+  const btnPauseResume = document.getElementById('btn-pause-resume')
+  const btnRestart = document.getElementById('btn-restart')
+  const btnSkip = document.getElementById('btn-skip')
+
+  let currentReplay = replays[0]
+  let player = null
+
+  // Build sidebar conversation list
+  replays.forEach((r, i) => {
+    const item = document.createElement('div')
+    item.className = 'owui-conv-item' + (i === 0 ? ' active' : '')
+    item.textContent = r.title
+    item.dataset.id = r.id
+    item.addEventListener('click', () => selectReplay(r, item))
+    convList.appendChild(item)
+  })
+
+  function selectReplay(replay, el) {
+    if (player?.running) player.stop()
+    currentReplay = replay
+    player = null
+
+    document.querySelectorAll('.owui-conv-item').forEach(i => i.classList.remove('active'))
+    el.classList.add('active')
+
+    modelSelect.value = replay.model ?? 'llama3.2:3b'
+    messages.innerHTML = ''
+    playTitle.innerHTML = `<strong>${escapeHtml(replay.title)}</strong>Click Play to start`
+    playScreen.hidden = false
+    btnPauseResume.textContent = '⏸ Pause'
+    btnPauseResume.disabled = true
+    btnSkip.disabled = true
+    btnRestart.disabled = true
+  }
+
+  function startReplay() {
+    if (player?.running) player.stop()
+
+    player = new ReplayPlayer(currentReplay, messages)
+    playScreen.hidden = true
+    btnPauseResume.disabled = false
+    btnSkip.disabled = false
+    btnRestart.disabled = false
+    btnPauseResume.textContent = '⏸ Pause'
+
+    player.play().then(() => {
+      btnPauseResume.disabled = true
+      btnSkip.disabled = true
+      btnPauseResume.textContent = '⏸ Pause'
+    })
+  }
+
+  btnPlay.addEventListener('click', startReplay)
+
+  btnPauseResume.addEventListener('click', () => {
+    if (!player) return
+    if (player.paused) {
+      player.resume()
+      btnPauseResume.textContent = '⏸ Pause'
+    } else {
+      player.pause()
+      btnPauseResume.textContent = '▶ Resume'
+    }
+  })
+
+  btnRestart.addEventListener('click', startReplay)
+
+  btnSkip.addEventListener('click', () => {
+    player?.skipTyping()
+  })
+
+  function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  }
+
+  // Init bridge
+  import { bridge } from '../../apps/_bridge.js'
+  bridge.ready()
+</script>
