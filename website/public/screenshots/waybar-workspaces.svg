@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" role="img" aria-label="Waybar top panel with workspace indicators, system status widgets and clock">
+  <rect width="960" height="600" fill="#0f0f1a"/>
+
+  <!-- Wallpaper patch -->
+  <defs>
+    <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1a1a2e"/>
+      <stop offset="1" stop-color="#0f0f1a"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="960" height="600" fill="url(#wall)"/>
+
+  <!-- Waybar -->
+  <rect x="0" y="0" width="960" height="44" fill="rgba(20,20,30,0.95)"/>
+  <rect x="0" y="42" width="960" height="2" fill="rgba(122,162,247,0.3)"/>
+
+  <!-- Left: logo + title -->
+  <g transform="translate(12 10)">
+    <rect width="24" height="24" rx="4" fill="#7aa2f7"/>
+    <text x="6" y="18" font-family="ui-monospace" font-size="14" font-weight="800" fill="#0f0f1a">P</text>
+    <text x="36" y="19" font-family="ui-sans-serif" font-size="12" fill="#e0e0e0">PAI Desktop · Terminal</text>
+  </g>
+
+  <!-- Center: workspaces -->
+  <g transform="translate(380 12)">
+    <rect width="30" height="20" rx="4" fill="#7aa2f7"/>
+    <text x="12" y="15" font-family="ui-monospace" font-size="11" font-weight="700" fill="#0f0f1a">1</text>
+    <rect x="34" width="30" height="20" rx="4" fill="rgba(255,255,255,0.06)" stroke="rgba(122,162,247,0.3)"/>
+    <text x="45" y="15" font-family="ui-monospace" font-size="11" fill="#e0e0e0">2</text>
+    <rect x="68" width="30" height="20" rx="4" fill="rgba(255,255,255,0.04)"/>
+    <text x="80" y="15" font-family="ui-monospace" font-size="11" fill="#888">3</text>
+    <rect x="102" width="30" height="20" rx="4" fill="rgba(255,255,255,0.04)"/>
+    <text x="114" y="15" font-family="ui-monospace" font-size="11" fill="#888">4</text>
+    <text x="145" y="15" font-family="ui-sans-serif" font-size="11" fill="#888">workspaces</text>
+  </g>
+
+  <!-- Right: widgets -->
+  <g transform="translate(680 12)" font-family="ui-monospace" font-size="11">
+    <!-- CPU sparkline -->
+    <g>
+      <polyline points="0,14 6,12 12,10 18,6 24,9 30,4 36,7 42,10 48,5 54,8" fill="none" stroke="#7aa2f7" stroke-width="1.5"/>
+      <text x="60" y="14" fill="#e0e0e0">CPU</text>
+    </g>
+    <!-- RAM -->
+    <text x="94" y="14" fill="#e0e0e0">▦ 1.2 GiB</text>
+    <!-- Net -->
+    <text x="156" y="14" fill="#4ade80">⊹ local</text>
+    <!-- Tor -->
+    <text x="210" y="14" fill="#9f7aea">⬡ tor</text>
+    <!-- Sound -->
+    <text x="240" y="14" font-size="13">🔊</text>
+    <!-- Clock -->
+    <rect x="262" y="-4" width="50" height="26" rx="4" fill="rgba(255,255,255,0.04)"/>
+    <text x="270" y="14" fill="#e0e0e0">22:14</text>
+    <!-- Power -->
+    <text x="320" y="14" fill="#e0e0e0" font-size="13">⏻</text>
+  </g>
+
+  <!-- Callout labels on the bar -->
+  <g font-family="ui-sans-serif" font-size="10" fill="#888">
+    <line x1="395" y1="44" x2="395" y2="100" stroke="#7aa2f7" stroke-opacity="0.4"/>
+    <text x="310" y="120" fill="#7aa2f7">workspace 1 · active</text>
+
+    <line x1="690" y1="44" x2="690" y2="170" stroke="#7aa2f7" stroke-opacity="0.4"/>
+    <text x="620" y="188" fill="#7aa2f7">CPU lag (real measure)</text>
+
+    <line x1="930" y1="44" x2="930" y2="140" stroke="#7aa2f7" stroke-opacity="0.4"/>
+    <text x="800" y="158" fill="#7aa2f7">clock · calendar on click</text>
+  </g>
+
+  <!-- Sub-description -->
+  <g transform="translate(120 280)" font-family="ui-sans-serif">
+    <text font-size="26" font-weight="700" fill="#e0e0e0">Waybar, re-skinned for PAI</text>
+    <text y="36" font-size="14" fill="#888">Real system-monitor popover over WebGL + navigator APIs.</text>
+    <text y="58" font-size="14" fill="#888">No telemetry — every number is measured in the tab you're looking at.</text>
+  </g>
+
+  <!-- Chip legend -->
+  <g transform="translate(120 410)" font-family="ui-sans-serif" font-size="11">
+    <rect width="140" height="28" rx="14" fill="rgba(122,162,247,0.15)" stroke="#7aa2f7"/>
+    <circle cx="16" cy="14" r="4" fill="#7aa2f7"/>
+    <text x="28" y="18" fill="#e0e0e0">event-loop lag</text>
+    <rect x="150" width="120" height="28" rx="14" fill="rgba(74,222,128,0.15)" stroke="#4ade80"/>
+    <circle cx="166" cy="14" r="4" fill="#4ade80"/>
+    <text x="178" y="18" fill="#e0e0e0">frame rate</text>
+    <rect x="280" width="130" height="28" rx="14" fill="rgba(251,191,36,0.15)" stroke="#fbbf24"/>
+    <circle cx="296" cy="14" r="4" fill="#fbbf24"/>
+    <text x="308" y="18" fill="#e0e0e0">JS heap usage</text>
+    <rect x="420" width="130" height="28" rx="14" fill="rgba(159,122,234,0.15)" stroke="#9f7aea"/>
+    <circle cx="436" cy="14" r="4" fill="#9f7aea"/>
+    <text x="448" y="18" fill="#e0e0e0">battery level</text>
+  </g>
+</svg>
