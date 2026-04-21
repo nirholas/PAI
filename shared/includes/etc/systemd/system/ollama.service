@@ -1,0 +1,20 @@
+[Unit]
+Description=Ollama LLM Runtime
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/ollama serve
+User=ollama
+Group=ollama
+Restart=always
+RestartSec=3
+Environment="HOME=/usr/share/ollama"
+Environment="OLLAMA_HOST=127.0.0.1:11434"
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/usr/share/ollama /var/lib/ollama /tmp
+
+[Install]
+WantedBy=multi-user.target
