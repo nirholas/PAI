@@ -1,0 +1,25 @@
+#!/bin/bash
+# ── Configure hardware-wallet group membership + wireshark capture ─────
+set -euo pipefail
+
+echo "[pai] Configuring hardware-wallet + wireshark permissions..."
+
+# plugdev group for hardware-wallet udev rules
+if ! getent group plugdev >/dev/null; then
+    addgroup --system plugdev
+fi
+# live user is traditionally "user" — add if present, plus the first real uid
+for u in user pai live; do
+    if id "$u" >/dev/null 2>&1; then usermod -aG plugdev "$u" || true; fi
+done
+
+# Wireshark: allow dumpcap without sudo. The live user is trusted in the
+# PAI threat model (ephemeral, single-user live ISO).
+if [ -x /usr/bin/dumpcap ]; then
+    setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap || true
+    for u in user pai live; do
+        if id "$u" >/dev/null 2>&1; then usermod -aG wireshark "$u" 2>/dev/null || true; fi
+    done
+fi
+
+echo "[pai] Hardware-wallet + wireshark permissions configured."
