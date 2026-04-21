@@ -1,0 +1,18 @@
+#!/bin/bash
+set -euo pipefail
+
+# Randomize MAC on all physical network interfaces
+for iface in /sys/class/net/*; do
+    iface_name=$(basename "$iface")
+    
+    # Skip loopback and virtual interfaces
+    [[ "$iface_name" == "lo" ]] && continue
+    [[ ! -e "$iface/device" ]] && continue
+    
+    echo "[pai] Spoofing MAC for $iface_name"
+    ip link set "$iface_name" down 2>/dev/null || true
+    macchanger -r "$iface_name" 2>/dev/null || true
+    ip link set "$iface_name" up 2>/dev/null || true
+done
+
+echo "[pai] MAC spoofing complete"
