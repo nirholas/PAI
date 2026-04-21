@@ -1,0 +1,38 @@
+#!/bin/bash
+# ── Install Trezor Suite (AppImage; amd64 + arm64 builds checked) ──────
+set -euo pipefail
+
+TREZOR_VERSION="24.10.2"
+ARCH=$(dpkg --print-architecture)
+case "$ARCH" in
+    amd64) TREZOR_APP="Trezor-Suite-${TREZOR_VERSION}-linux-x86_64.AppImage" ;;
+    arm64) echo "[pai] Trezor Suite does not publish arm64 AppImages — skipping."; exit 0 ;;
+    *) echo "[pai] Trezor Suite: unsupported arch $ARCH"; exit 0 ;;
+esac
+
+echo "[pai] Installing Trezor Suite ${TREZOR_VERSION}..."
+
+install -d -m 0755 /opt/trezor-suite
+curl -fsSL -o /opt/trezor-suite/Trezor-Suite.AppImage \
+    "https://github.com/trezor/trezor-suite/releases/download/v${TREZOR_VERSION}/${TREZOR_APP}" \
+    || { echo "[pai] Trezor Suite download failed — skipping."; exit 0; }
+chmod +x /opt/trezor-suite/Trezor-Suite.AppImage
+
+cat > /usr/local/bin/trezor-suite <<'WRAP'
+#!/bin/bash
+exec /opt/trezor-suite/Trezor-Suite.AppImage --no-sandbox "$@"
+WRAP
+chmod +x /usr/local/bin/trezor-suite
+
+cat > /usr/share/applications/trezor-suite.desktop <<'DESKTOP'
+[Desktop Entry]
+Type=Application
+Name=Trezor Suite
+Comment=Manage Trezor hardware wallets
+Exec=trezor-suite
+Icon=trezor-suite
+Terminal=false
+Categories=Finance;Office;
+DESKTOP
+
+echo "[pai] Trezor Suite installed."
