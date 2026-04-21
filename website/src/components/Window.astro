@@ -1,0 +1,48 @@
+---
+// Static template cloned by wm.js for each window instance.
+// Not rendered directly — the <template> element is inert until JS clones it.
+---
+
+<template id="window-template">
+  <div
+    class="window"
+    role="dialog"
+    aria-modal="false"
+    aria-labelledby=""
+    tabindex="-1"
+    data-app-id=""
+    data-window-id=""
+  >
+    <div
+      class="window-titlebar"
+      tabindex="0"
+      aria-label="Window titlebar — arrow keys to move, Shift+arrow for large step"
+    >
+      <img class="window-icon" width="16" height="16" aria-hidden="true" alt="" />
+      <span class="window-title"></span>
+      <div class="window-controls" role="group" aria-label="Window controls">
+        <button class="window-btn btn-minimize" type="button" aria-label="Minimize"></button>
+        <button class="window-btn btn-maximize" type="button" aria-label="Maximize"></button>
+        <button class="window-btn btn-close" type="button" aria-label="Close"></button>
+      </div>
+    </div>
+
+    <div class="window-content">
+      <iframe
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads"
+        tabindex="-1"
+        title="App content"
+        aria-label="App content"
+      ></iframe>
+    </div>
+
+    <div class="resize-handle" data-dir="n"  aria-hidden="true"></div>
+    <div class="resize-handle" data-dir="s"  aria-hidden="true"></div>
+    <div class="resize-handle" data-dir="e"  aria-hidden="true"></div>
+    <div class="resize-handle" data-dir="w"  aria-hidden="true"></div>
+    <div class="resize-handle" data-dir="nw" aria-hidden="true"></div>
+    <div class="resize-handle" data-dir="ne" aria-hidden="true"></div>
+    <div class="resize-handle" data-dir="sw" aria-hidden="true"></div>
+    <div class="resize-handle" data-dir="se" aria-hidden="true"></div>
+  </div>
+</template>
