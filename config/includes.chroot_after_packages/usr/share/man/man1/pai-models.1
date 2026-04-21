@@ -1,0 +1,28 @@
+.TH PAI-MODELS 1 "April 2026" "PAI" "PAI User Commands"
+.SH NAME
+pai-models \- interactive Ollama model picker
+.SH SYNOPSIS
+.B pai-models
+.SH DESCRIPTION
+.B pai-models
+is the interactive model browser for PAI. It reports currently
+installed Ollama models, recommends a best-fit model for the
+machine's RAM, and offers to pull it.
+.PP
+For the first-boot GUI equivalent, see
+.BR pai-model-picker .
+For the underlying sizing logic, see
+.BR pai-recommend-model .
+.SH FILES
+.TP
+.I /usr/local/bin/pai-models
+The executable.
+.TP
+.I ~/.config/pai/default-model
+The currently-selected default Ollama model, written by the picker.
+.SH SEE ALSO
+.BR pai-recommend-model (1),
+.BR pai-status (1),
+.BR ollama (1)
+.SH AUTHOR
+The PAI project \[em] https://pai.direct
