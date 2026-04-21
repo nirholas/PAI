@@ -1,0 +1,24 @@
+#!/bin/bash
+set -euo pipefail
+
+# ── Node.js (LTS via NodeSource) ────────────────────────────────────
+# Kept in the base image because pai-ui.service (on editions that ship
+# it) runs a Next.js server. Go, Rust, and npm global CLIs are NOT
+# bundled — users who want them run `pai-install-devtools`.
+
+echo "[pai] Installing Node.js..."
+
+# Secure APT-based install: import GPG key, add signed repo, then install.
+# This replaces the previous curl|bash pipe which cannot be verified.
+install -d -m 0755 /usr/share/keyrings
+curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+    | gpg --dearmor -o /usr/share/keyrings/nodesource.gpg
+echo "deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" \
+    > /etc/apt/sources.list.d/nodesource.list
+apt-get update
+apt-get install -y --no-install-recommends nodejs
+
+echo "[pai] Node.js $(node --version) installed."
+
+apt-get clean
+rm -rf /var/lib/apt/lists/*
