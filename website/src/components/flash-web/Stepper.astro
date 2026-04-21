@@ -1,0 +1,92 @@
+---
+/**
+ * Stepper — five-phase progress indicator for the browser flasher.
+ * Renders server-side; client JS handles step transitions.
+ */
+const steps = [
+  { id: 1, label: 'Detect & Prep' },
+  { id: 2, label: 'Download & Verify' },
+  { id: 3, label: 'Choose Method' },
+  { id: 4, label: 'Flash' },
+  { id: 5, label: 'Boot' },
+]
+---
+
+<nav class="stepper" aria-label="Install progress" role="tablist">
+  {steps.map(step => (
+    <button
+      class="stepper__step"
+      role="tab"
+      id={`step-tab-${step.id}`}
+      aria-controls={`step-panel-${step.id}`}
+      aria-selected={step.id === 1 ? 'true' : 'false'}
+      data-step={step.id}
+      tabindex={step.id === 1 ? '0' : '-1'}
+    >
+      <span class="stepper__number" aria-hidden="true">{step.id}</span>
+      <span class="stepper__label">{step.label}</span>
+    </button>
+  ))}
+</nav>
+
+<style>
+  .stepper {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 2rem;
+    padding: 0;
+    overflow-x: auto;
+  }
+  .stepper__step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    color: #888;
+    font: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+    flex: 1;
+    justify-content: center;
+  }
+  .stepper__step:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .stepper__step[aria-selected='true'] {
+    background: rgba(56, 189, 248, 0.12);
+    color: #38bdf8;
+  }
+  .stepper__step.completed {
+    color: #22c55e;
+  }
+  .stepper__step:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: 2px;
+  }
+  .stepper__number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    font-weight: 600;
+    font-size: 0.8rem;
+  }
+  .stepper__step[aria-selected='true'] .stepper__number {
+    background: rgba(56, 189, 248, 0.2);
+  }
+  .stepper__step.completed .stepper__number {
+    background: rgba(34, 197, 94, 0.2);
+  }
+  @media (max-width: 640px) {
+    .stepper__label { display: none; }
+    .stepper__step { padding: 8px 12px; }
+  }
+</style>
