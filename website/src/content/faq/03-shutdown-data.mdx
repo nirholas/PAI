@@ -1,0 +1,19 @@
+---
+question: "What happens to my data when I shut down?"
+order: 3
+---
+
+Everything in RAM is gone — permanently. This includes:
+
+- All AI chat history and conversations
+- Any files you downloaded or created
+- Browser history, cookies, and saved passwords
+- Wi-Fi credentials and connection history
+- Shell history and command logs
+- Every keystroke, clipboard entry, and screen capture
+
+The host machine returns to exactly how it was before you booted PAI. There is no forensic residue.
+
+This is called **amnesic operation** — the same design philosophy used by Tails. It means PAI is ephemeral by default: great for privacy, but you can't resume where you left off without the opt-in encrypted persistence feature.
+
+With **encrypted persistence** (opt-in via `sudo pai-persistence setup`), selected data is saved to a LUKS-encrypted partition on the USB drive and restored at the next boot after you enter your passphrase.
