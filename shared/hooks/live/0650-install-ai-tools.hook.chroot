@@ -1,0 +1,16 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "[pai] Installing AI tools..."
+
+# NOTE: whisper.cpp is built by 0681-install-whisper.hook.chroot (pinned
+# to v1.7.2). The duplicate build that was here has been removed to avoid
+# redundancy and keep the ISO smaller.
+
+# ── jq (JSON processor — useful for API work) ────────────────────────
+apt-get install -y jq 2>/dev/null || true
+
+apt-get clean
+rm -rf /var/lib/apt/lists/*
+
+echo "[pai] AI tools installed."
