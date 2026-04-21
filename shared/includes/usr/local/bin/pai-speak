@@ -1,0 +1,53 @@
+#!/bin/bash
+# PAI Speak — local text-to-speech via Piper.
+# Reads text from stdin or argv, synthesizes with the configured voice,
+# plays through the default audio sink.
+set -euo pipefail
+
+VOICE_DEFAULT="en_US-lessac-medium"
+VOICE="${PAI_PIPER_VOICE:-$VOICE_DEFAULT}"
+
+if ! command -v piper >/dev/null 2>&1; then
+    echo "piper is not installed." >&2
+    exit 1
+fi
+
+voice_dir="$HOME/.local/share/piper/voices"
+voice_onnx="$voice_dir/${VOICE}.onnx"
+voice_json="$voice_dir/${VOICE}.onnx.json"
+# Fall back to /opt/piper/voices (system-wide) if user hasn't downloaded
+if [ ! -f "$voice_onnx" ] && [ -f "/opt/piper/voices/${VOICE}.onnx" ]; then
+    voice_onnx="/opt/piper/voices/${VOICE}.onnx"
+    voice_json="/opt/piper/voices/${VOICE}.onnx.json"
+fi
+
+if [ ! -f "$voice_onnx" ]; then
+    cat >&2 <<EOF
+Voice not found: $voice_onnx
+
+Download with:  pai-ai-model-picker
+Set PAI_PIPER_VOICE to use a voice other than $VOICE_DEFAULT.
+EOF
+    exit 1
+fi
+
+if [ $# -gt 0 ]; then
+    text="$*"
+else
+    text="$(cat)"
+fi
+
+tmpwav=$(mktemp --suffix=.wav /tmp/pai-speak-XXXXXX)
+trap 'rm -f "$tmpwav"' EXIT
+
+printf '%s' "$text" \
+    | piper --model "$voice_onnx" --config "$voice_json" --output_file "$tmpwav" 2>/dev/null
+
+if command -v pw-play >/dev/null 2>&1; then
+    pw-play "$tmpwav"
+elif command -v aplay >/dev/null 2>&1; then
+    aplay -q "$tmpwav"
+else
+    echo "No audio player found (pw-play or aplay)." >&2
+    exit 1
+fi
