@@ -1,0 +1,190 @@
+---
+import AppStandalone from '../../layouts/AppStandalone.astro'
+import Head from '../../components/Head.astro'
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <Head
+      title="Welcome — PAI"
+      description="A quick tour of the PAI desktop — dock, context menu, search, and windows."
+      ogImage="/og/welcome.png"
+    />
+    <link rel="icon" type="image/svg+xml" href="/icons/welcome.svg" />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+        font-family:
+          ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          Helvetica, Arial, sans-serif;
+        background: #0f0f1a;
+        color: #e0e0e0;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      #app-root {
+        flex: 1;
+        overflow: auto;
+        padding: 28px 32px;
+      }
+      .wc-wrap {
+        max-width: 720px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+      }
+      p.lede {
+        font-size: 0.9375rem;
+        color: #bbb;
+        line-height: 1.55;
+      }
+      .wc-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 12px;
+      }
+      .wc-card {
+        background: #1a1a2e;
+        border: 1px solid #2a2a3e;
+        border-radius: 8px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .wc-num {
+        font-size: 0.6875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #7aa2f7;
+        font-weight: 600;
+      }
+      .wc-card h2 {
+        font-size: 0.9375rem;
+        font-weight: 600;
+      }
+      .wc-card p {
+        font-size: 0.8125rem;
+        color: #aaa;
+        line-height: 1.5;
+      }
+      .btn-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+      }
+      .btn {
+        appearance: none;
+        border: 1px solid #2a2a3e;
+        background: #0f0f1a;
+        color: #e0e0e0;
+        border-radius: 6px;
+        padding: 10px 16px;
+        font-size: 0.875rem;
+        font-family: inherit;
+        cursor: pointer;
+        transition: background 120ms, border-color 120ms;
+      }
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: #3a3a52;
+      }
+      .btn--primary {
+        background: #7aa2f7;
+        color: #0f0f1a;
+        border-color: #7aa2f7;
+        font-weight: 600;
+      }
+      .btn--primary:hover {
+        background: #8cb3ff;
+      }
+    </style>
+  </head>
+  <body>
+    <AppStandalone appId="welcome" />
+    <div id="app-root">
+      <div class="wc-wrap">
+        <div>
+          <h1>Welcome to PAI</h1>
+          <p class="lede">
+            PAI is a bootable, private AI workstation that lives on a USB
+            drive. This page is a quick tour of the preview desktop you're
+            looking at — the same look and feel as the live OS.
+          </p>
+        </div>
+
+        <div class="wc-grid" id="wc-grid"></div>
+
+        <div class="btn-row">
+          <button class="btn btn--primary" id="start-tour">
+            Run interactive tour
+          </button>
+          <button class="btn" id="reset-tour">
+            Reset tour flag
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      import { bridge } from '../../apps/_bridge.js'
+      import { welcomeTour } from '../../shell/welcome-tour.ts'
+
+      bridge.ready()
+
+      const grid = document.getElementById('wc-grid')!
+      welcomeTour.STEPS.forEach((s, i) => {
+        const card = document.createElement('article')
+        card.className = 'wc-card'
+        card.innerHTML = `
+          <div class="wc-num">Step ${i + 1} of ${welcomeTour.STEPS.length}</div>
+          <h2></h2>
+          <p></p>
+        `
+        ;(card.querySelector('h2') as HTMLElement).textContent = s.title
+        ;(card.querySelector('p') as HTMLElement).textContent = s.body
+        grid.appendChild(card)
+      })
+
+      const startBtn = document.getElementById('start-tour')!
+      const resetBtn = document.getElementById('reset-tour')!
+      startBtn.addEventListener('click', () => {
+        // The interactive tour requires the shell UI, which only exists
+        // in the shell window (the parent). Ask the shell to run it.
+        if (window.self !== window.top) {
+          ;(window.parent as any).__startmenu // eslint-disable-line no-unused-expressions
+          // Best effort: dispatch a custom event the shell can hook.
+          window.parent.postMessage(
+            { v: 1, source: 'pai-app', type: 'run-welcome-tour' },
+            window.location.origin,
+          )
+        } else {
+          welcomeTour.startTour()
+        }
+      })
+      resetBtn.addEventListener('click', () => {
+        welcomeTour.resetTour()
+        startBtn.focus()
+      })
+    </script>
+  </body>
+</html>
