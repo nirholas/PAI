@@ -1,0 +1,15 @@
+[Unit]
+Description=PAI Profile Initializer
+DefaultDependencies=no
+After=local-fs.target systemd-tmpfiles-setup.service
+Before=network.target ollama.service open-webui.service display-manager.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/pai-profile-init
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
