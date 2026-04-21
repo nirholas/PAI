@@ -1,0 +1,39 @@
+# persistence.conf.example — PAI persistent storage layout
+#
+# This file is copied onto the root of the encrypted persistence partition as
+# `persistence.conf`. Debian live-boot reads it at boot time and bind-mounts
+# each listed directory from a subdirectory of the persistence partition
+# over the live filesystem. See live-boot(7) and live-manual for the full
+# syntax.
+#
+# Format:
+#   <target-dir>  source=<subdir-on-persistence-partition>  [options]
+#
+# The `source=` subdirectory is relative to the root of the persistence
+# volume. It is created automatically the first time you boot with
+# persistence active.
+
+# --- AI models --------------------------------------------------------------
+# Keeps Ollama's pulled models across reboots. Large — can consume tens of GB.
+/var/lib/ollama                             source=ollama-models
+
+# --- Open WebUI chat history, settings, user accounts -----------------------
+/var/lib/open-webui                         source=webui-data
+
+# --- Saved WiFi networks and NetworkManager connections ---------------------
+/etc/NetworkManager/system-connections      source=wifi-creds
+
+# --- Home directory (OPT-IN: uncomment to enable) ---------------------------
+# Persisting /home/pai saves dotfiles, browser profiles, downloads, and
+# anything else you put there. It makes the USB much less "ephemeral"
+# privacy-wise — weigh the convenience against the threat model.
+#/home/pai                                  source=home
+
+# --- System logs (OPT-IN: uncomment to enable) ------------------------------
+# Keeps systemd journal across reboots. Useful for debugging, but reduces
+# the anti-forensics properties of the live system.
+#/var/log                                   source=system-logs
+
+# --- Custom entries ---------------------------------------------------------
+# Add additional persistent paths below.
+#/home/pai/projects                         source=projects
