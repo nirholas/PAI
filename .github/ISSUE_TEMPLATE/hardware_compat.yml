@@ -1,0 +1,56 @@
+name: Hardware Compatibility Report
+description: Report whether PAI works on your hardware
+labels: ["hardware-compat"]
+body:
+  - type: input
+    id: machine
+    attributes:
+      label: Machine Make / Model
+      placeholder: "e.g. Dell XPS 15 9500"
+    validations:
+      required: true
+
+  - type: input
+    id: cpu
+    attributes:
+      label: CPU
+      placeholder: "e.g. Intel Core i7-10750H"
+    validations:
+      required: true
+
+  - type: input
+    id: wifi
+    attributes:
+      label: Wi-Fi Chipset
+      placeholder: "e.g. Intel Wi-Fi 6 AX201 (run: lspci | grep -i wireless)"
+
+  - type: input
+    id: gpu
+    attributes:
+      label: GPU
+      placeholder: "e.g. NVIDIA GTX 1650 / Intel UHD 630"
+
+  - type: input
+    id: version
+    attributes:
+      label: PAI Version
+      placeholder: "e.g. v0.1.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: status
+    attributes:
+      label: Compatibility Status
+      options:
+        - "Works fully"
+        - "Works with issues"
+        - "Broken / does not boot"
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      placeholder: "Anything that needed workarounds, partial issues, etc."
