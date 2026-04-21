@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=PAI
+Description=PAI boot splash — private, offline AI
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/pai
+ScriptFile=/usr/share/plymouth/themes/pai/pai.script
