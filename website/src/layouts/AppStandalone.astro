@@ -1,0 +1,114 @@
+---
+import { APPS } from '../shell/apps.js'
+
+interface Props {
+  appId: string
+}
+
+const { appId } = Astro.props
+const app = APPS[appId as keyof typeof APPS]
+
+// Apps that are non-functional without JS — show a noscript warning
+const JS_REQUIRED = new Set(['terminal', 'chat', 'files', 'flash', 'verify'])
+const requiresJS = JS_REQUIRED.has(appId)
+---
+
+<!--
+  No-JS message for interactive apps — shown when JavaScript is disabled.
+  Content apps (docs, faq, etc.) degrade gracefully; interactive apps show this notice.
+-->
+{requiresJS && (
+  <noscript>
+    <div class="noscript-app" role="note">
+      <strong>{app.title}</strong> requires JavaScript to run.{' '}
+      <a href="/">Return to PAI home →</a>
+    </div>
+  </noscript>
+)}
+
+<!--
+  Standalone header: visible only when page is accessed directly (not in iframe).
+  On mobile, this provides navigation back to PAI home and a deep link to open in the desktop.
+-->
+<header id="standalone-header" hidden role="banner" aria-label={`${app.title} — standalone`}>
+  <a href="/" class="app-info" aria-label={`PAI home — ${app.title}`}>
+    <img src={app.icon} alt="" width="24" height="24" class="app-icon" />
+    <span class="app-title">{app.title}</span>
+  </a>
+  <a href={`/#app=${appId}`} class="open-in-pai">Open in PAI desktop →</a>
+</header>
+
+<script>
+  // Only show header in standalone (non-iframe) mode
+  if (window.self === window.top) {
+    const header = document.getElementById('standalone-header')
+    if (header) header.removeAttribute('hidden')
+  }
+</script>
+
+<style>
+  #standalone-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--s-2, 8px) var(--s-4, 16px);
+    background: var(--bg, #0f0f1a);
+    border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+    font-size: 0.8125rem;
+    gap: var(--s-4, 16px);
+    flex-shrink: 0;
+    min-height: 44px;
+  }
+
+  .app-info {
+    display: flex;
+    align-items: center;
+    gap: var(--s-2, 8px);
+    color: var(--fg, #e0e0e0);
+    text-decoration: none;
+  }
+
+  .app-icon {
+    image-rendering: pixelated;
+  }
+
+  .app-title {
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  .open-in-pai {
+    color: var(--pai-blue, #7aa2f7);
+    text-decoration: none;
+    white-space: nowrap;
+    font-size: 0.8125rem;
+  }
+
+  .open-in-pai:hover {
+    text-decoration: underline;
+  }
+
+  .noscript-app {
+    background: color-mix(in srgb, var(--pai-yellow, #fbbf24) 12%, var(--bg-elev, #1a1a2e));
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--pai-yellow, #fbbf24) 30%, var(--border, #2a2a3e));
+    color: var(--fg, #e0e0e0);
+    font-size: 0.875rem;
+    text-align: center;
+    padding: var(--s-3, 12px) var(--s-5, 24px);
+    display: block;
+  }
+
+  .noscript-app a {
+    color: var(--pai-blue, #7aa2f7);
+  }
+
+  /* Mobile: full-width stacked layout */
+  @media (max-width: 480px) {
+    #standalone-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--s-1, 4px);
+    }
+  }
+</style>
