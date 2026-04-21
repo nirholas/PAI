@@ -1,0 +1,25 @@
+#!/bin/bash
+# ── Install SimpleX Chat Desktop ───────────────────────────────────────
+# SimpleX publishes amd64 debs. arm64 builds exist but layout varies —
+# fall back to skip-and-document on arm64.
+set -euo pipefail
+
+SIMPLEX_VERSION="v6.1.1"
+ARCH=$(dpkg --print-architecture)
+if [ "$ARCH" != "amd64" ]; then
+    echo "[pai] SimpleX Chat: no stable arm64 .deb — skipping on $ARCH."
+    exit 0
+fi
+
+echo "[pai] Installing SimpleX Chat Desktop ${SIMPLEX_VERSION}..."
+
+curl -fsSL -o /tmp/simplex.deb \
+    "https://github.com/simplex-chat/simplex-chat/releases/download/${SIMPLEX_VERSION}/simplex-desktop-x86_64.deb" \
+    || { echo "[pai] SimpleX download failed — skipping."; exit 0; }
+
+DEBIAN_FRONTEND=noninteractive apt-get install -y /tmp/simplex.deb \
+    || echo "[pai] SimpleX install failed — non-fatal."
+rm -f /tmp/simplex.deb
+
+apt-get clean && rm -rf /var/lib/apt/lists/*
+echo "[pai] SimpleX Chat installed."
