@@ -1,0 +1,76 @@
+#!/bin/bash
+set -euo pipefail
+
+# ── Auto-Login + Live User Setup ──────────────────────────────────────
+# Runs inside the chroot during ISO build.
+# Configures tty1 auto-login → sway (no display manager).
+# At runtime, live-config (live-build) creates the 'pai' user via
+# bootappend-live params (username=pai, hostname=pai, user-default-groups=...).
+# This hook prepares everything else.
+# ──────────────────────────────────────────────────────────────────────
+
+echo "[pai] Configuring auto-login..."
+
+# ── 1. Pre-create 'pai' as a fallback (live-config will reconcile groups at boot)
+if ! id pai >/dev/null 2>&1; then
+    useradd -m -s /bin/bash pai
+fi
+usermod -aG sudo,video,render,input,audio,plugdev,netdev pai
+echo "pai ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/pai
+chmod 0440 /etc/sudoers.d/pai
+passwd -d pai || true
+
+# ── 2. Create sway Wayland session entry
+mkdir -p /usr/share/wayland-sessions
+cat > /usr/share/wayland-sessions/sway.desktop <<'EOF'
+[Desktop Entry]
+Name=Sway
+Comment=An i3-compatible Wayland compositor
+Exec=sway
+Type=Application
+EOF
+
+# ── 3. Getty auto-login on tty1 (no greeter)
+mkdir -p /etc/systemd/system/getty@tty1.service.d
+cat > /etc/systemd/system/getty@tty1.service.d/override.conf <<'EOF'
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin pai --noclear %I $TERM
+EOF
+
+# ── 4. Auto-start sway from tty1 (Tails-style: no manual sway command)
+# Write to BOTH /etc/skel and /home/pai so it works regardless of which
+# account live-config ends up using at boot.
+SWAY_BASH_PROFILE=$(cat <<'EOF'
+# Source .bashrc if it exists
+if [ -f "$HOME/.bashrc" ]; then
+    . "$HOME/.bashrc"
+fi
+
+# Auto-start sway on tty1 (no display manager).
+# Software-renderer fallbacks make this work in VMs (UTM/QEMU) without GPU passthrough.
+if [ -z "$WAYLAND_DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
+    export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+    mkdir -p "$XDG_RUNTIME_DIR"
+    chmod 700 "$XDG_RUNTIME_DIR"
+    export WLR_NO_HARDWARE_CURSORS=1
+    export WLR_RENDERER_ALLOW_SOFTWARE=1
+    # If no DRM device is usable (typical in headless VMs), fall back to pixman.
+    if [ ! -e /dev/dri/card0 ] && [ ! -e /dev/dri/card1 ]; then
+        export WLR_RENDERER=pixman
+        export WLR_BACKENDS=headless
+    fi
+    exec sway
+fi
+EOF
+)
+
+echo "$SWAY_BASH_PROFILE" > /etc/skel/.bash_profile
+
+# Also seed the existing pai homedir (in case it was already created above)
+if [ -d /home/pai ]; then
+    echo "$SWAY_BASH_PROFILE" > /home/pai/.bash_profile
+    chown pai:pai /home/pai/.bash_profile
+fi
+
+echo "[pai] Auto-login configured: tty1 → pai → sway"
