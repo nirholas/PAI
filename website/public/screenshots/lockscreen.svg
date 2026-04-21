@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" role="img" aria-label="PAI swaylock lockscreen with time, date and password prompt over a dark gradient wallpaper">
+  <defs>
+    <radialGradient id="lockbg" cx="0.5" cy="0.4" r="0.8">
+      <stop offset="0" stop-color="#1e1e3a"/>
+      <stop offset="0.6" stop-color="#0f0f1a"/>
+      <stop offset="1" stop-color="#000"/>
+    </radialGradient>
+  </defs>
+  <rect width="960" height="600" fill="url(#lockbg)"/>
+
+  <!-- Soft ribbon ornament -->
+  <g opacity="0.18">
+    <polyline points="-20,460 160,440 320,430 520,470 720,450 980,470" fill="none" stroke="#7aa2f7" stroke-width="60" stroke-linecap="round"/>
+    <polyline points="-20,500 160,510 320,490 520,520 720,500 980,530" fill="none" stroke="#9f7aea" stroke-width="40" stroke-linecap="round"/>
+  </g>
+
+  <!-- Clock -->
+  <text x="480" y="200" text-anchor="middle" font-family="ui-sans-serif" font-size="110" font-weight="200" fill="#e0e0e0">22:14</text>
+  <text x="480" y="240" text-anchor="middle" font-family="ui-sans-serif" font-size="18" fill="#888">Sunday, 19 April · PAI Live</text>
+
+  <!-- Lock indicator -->
+  <g transform="translate(440 300)">
+    <circle cx="40" cy="40" r="40" fill="rgba(122,162,247,0.12)" stroke="#7aa2f7" stroke-width="1.5"/>
+    <rect x="28" y="36" width="24" height="20" rx="3" fill="#7aa2f7"/>
+    <path d="M32 36 v-6 a8 8 0 0 1 16 0 v6" fill="none" stroke="#7aa2f7" stroke-width="3"/>
+  </g>
+
+  <!-- Password field -->
+  <g transform="translate(330 420)">
+    <rect width="300" height="44" rx="22" fill="rgba(255,255,255,0.04)" stroke="rgba(122,162,247,0.35)"/>
+    <text x="24" y="28" font-family="ui-sans-serif" font-size="14" fill="#e0e0e0">••••••••</text>
+    <rect x="218" y="8" width="74" height="28" rx="14" fill="#7aa2f7"/>
+    <text x="238" y="27" font-family="ui-sans-serif" font-size="12" font-weight="700" fill="#0f0f1a">Unlock</text>
+  </g>
+
+  <!-- Footer -->
+  <text x="480" y="540" text-anchor="middle" font-family="ui-sans-serif" font-size="12" fill="#666">Screen locked · Super+L to lock manually</text>
+</svg>
