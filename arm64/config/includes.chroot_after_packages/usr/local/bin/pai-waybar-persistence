@@ -1,0 +1,6 @@
+#!/bin/bash
+if [[ -f /run/pai-persistence-active ]]; then
+    echo '{"text": "💾 Persist", "class": "active", "tooltip": "Persistence: ON — models and data survive reboot"}'
+else
+    echo '{"text": "", "class": "inactive"}'
+fi
