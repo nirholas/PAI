@@ -1,0 +1,126 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "[pai] Configuring encryption & privacy tools..."
+
+# ── GnuPG config ────────────────────────────────────────────────
+mkdir -p /etc/skel/.gnupg
+chmod 700 /etc/skel/.gnupg
+
+cat > /etc/skel/.gnupg/gpg.conf <<'GPG'
+# PAI GnuPG Configuration
+
+# Default key server
+keyserver hkps://keys.openpgp.org
+
+# Use stronger algorithms by default
+personal-cipher-preferences AES256 AES192 AES
+personal-digest-preferences SHA512 SHA384 SHA256
+personal-compress-preferences ZLIB BZIP2 ZIP Uncompressed
+
+# Prefer stronger hashes
+cert-digest-algo SHA512
+default-preference-list SHA512 SHA384 SHA256 AES256 AES192 AES ZLIB BZIP2 ZIP Uncompressed
+
+# Show fingerprints
+keyid-format 0xlong
+with-fingerprint
+
+# No comments in output
+no-comments
+no-emit-version
+GPG
+
+cat > /etc/skel/.gnupg/gpg-agent.conf <<'AGENT'
+# PAI GPG Agent Configuration
+default-cache-ttl 3600
+max-cache-ttl 7200
+AGENT
+
+chmod 600 /etc/skel/.gnupg/gpg.conf
+chmod 600 /etc/skel/.gnupg/gpg-agent.conf
+
+echo "[pai] GnuPG configured with secure defaults."
+
+# ── KeePassXC config ────────────────────────────────────────────
+mkdir -p /etc/skel/.config/keepassxc
+
+cat > /etc/skel/.config/keepassxc/keepassxc.ini <<'KEEPASS'
+[General]
+ConfigVersion=2
+
+[GUI]
+ApplicationTheme=dark
+CompactMode=true
+MinimizeOnClose=true
+ShowTrayIcon=false
+
+[Security]
+ClearClipboardTimeout=30
+LockDatabaseIdleSeconds=300
+KEEPASS
+
+# Create a database directory hint
+mkdir -p /etc/skel/Documents/Passwords
+cat > /etc/skel/Documents/Passwords/README.txt <<'EOF'
+PAI Password Manager
+====================
+
+KeePassXC is your offline password manager.
+
+Getting started:
+  1. Open KeePassXC (Alt+K or from app menu)
+  2. Create a new database (File → New Database)
+  3. Set a strong master password
+  4. Save the .kdbx file here or on encrypted storage
+
+Tips:
+  - Use the password generator for strong passwords
+  - Enable browser integration for auto-fill
+  - Back up your .kdbx file to encrypted storage
+  - KeePassXC is fully offline — no cloud sync
+EOF
+
+echo "[pai] KeePassXC configured."
+
+# ── mat2 (Metadata Cleaner) ─────────────────────────────────────
+# mat2 works out of the box — CLI tool
+# Create a helper script for easy use
+cat > /usr/local/bin/pai-clean-metadata <<'SCRIPT'
+#!/bin/bash
+# PAI Metadata Cleaner — strips hidden metadata from files
+# Usage: pai-clean-metadata <file1> [file2] ...
+
+if [[ $# -eq 0 ]]; then
+    echo ""
+    echo "  PAI Metadata Cleaner"
+    echo "  ===================="
+    echo ""
+    echo "  Strips hidden metadata from files (EXIF, GPS, author, etc.)"
+    echo ""
+    echo "  Usage: pai-clean-metadata <file1> [file2] ..."
+    echo "  Recursive: pai-clean-metadata *.jpg"
+    echo ""
+    echo "  Supported: images, PDFs, office docs, audio, video, archives"
+    echo ""
+    echo "  Show metadata: mat2 --show <file>"
+    echo "  Clean file:    mat2 <file>"
+    echo ""
+    exit 0
+fi
+
+for file in "$@"; do
+    if [[ -f "$file" ]]; then
+        echo "Cleaning: $file"
+        mat2 "$file" && echo "  ✓ Cleaned" || echo "  ✗ Failed (unsupported format?)"
+    else
+        echo "  ✗ Not found: $file"
+    fi
+done
+SCRIPT
+
+chmod +x /usr/local/bin/pai-clean-metadata
+
+echo "[pai] mat2 metadata cleaner ready."
+
+echo "[pai] Encryption & privacy tools configured."
