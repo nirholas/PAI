@@ -1,0 +1,155 @@
+#!/bin/bash
+# PAI Settings — default application handler registry.
+# Writes ~/.config/mimeapps.list via xdg-mime.
+set -euo pipefail
+
+STYLE=/etc/pai/wofi-shutdown.css
+WOFI=(wofi --dmenu --cache-file=/dev/null)
+[ -r "$STYLE" ] && WOFI+=(--style "$STYLE")
+
+if ! command -v xdg-mime >/dev/null 2>&1; then
+    zenity --error --text="xdg-utils is not installed." 2>/dev/null
+    exit 1
+fi
+
+set_default() {
+    local mime="$1" app="$2"
+    xdg-mime default "$app" "$mime" 2>/dev/null || true
+}
+
+pick_app() {
+    local label="$1"
+    shift
+    local choice
+    choice=$(printf '%s\n' "$@" | "${WOFI[@]}" --prompt "$label" --lines $# --width 340 --height $(( $# * 44 + 60 )) 2>/dev/null)
+    printf '%s' "$choice"
+}
+
+category=$(printf '%s\n' \
+    "🌐  Web browser" \
+    "📧  Email (mailto:)" \
+    "📝  Plain text editor" \
+    "🗂️  File manager" \
+    "🖼️  Image viewer" \
+    "🎬  Video player" \
+    "🎵  Audio player" \
+    "📄  PDF viewer" \
+    "📓  Notes (markdown)" \
+    "📊  Office documents" \
+    "📅  Calendar" \
+    "👥  Contacts" \
+    "💬  Messenger" \
+    "🔌  API client" \
+    | "${WOFI[@]}" --prompt "Default apps — category" --lines 14 --width 360 --height 560 2>/dev/null)
+
+case "$category" in
+    *browser*)
+        app=$(pick_app "Default browser" "firefox-esr.desktop" "mullvad-browser.desktop" "torbrowser.desktop")
+        [ -n "$app" ] && {
+            set_default x-scheme-handler/http "$app"
+            set_default x-scheme-handler/https "$app"
+            set_default text/html "$app"
+        }
+        ;;
+    *Email*)
+        app=$(pick_app "Default mail client" "thunderbird.desktop" "evolution.desktop")
+        [ -n "$app" ] && set_default x-scheme-handler/mailto "$app"
+        ;;
+    *Plain\ text*)
+        app=$(pick_app "Default text editor" "codium.desktop" "geany.desktop" "mousepad.desktop" "org.gnome.gedit.desktop")
+        [ -n "$app" ] && {
+            set_default text/plain "$app"
+            set_default text/markdown "$app"
+        }
+        ;;
+    *File\ manager*)
+        app=$(pick_app "Default file manager" "thunar.desktop" "pcmanfm.desktop")
+        [ -n "$app" ] && set_default inode/directory "$app"
+        ;;
+    *Image*)
+        app=$(pick_app "Default image viewer" "org.gnome.eog.desktop" "gimp.desktop" "org.gnome.Shotwell.desktop" "imv.desktop")
+        [ -n "$app" ] && {
+            for m in image/png image/jpeg image/webp image/gif; do
+                set_default "$m" "$app"
+            done
+        }
+        vec=$(pick_app "Default SVG / vector editor" "org.inkscape.Inkscape.desktop" "gimp.desktop" "firefox-esr.desktop")
+        [ -n "$vec" ] && set_default image/svg+xml "$vec"
+        raw=$(pick_app "Default RAW / photo library" "org.darktable.darktable.desktop" "org.gnome.Shotwell.desktop" "gimp.desktop")
+        [ -n "$raw" ] && {
+            for m in image/x-canon-cr2 image/x-nikon-nef image/x-sony-arw image/x-adobe-dng image/tiff; do
+                set_default "$m" "$raw"
+            done
+        }
+        ;;
+    *Video*)
+        app=$(pick_app "Default video player" "io.github.celluloid_player.Celluloid.desktop" "mpv.desktop")
+        [ -n "$app" ] && {
+            for m in video/mp4 video/x-matroska video/webm video/x-msvideo; do
+                set_default "$m" "$app"
+            done
+        }
+        ed=$(pick_app "Default video editor" "org.kde.kdenlive.desktop" "org.shotcut.Shotcut.desktop")
+        [ -n "$ed" ] && set_default application/x-kdenlive "$ed"
+        ;;
+    *Audio*)
+        app=$(pick_app "Default audio player" "strawberry.desktop" "audacious.desktop" "mpv.desktop")
+        [ -n "$app" ] && {
+            for m in audio/mpeg audio/flac audio/ogg audio/x-wav audio/mp4; do
+                set_default "$m" "$app"
+            done
+        }
+        ed=$(pick_app "Default audio editor" "audacity.desktop")
+        [ -n "$ed" ] && set_default audio/x-wav "$ed"
+        ;;
+    *PDF*)
+        app=$(pick_app "Default PDF viewer" "org.kde.okular.desktop" "firefox-esr.desktop" "xournalpp.desktop")
+        [ -n "$app" ] && set_default application/pdf "$app"
+        ;;
+    *Notes*)
+        app=$(pick_app "Default notes app" "joplin.desktop" "codium.desktop" "mousepad.desktop")
+        [ -n "$app" ] && {
+            set_default text/markdown "$app"
+            set_default text/x-markdown "$app"
+        }
+        ;;
+    *Office*)
+        app=$(pick_app "Default office app" "libreoffice-writer.desktop" "libreoffice-startcenter.desktop")
+        [ -n "$app" ] && {
+            for m in \
+                application/vnd.oasis.opendocument.text \
+                application/vnd.oasis.opendocument.spreadsheet \
+                application/vnd.oasis.opendocument.presentation \
+                application/msword \
+                application/vnd.openxmlformats-officedocument.wordprocessingml.document \
+                application/vnd.ms-excel \
+                application/vnd.openxmlformats-officedocument.spreadsheetml.sheet \
+                application/vnd.ms-powerpoint \
+                application/vnd.openxmlformats-officedocument.presentationml.presentation; do
+                set_default "$m" "$app"
+            done
+        }
+        ;;
+    *Calendar*)
+        app=$(pick_app "Default calendar" "org.gnome.Calendar.desktop" "thunderbird.desktop")
+        [ -n "$app" ] && set_default text/calendar "$app"
+        ;;
+    *Contacts*)
+        app=$(pick_app "Default contacts" "org.gnome.Contacts.desktop" "thunderbird.desktop")
+        [ -n "$app" ] && set_default text/vcard "$app"
+        ;;
+    *Messenger*)
+        app=$(pick_app "Default messenger" "signal-desktop.desktop" "element-desktop.desktop")
+        [ -n "$app" ] && {
+            set_default x-scheme-handler/signalcaptcha "$app"
+            set_default x-scheme-handler/matrix "$app"
+        }
+        ;;
+    *API\ client*)
+        app=$(pick_app "Default API client" "bruno.desktop")
+        [ -n "$app" ] && set_default x-scheme-handler/bruno "$app"
+        ;;
+esac
+
+zenity --info --title="Default apps" \
+    --text="Updated. Changes are saved in ~/.config/mimeapps.list." 2>/dev/null &
