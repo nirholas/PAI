@@ -1,0 +1,41 @@
+#!/bin/bash
+set -euo pipefail
+
+# ── Install Ollama (CPU-only) ─────────────────────────────────────────
+# Downloads ONLY the static binary — no GPU libs (CUDA/Vulkan/ROCm).
+# This saves ~2GB of disk space during build.
+# Users who need GPU support can run: curl -fsSL https://ollama.com/install.sh | sh
+# ──────────────────────────────────────────────────────────────────────
+
+echo "[pai] Installing Ollama (CPU-only)..."
+
+# Download the static binary from Ollama's CDN (not the install script)
+# The install script pulls ~2GB of GPU libraries we don't need for CPU-only
+ARCH=$(dpkg --print-architecture)
+
+if [ "$ARCH" = "amd64" ]; then
+    OLLAMA_URL="https://ollama.com/download/ollama-linux-amd64"
+elif [ "$ARCH" = "arm64" ]; then
+    OLLAMA_URL="https://ollama.com/download/ollama-linux-arm64"
+else
+    echo "[pai] WARNING: Unsupported architecture $ARCH for Ollama"
+    exit 0
+fi
+
+curl -fSL -o /usr/local/bin/ollama "$OLLAMA_URL"
+chmod +x /usr/local/bin/ollama
+
+# Verify the binary works
+/usr/local/bin/ollama --version || echo "[pai] WARNING: Ollama binary may not be functional"
+
+# Create ollama user for the systemd service
+useradd -r -s /bin/false -m -d /usr/share/ollama ollama 2>/dev/null || true
+
+# Create model directory
+mkdir -p /usr/share/ollama/.ollama/models
+chown -R ollama:ollama /usr/share/ollama
+
+# Enable the service (unit file is in includes.chroot_after_packages)
+systemctl enable ollama.service 2>/dev/null || true
+
+echo "[pai] Ollama installed (CPU-only, ${ARCH})."
