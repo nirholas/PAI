@@ -1,0 +1,66 @@
+---
+import AppStandalone from '../../layouts/AppStandalone.astro'
+import Head from '../../components/Head.astro'
+import { APPS } from '../../shell/apps.js'
+import '../../styles/global.css'
+import '../../shell/apps.css'
+import '../../apps/music/music.css'
+
+const app = APPS.music
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <Head
+      title={`${app.title} — PAI`}
+      description={app.description}
+      ogImage={app.ogImage}
+    />
+    <link rel="icon" type="image/svg+xml" href="/icons/music.svg" />
+  </head>
+  <body>
+    <a href="#app-content" class="skip-link">Skip to app content</a>
+    <AppStandalone appId="music" />
+    <main id="app-content" class="app-content" data-app-id="music"></main>
+
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100dvh;
+        background: var(--bg, #0f0f1a);
+      }
+      .app-content {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .skip-link {
+        position: absolute;
+        top: -100%;
+        left: var(--s-2);
+        background: var(--pai-blue);
+        color: #0f0f1a;
+        padding: var(--s-1) var(--s-3);
+        border-radius: var(--r-icon);
+        font-weight: 600;
+        font-size: 0.875rem;
+        z-index: 9999;
+        text-decoration: none;
+      }
+      .skip-link:focus { top: var(--s-2); }
+    </style>
+
+    <script>
+      import { bridge } from '../../apps/_bridge.js'
+      import { MusicApp } from '../../apps/music/music.ts'
+
+      bridge.ready()
+      const container = document.getElementById('app-content')!
+      new MusicApp(container)
+    </script>
+  </body>
+</html>
