@@ -1,0 +1,214 @@
+# ── Core system ──
+firmware-linux-free
+linux-image-arm64
+
+# ── Desktop (lightweight Wayland) ──
+sway
+foot
+waybar
+swaybg
+swaylock
+swayidle
+wlr-randr
+xwayland
+dbus-x11
+
+# ── Browser ──
+firefox-esr
+
+# ── Networking ──
+network-manager
+network-manager-gnome
+wireless-tools
+wpasupplicant
+wireguard-tools
+
+# ── Privacy / Security ──
+ufw
+tor
+torsocks
+macchanger
+cryptsetup
+
+# ── Git & Version Control ──
+git
+git-lfs
+gh
+gitg
+openssh-client
+openssh-server
+
+# ── Launcher & Desktop shell ──
+wofi
+mako-notifier
+grim
+slurp
+wl-clipboard
+brightnessctl
+xdg-utils
+xdg-user-dirs
+
+# ── System utilities ──
+curl
+wget
+unzip
+zip
+htop
+lxtask
+baobab
+gnome-disk-utility
+file-roller
+secure-delete
+wdisplays
+
+# ── Printing ──
+cups
+cups-pdf
+system-config-printer
+
+# ── File management ──
+thunar
+thunar-archive-plugin
+thunar-volman
+tumbler
+
+# ── Text editors ──
+mousepad
+
+# ── Audio ──
+pipewire
+pipewire-pulse
+wireplumber
+pavucontrol
+alsa-utils
+playerctl
+
+# ── Video & Media ──
+mpv
+audacious
+audacious-plugins
+ffmpeg
+
+# ── Bluetooth ──
+bluez
+blueman
+
+# ── Theming ──
+adwaita-icon-theme
+lxappearance
+
+# ── Fonts ──
+fonts-noto-core
+fonts-noto-color-emoji
+
+# ── Boot splash ──
+plymouth
+
+# ── Productivity ──
+galculator
+drawing
+imv
+zathura
+tesseract-ocr
+
+# ── Games ──
+aisleriot
+gnome-mines
+frozen-bubble
+
+# ── Privacy & Security tools ──
+onionshare
+# torbrowser-launcher — not available for ARM64 (Tor Browser is x86-only)
+gnupg
+keepassxc
+kleopatra
+mat2
+
+# ── Cryptocurrency ──
+electrum
+
+# ── Python ──
+python3
+python3-pip
+python3-venv
+
+# ── Developer tools ──
+make
+pkg-config
+libssl-dev
+jq
+tmux
+fzf
+ripgrep
+fd-find
+bat
+tree
+neofetch
+poppler-utils
+
+# ── UI utilities ──
+zenity
+
+# ── Persistence ──
+parted
+
+# ── PAI Settings extras (added in Wave 1) ──
+policykit-1
+# nm-connection-editor — not in arm64 repos
+
+# ── Productivity (Wave 2) ──
+libreoffice
+libreoffice-gtk3
+libreoffice-style-colibre
+libreoffice-help-en-us
+hunspell-en-us
+hunspell-en-gb
+geany
+geany-plugins-common
+thunderbird
+# thunderbird-l10n-en-us — not in arm64 repos
+gnome-calendar
+gnome-contacts
+evolution-data-server
+hexchat
+
+# ── Creative (Wave 3) ──
+gimp
+gimp-data-extras
+krita
+krita-l10n
+inkscape
+kdenlive
+shotcut
+audacity
+audacity-data
+strawberry
+shotwell
+blender
+celluloid
+okular
+xournalpp
+darktable
+dcraw
+libopenraw7
+libavcodec-extra
+fonts-liberation2
+fonts-dejavu
+fonts-noto
+fonts-noto-cjk
+fonts-firacode
+
+# ── Crypto & privacy (Wave 5) ──
+wireshark
+tshark
+nmap
+mtr-tiny
+tcpdump
+iperf3
+dnsutils
+whois
+libusb-1.0-0
+age
+magic-wormhole
+secure-delete
+exiftool
