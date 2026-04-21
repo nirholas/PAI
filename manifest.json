@@ -1,0 +1,21 @@
+{
+  "name": "PAI — Private AI",
+  "short_name": "PAI",
+  "description": "Private AI on a bootable USB drive. Offline-first personal AI.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ]
+}
