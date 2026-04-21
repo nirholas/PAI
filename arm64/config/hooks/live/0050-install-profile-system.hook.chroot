@@ -1,0 +1,20 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "[pai] Installing profile system..."
+
+chmod +x /usr/local/bin/pai-profile-init
+systemctl enable pai-profile.service
+
+# Ensure profile.d directory exists for Sway
+mkdir -p /etc/sway/profile.d
+
+# Create a stub active.conf so Sway doesn't error on first boot
+# (pai-profile-init will overwrite this at runtime)
+cat > /etc/sway/profile.d/active.conf <<'EOF'
+# PAI active profile config — generated at boot by pai-profile.service
+# Default to full if profile system hasn't run yet
+set $pai_profile full
+EOF
+
+echo "[pai] Profile system installed."
