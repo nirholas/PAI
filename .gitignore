@@ -1,0 +1,35 @@
+# Build output
+output/
+*.iso
+*.img
+cache/
+chroot/
+binary/
+
+# Node.js
+node_modules/
+.next/
+.turbo/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker
+*.tar
+
+# Open WebUI runtime secret (generated on first boot; must never be committed)
+.webui_secret_key
+
+# Claude Code harness scratch
+.claude/
+
+# Win12 fork (separate project, not part of main PAI repo)
+pai-web-os/
+
+docs/_site/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
