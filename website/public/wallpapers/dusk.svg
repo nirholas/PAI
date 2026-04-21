@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <defs>
+    <linearGradient id="bg-dusk" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#0d0a1a"/>
+      <stop offset="40%"  stop-color="#150d28"/>
+      <stop offset="100%" stop-color="#0a0f18"/>
+    </linearGradient>
+    <!-- Pixel grain: tiny 2x2 tile, repeated -->
+    <pattern id="grain" x="0" y="0" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect x="0" y="0" width="1" height="1" fill="#f472b6" opacity="0.04"/>
+      <rect x="2" y="2" width="1" height="1" fill="#9f7aea" opacity="0.03"/>
+      <rect x="1" y="3" width="1" height="1" fill="#7aa2f7" opacity="0.02"/>
+    </pattern>
+    <!-- Horizontal scan-line subtle overlay -->
+    <pattern id="scanline" x="0" y="0" width="1" height="3" patternUnits="userSpaceOnUse">
+      <rect x="0" y="0" width="1920" height="1" fill="#000000" opacity="0.06"/>
+    </pattern>
+  </defs>
+
+  <!-- Background gradient -->
+  <rect width="1920" height="1080" fill="url(#bg-dusk)"/>
+
+  <!-- Pixel grain texture -->
+  <rect width="1920" height="1080" fill="url(#grain)"/>
+
+  <!-- Scan-line overlay for CRT feel -->
+  <rect width="1920" height="1080" fill="url(#scanline)"/>
+
+  <!-- Corner glow: top-left warm pink -->
+  <radialGradient id="glow-tl" cx="0%" cy="0%" r="60%">
+    <stop offset="0%" stop-color="#f472b6" stop-opacity="0.08"/>
+    <stop offset="100%" stop-color="#f472b6" stop-opacity="0"/>
+  </radialGradient>
+  <rect width="1920" height="1080" fill="url(#glow-tl)"/>
+
+  <!-- Corner glow: bottom-right blue -->
+  <radialGradient id="glow-br" cx="100%" cy="100%" r="55%">
+    <stop offset="0%" stop-color="#7aa2f7" stop-opacity="0.07"/>
+    <stop offset="100%" stop-color="#7aa2f7" stop-opacity="0"/>
+  </radialGradient>
+  <rect width="1920" height="1080" fill="url(#glow-br)"/>
+
+  <!-- Subtle horizontal rule lines (wide-spaced) -->
+  <g stroke="#9f7aea" stroke-width="0.5" opacity="0.06">
+    <line x1="0" y1="270" x2="1920" y2="270"/>
+    <line x1="0" y1="540" x2="1920" y2="540"/>
+    <line x1="0" y1="810" x2="1920" y2="810"/>
+  </g>
+
+  <!-- Pixel sparkles scattered -->
+  <g fill="#f472b6" opacity="0.35">
+    <rect x="320"  y="180" width="2" height="2"/>
+    <rect x="640"  y="90"  width="2" height="2"/>
+    <rect x="960"  y="220" width="2" height="2"/>
+    <rect x="1280" y="140" width="2" height="2"/>
+    <rect x="1600" y="200" width="2" height="2"/>
+    <rect x="180"  y="450" width="2" height="2"/>
+    <rect x="480"  y="380" width="2" height="2"/>
+    <rect x="760"  y="420" width="2" height="2"/>
+    <rect x="1100" y="360" width="2" height="2"/>
+    <rect x="1440" y="410" width="2" height="2"/>
+    <rect x="1740" y="380" width="2" height="2"/>
+    <rect x="280"  y="720" width="2" height="2"/>
+    <rect x="560"  y="650" width="2" height="2"/>
+    <rect x="880"  y="700" width="2" height="2"/>
+    <rect x="1200" y="640" width="2" height="2"/>
+    <rect x="1520" y="690" width="2" height="2"/>
+    <rect x="120"  y="950" width="2" height="2"/>
+    <rect x="400"  y="900" width="2" height="2"/>
+    <rect x="720"  y="940" width="2" height="2"/>
+    <rect x="1040" y="880" width="2" height="2"/>
+    <rect x="1360" y="930" width="2" height="2"/>
+    <rect x="1680" y="870" width="2" height="2"/>
+  </g>
+  <g fill="#7aa2f7" opacity="0.25">
+    <rect x="420"  y="300" width="2" height="2"/>
+    <rect x="840"  y="160" width="2" height="2"/>
+    <rect x="1160" y="310" width="2" height="2"/>
+    <rect x="1680" y="280" width="2" height="2"/>
+    <rect x="360"  y="580" width="2" height="2"/>
+    <rect x="680"  y="520" width="2" height="2"/>
+    <rect x="1020" y="570" width="2" height="2"/>
+    <rect x="1340" y="510" width="2" height="2"/>
+    <rect x="1800" y="560" width="2" height="2"/>
+    <rect x="200"  y="830" width="2" height="2"/>
+    <rect x="520"  y="780" width="2" height="2"/>
+    <rect x="800"  y="820" width="2" height="2"/>
+    <rect x="1120" y="760" width="2" height="2"/>
+    <rect x="1460" y="810" width="2" height="2"/>
+  </g>
+
+  <!-- Watermark text -->
+  <text x="960" y="510" text-anchor="middle" dominant-baseline="central"
+        font-family="sans-serif" font-size="140" font-weight="bold"
+        fill="#9f7aea" opacity="0.2" letter-spacing="20">PAI</text>
+  <text x="960" y="580" text-anchor="middle" dominant-baseline="central"
+        font-family="sans-serif" font-size="22"
+        fill="#f472b6" opacity="0.4">PAI</text>
+</svg>
