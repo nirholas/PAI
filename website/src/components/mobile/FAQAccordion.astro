@@ -1,0 +1,130 @@
+---
+const items = [
+  {
+    q: 'What is PAI?',
+    a: 'PAI is a bootable live-USB operating system that runs local AI models entirely on your own hardware. No cloud, no accounts, no internet required.',
+  },
+  {
+    q: 'What hardware do I need?',
+    a: 'Any x86-64 PC with at least 8 GB RAM and a USB 3.0 port. For running larger models (13B+), 16 GB RAM and a GPU are recommended but not required.',
+  },
+  {
+    q: 'How do I install it?',
+    a: 'Download the ISO and write it to a USB drive using dd, Rufus, or Balena Etcher. Then reboot your PC and select the USB from the boot menu. No installation to your hard drive is needed.',
+  },
+  {
+    q: 'Is it really private?',
+    a: 'Yes — not "policy-private," actually private. PAI never connects to the internet unless you open a browser yourself. All AI inference runs locally via Ollama. There is no telemetry, no license server, no accounts, and no company that can read your prompts, ever.',
+  },
+  {
+    q: 'What AI models are included?',
+    a: 'PAI ships with Llama 3, Mistral, and Phi via Ollama. You can add any GGUF-format model by copying it to the USB drive. The model library is fully under your control.',
+  },
+  {
+    q: 'Can I use it without an internet connection?',
+    a: "Yes — that's the whole point. PAI is designed to work completely airgapped. Every component that needs to work offline is bundled on the USB drive.",
+  },
+  {
+    q: 'Does it modify my computer?',
+    a: "No. PAI runs live from the USB drive and does not touch your hard drive or existing OS. You can remove the USB at any time to restore normal operation.",
+  },
+]
+---
+
+<section class="faq-section" aria-labelledby="faq-heading">
+  <h2 id="faq-heading" class="section-heading">Frequently asked questions</h2>
+
+  <dl class="faq">
+    {
+      items.map((item) => (
+        <details class="faq__item">
+          <summary class="faq__question">
+            <dt>{item.q}</dt>
+            <span class="faq__chevron" aria-hidden="true">▸</span>
+          </summary>
+          <dd class="faq__answer">{item.a}</dd>
+        </details>
+      ))
+    }
+  </dl>
+</section>
+
+<style>
+  .faq-section {
+    padding: var(--s-7) 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .section-heading {
+    font-size: clamp(1.25rem, 3vw, 1.75rem);
+    font-weight: 700;
+    margin-bottom: var(--s-5);
+    color: var(--fg);
+  }
+
+  .faq {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-2);
+  }
+
+  .faq__item {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--r-window);
+    overflow: hidden;
+    transition: border-color var(--motion-duration) var(--motion-easing);
+  }
+
+  .faq__item:hover {
+    border-color: color-mix(in srgb, var(--pai-blue) 40%, var(--border));
+  }
+
+  .faq__item[open] {
+    border-color: color-mix(in srgb, var(--pai-blue) 60%, var(--border));
+  }
+
+  .faq__question {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--s-4) var(--s-5);
+    cursor: pointer;
+    list-style: none;
+    gap: var(--s-4);
+    user-select: none;
+    min-height: 44px;
+  }
+
+  /* Remove default marker in WebKit */
+  .faq__question::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq__question dt {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--fg);
+    line-height: 1.4;
+  }
+
+  .faq__chevron {
+    flex-shrink: 0;
+    color: var(--fg-muted);
+    font-size: 0.75rem;
+    transition: transform var(--motion-duration) var(--motion-easing);
+  }
+
+  .faq__item[open] .faq__chevron {
+    transform: rotate(90deg);
+  }
+
+  .faq__answer {
+    padding: 0 var(--s-5) var(--s-4);
+    font-size: 0.9375rem;
+    color: var(--fg-muted);
+    line-height: 1.65;
+    border-top: 1px solid var(--border);
+    padding-top: var(--s-3);
+  }
+</style>
