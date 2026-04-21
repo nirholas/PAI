@@ -1,0 +1,84 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "[pai] Creating Plymouth boot splash theme..."
+
+THEME_DIR="/usr/share/plymouth/themes/pai"
+mkdir -p "$THEME_DIR"
+
+# ── Theme descriptor ──────────────────────────────────────────────────
+cat > "$THEME_DIR/pai.plymouth" <<'EOF'
+[Plymouth Theme]
+Name=PAI
+Description=PAI Boot Splash
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/pai
+ScriptFile=/usr/share/plymouth/themes/pai/pai.script
+EOF
+
+# ── Plymouth script ───────────────────────────────────────────────────
+cat > "$THEME_DIR/pai.script" <<'SCRIPT'
+# Plymouth script — PAI boot splash
+# Background: #0f0f1a (r=0.059, g=0.059, b=0.102)
+Window.SetBackgroundTopColor(0.06, 0.06, 0.10);
+Window.SetBackgroundBottomColor(0.06, 0.06, 0.10);
+
+# "PAI" title text in accent color #7aa2f7
+pai_text = Image.Text("PAI", 0.48, 0.63, 0.97);
+pai_sprite = Sprite(pai_text);
+pai_sprite.SetX(Window.GetWidth() / 2 - pai_text.GetWidth() / 2);
+pai_sprite.SetY(Window.GetHeight() / 2 - pai_text.GetHeight() / 2);
+
+# Pulsing dot animation — 3 dots below the title
+dot1_img = Image.Text(".", 0.48, 0.63, 0.97);
+dot2_img = Image.Text(".", 0.48, 0.63, 0.97);
+dot3_img = Image.Text(".", 0.48, 0.63, 0.97);
+
+dot1 = Sprite(dot1_img);
+dot2 = Sprite(dot2_img);
+dot3 = Sprite(dot3_img);
+
+dot_y = Window.GetHeight() / 2 + pai_text.GetHeight() / 2 + 20;
+dot_spacing = 20;
+dot_cx = Window.GetWidth() / 2;
+
+dot1.SetX(dot_cx - dot_spacing - dot1_img.GetWidth() / 2);
+dot1.SetY(dot_y);
+dot2.SetX(dot_cx - dot2_img.GetWidth() / 2);
+dot2.SetY(dot_y);
+dot3.SetX(dot_cx + dot_spacing - dot3_img.GetWidth() / 2);
+dot3.SetY(dot_y);
+
+progress = 0;
+
+fun refresh_callback() {
+    progress++;
+    # Cycle opacity across the 3 dots for a pulsing effect
+    t = progress % 60;
+    if (t < 20) {
+        dot1.SetOpacity(1.0);
+        dot2.SetOpacity(0.3);
+        dot3.SetOpacity(0.3);
+    } else if (t < 40) {
+        dot1.SetOpacity(0.3);
+        dot2.SetOpacity(1.0);
+        dot3.SetOpacity(0.3);
+    } else {
+        dot1.SetOpacity(0.3);
+        dot2.SetOpacity(0.3);
+        dot3.SetOpacity(1.0);
+    }
+}
+
+Plymouth.SetRefreshFunction(refresh_callback);
+SCRIPT
+
+echo "[pai] Setting PAI as default Plymouth theme..."
+plymouth-set-default-theme pai
+
+echo "[pai] Updating initramfs with Plymouth theme..."
+update-initramfs -u
+
+echo "[pai] Plymouth boot splash configured."
