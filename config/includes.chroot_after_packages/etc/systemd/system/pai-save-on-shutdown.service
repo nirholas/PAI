@@ -1,0 +1,15 @@
+[Unit]
+Description=PAI Save User Data on Shutdown
+DefaultDependencies=no
+Before=shutdown.target reboot.target halt.target
+After=local-fs.target
+ConditionPathExists=/run/pai-persistence-active
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/pai-save
+TimeoutStartSec=120
+RemainAfterExit=yes
+
+[Install]
+WantedBy=halt.target reboot.target shutdown.target
