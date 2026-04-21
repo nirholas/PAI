@@ -1,0 +1,69 @@
+---
+import { getCollection, render } from 'astro:content'
+import ContentApp from '../../../layouts/ContentApp.astro'
+import DocsSidebar from '../../../components/DocsSidebar.astro'
+
+export async function getStaticPaths() {
+  const docs = await getCollection('docs')
+  return docs.map((doc) => ({
+    params: { slug: doc.id },
+    props: { doc },
+  }))
+}
+
+const { doc } = Astro.props
+const { Content, headings } = await render(doc)
+
+const GITHUB_REPO = 'https://github.com/nirholas/pai'
+const editPath = doc.data.editPath
+const editUrl = editPath ? `${GITHUB_REPO}/blob/main/${editPath}` : `${GITHUB_REPO}/blob/main/docs/${doc.id}.md`
+---
+
+<ContentApp title={doc.data.title} description={doc.data.description} toc={headings}>
+  <DocsSidebar slot="sidebar" currentSlug={doc.id} />
+
+  <Content />
+
+  <footer class="doc-footer">
+    <a href={editUrl} class="edit-link" target="_blank" rel="noopener noreferrer">
+      Edit this page on GitHub ↗
+    </a>
+    <a href="/apps/docs" class="back-link">← All docs</a>
+  </footer>
+</ContentApp>
+
+<style>
+  .doc-footer {
+    display: flex;
+    gap: var(--s-5);
+    align-items: center;
+    margin-top: var(--s-7);
+    padding-top: var(--s-5);
+    border-top: 1px solid var(--border);
+    max-width: 72ch;
+    flex-wrap: wrap;
+  }
+
+  .edit-link {
+    font-size: 0.875rem;
+    color: var(--fg-muted);
+    text-decoration: none;
+    transition: color 0.1s;
+  }
+
+  .edit-link:hover {
+    color: var(--pai-blue);
+  }
+
+  .back-link {
+    font-size: 0.875rem;
+    color: var(--fg-muted);
+    text-decoration: none;
+    margin-left: auto;
+    transition: color 0.1s;
+  }
+
+  .back-link:hover {
+    color: var(--fg);
+  }
+</style>
