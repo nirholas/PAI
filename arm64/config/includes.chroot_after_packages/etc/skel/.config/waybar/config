@@ -1,0 +1,81 @@
+{
+    "layer": "top",
+    "position": "bottom",
+    "height": 30,
+    "margin-bottom": 8,
+    "margin-left": 8,
+    "margin-right": 8,
+    "modules-left": ["custom/logo", "custom/browser", "custom/terminal", "custom/files", "custom/editor", "custom/ollama"],
+    "modules-center": [],
+    "modules-right": ["custom/media", "custom/crypto", "custom/pai-status", "network", "cpu", "memory", "clock", "custom/settings"],
+    "custom/logo": {
+        "format": " PAI",
+        "tooltip": false,
+        "on-click": "wofi --show drun"
+    },
+    "custom/browser": {
+        "format": "🌐",
+        "tooltip-format": "Firefox",
+        "on-click": "firefox-esr"
+    },
+    "custom/terminal": {
+        "format": "💻",
+        "tooltip-format": "Terminal",
+        "on-click": "foot"
+    },
+    "custom/files": {
+        "format": "📁",
+        "tooltip-format": "Files",
+        "on-click": "thunar"
+    },
+    "custom/editor": {
+        "format": "📝",
+        "tooltip-format": "Text Editor",
+        "on-click": "mousepad"
+    },
+    "custom/ollama": {
+        "exec": "/usr/local/bin/pai-waybar-ollama",
+        "return-type": "json",
+        "interval": 5,
+        "tooltip": true
+    },
+    "clock": {
+        "format": "{:%H:%M}"
+    },
+    "cpu": {
+        "format": " {usage}%"
+    },
+    "memory": {
+        "format": " {percentage}%"
+    },
+    "custom/crypto": {
+        "exec": "/usr/local/bin/pai-waybar-crypto",
+        "return-type": "json",
+        "interval": 60,
+        "tooltip": true
+    },
+    "custom/media": {
+        "format": " {}",
+        "interval": 5,
+        "exec": "playerctl metadata --format '{{artist}} - {{title}}' 2>/dev/null || echo ''",
+        "max-length": 30,
+        "on-click": "playerctl play-pause"
+    },
+    "network": {
+        "format-wifi": " {signalStrength}%",
+        "format-ethernet": " ETH",
+        "format-disconnected": " Off"
+    },
+    "custom/pai-status": {
+        "exec": "/usr/local/bin/pai-waybar-status",
+        "return-type": "json",
+        "interval": 10,
+        "tooltip": true,
+        "on-click": "foot -e sh -c 'pai-status; echo; read -rp \"Press Enter to close...\" _'"
+    },
+    "custom/settings": {
+        "format": "⚙",
+        "tooltip": false,
+        "on-click": "pai-settings"
+    }
+}
