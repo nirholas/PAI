@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1236 690" width="1236" height="690">
+  <!-- PAI README header — mirrors website/src/shell/boot.ts boot sequence.
+       Transparent background; colours + motion adapt to user prefs.
+       Logo is a 17×7 grid @ 28px cells = 476×196, matching pai-logo.png.
+       Regenerate SVG from logo with: python3 branding/tools/regen-header.py -->
+  <style><![CDATA[
+    .fg-bright { fill: #ffffff; }
+    .fg-muted  { fill: #8a8f99; }
+    .fg-dim    { fill: #5a5f6b; }
+    @media (prefers-color-scheme: light) {
+      .fg-bright { fill: #1a1a2e; }
+      .fg-muted  { fill: #50555f; }
+      .fg-dim    { fill: #9aa0ad; }
+    }
+
+    text {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 22px;
+    }
+
+    /* One-shot fade-ins for each tier of content */
+    #logo, #dots, .line, #prompt {
+      opacity: 0;
+      animation: fade-in 0.3s ease-out forwards;
+    }
+    #logo     { animation-delay: 0.1s; }
+    #dots     { animation-delay: 0.4s; }
+    .line-1   { animation-delay: 0.8s; }
+    .line-2   { animation-delay: 1.0s; }
+    .line-3   { animation-delay: 1.2s; }
+    .line-4   { animation-delay: 1.4s; }
+    .line-5   { animation-delay: 1.6s; }
+    #prompt   { animation-delay: 2.0s; }
+
+    @keyframes fade-in { to { opacity: 1; } }
+
+    /* Continuous dot pulse (starts after the dots group has faded in) */
+    .dot {
+      animation: dot-pulse 0.9s 0.6s ease-in-out infinite;
+    }
+    .dot-2 { animation-delay: 0.9s; }
+    .dot-3 { animation-delay: 1.2s; }
+    @keyframes dot-pulse {
+      0%, 100% { fill-opacity: 0.25; }
+      50%      { fill-opacity: 1; }
+    }
+
+    /* Blinking caret on the trailing prompt */
+    .caret {
+      animation: caret-blink 1s 2.4s steps(2, start) infinite;
+    }
+    @keyframes caret-blink {
+      to { visibility: hidden; }
+    }
+
+    /* Respect reduced-motion: show final state, disable all animations */
+    @media (prefers-reduced-motion: reduce) {
+      #logo, #dots, .line, #prompt {
+        opacity: 1;
+        animation: none;
+      }
+      .dot    { animation: none; fill-opacity: 1; }
+      .caret  { animation: none; }
+    }
+  ]]></style>
+
+  <!-- ── Logo: 17×7 pixel grid @ 28px (476×196), centered, transformed to (380,120) ─ -->
+  <g id="logo" class="fg-bright" transform="translate(380 120)">
+    <rect x="0" y="0" width="28" height="28"/>
+    <rect x="28" y="0" width="28" height="28"/>
+    <rect x="56" y="0" width="28" height="28"/>
+    <rect x="84" y="0" width="28" height="28"/>
+    <rect x="196" y="0" width="28" height="28"/>
+    <rect x="224" y="0" width="28" height="28"/>
+    <rect x="252" y="0" width="28" height="28"/>
+    <rect x="336" y="0" width="28" height="28"/>
+    <rect x="364" y="0" width="28" height="28"/>
+    <rect x="392" y="0" width="28" height="28"/>
+    <rect x="0" y="28" width="28" height="28"/>
+    <rect x="112" y="28" width="28" height="28"/>
+    <rect x="168" y="28" width="28" height="28"/>
+    <rect x="280" y="28" width="28" height="28"/>
+    <rect x="364" y="28" width="28" height="28"/>
+    <rect x="0" y="56" width="28" height="28"/>
+    <rect x="112" y="56" width="28" height="28"/>
+    <rect x="168" y="56" width="28" height="28"/>
+    <rect x="280" y="56" width="28" height="28"/>
+    <rect x="364" y="56" width="28" height="28"/>
+    <rect x="0" y="84" width="28" height="28"/>
+    <rect x="28" y="84" width="28" height="28"/>
+    <rect x="56" y="84" width="28" height="28"/>
+    <rect x="84" y="84" width="28" height="28"/>
+    <rect x="168" y="84" width="28" height="28"/>
+    <rect x="196" y="84" width="28" height="28"/>
+    <rect x="224" y="84" width="28" height="28"/>
+    <rect x="252" y="84" width="28" height="28"/>
+    <rect x="280" y="84" width="28" height="28"/>
+    <rect x="364" y="84" width="28" height="28"/>
+    <rect x="0" y="112" width="28" height="28"/>
+    <rect x="168" y="112" width="28" height="28"/>
+    <rect x="280" y="112" width="28" height="28"/>
+    <rect x="364" y="112" width="28" height="28"/>
+    <rect x="0" y="140" width="28" height="28"/>
+    <rect x="168" y="140" width="28" height="28"/>
+    <rect x="280" y="140" width="28" height="28"/>
+    <rect x="364" y="140" width="28" height="28"/>
+    <rect x="0" y="168" width="28" height="28"/>
+    <rect x="168" y="168" width="28" height="28"/>
+    <rect x="280" y="168" width="28" height="28"/>
+    <rect x="336" y="168" width="28" height="28"/>
+    <rect x="364" y="168" width="28" height="28"/>
+    <rect x="392" y="168" width="28" height="28"/>
+  </g>
+
+  <!-- ── Spinner dots — pulse continuously after the one-shot fade-in ─────── -->
+  <g id="dots">
+    <rect class="dot dot-1 fg-muted" x="584" y="388" width="12" height="12"/>
+    <rect class="dot dot-2 fg-muted" x="612" y="388" width="12" height="12"/>
+    <rect class="dot dot-3 fg-muted" x="640" y="388" width="12" height="12"/>
+  </g>
+
+  <!-- ── Init lines: staggered stream-in (matches boot.ts ~100-200ms per line) ─── -->
+  <g class="fg-muted" xml:space="preserve">
+    <text class="line line-1" x="420" y="470">[  OK  ] Started systemd.</text>
+    <text class="line line-2" x="420" y="506">[  OK  ] Reached target Network.</text>
+    <text class="line line-3" x="420" y="542">[  OK  ] Started Ollama.</text>
+    <text class="line line-4" x="420" y="578">[  OK  ] Started Open WebUI.</text>
+    <text class="line line-5" x="420" y="614">[  OK  ] Reached target Graphical Interface.</text>
+  </g>
+
+  <!-- ── Trailing shell prompt: "boot complete" punchline ──────────────────── -->
+  <text id="prompt" class="fg-bright" x="420" y="656" xml:space="preserve">pai@pai:~$ <tspan class="caret">_</tspan></text>
+</svg>
