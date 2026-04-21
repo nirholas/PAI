@@ -1,0 +1,17 @@
+pkgbase = pai-cli
+	pkgdesc = Flash, verify, and try PAI — private offline AI on a bootable USB
+	pkgver = 0.2.0
+	pkgrel = 1
+	url = https://pai.direct
+	arch = any
+	license = GPL3
+	depends = bash
+	depends = coreutils
+	depends = curl
+	optdepends = qemu-full: for `pai try` to launch PAI in a VM
+	optdepends = ovmf: UEFI firmware for QEMU
+	optdepends = util-linux: lsblk used by `pai flash`
+	source = pai-0.2.0.tar.gz::https://github.com/nirholas/pai/archive/refs/tags/v0.2.0.tar.gz
+	sha256sums = SKIP
+
+pkgname = pai-cli
