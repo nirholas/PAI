@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PAI — App Store</title>
+<style>
+  :root { --bg: #0f0f1a; --surface: #1a1a2e; --border: #2a2a3e; --text: #e0e0e0; --accent: #7aa2f7; --dim: #888; --success: #4ade80; --error: #f87171; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Noto Sans', system-ui, sans-serif; min-height: 100vh; }
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; gap: 16px; }
+  header h1 { font-size: 20px; color: var(--accent); }
+  header span { font-size: 13px; color: var(--dim); }
+  header a { margin-left: auto; color: var(--accent); text-decoration: none; font-size: 14px; }
+  header a:hover { text-decoration: underline; }
+  .notice { background: #1a2a1a; border: 1px solid #2a3a2a; border-radius: 8px; margin: 16px 24px; padding: 12px 16px; font-size: 13px; color: var(--dim); }
+  .notice strong { color: var(--success); }
+  .search-bar { padding: 16px 24px 0; }
+  .search-bar input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 10px 14px; font-size: 14px; font-family: inherit; outline: none; }
+  .search-bar input:focus { border-color: var(--accent); }
+  .categories { padding: 12px 24px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .cat-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; color: var(--dim); padding: 6px 14px; font-size: 12px; cursor: pointer; transition: all 0.2s; }
+  .cat-btn:hover, .cat-btn.active { background: var(--accent); color: #0f0f1a; border-color: var(--accent); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; padding: 16px 24px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 8px; transition: border-color 0.2s; }
+  .card:hover { border-color: var(--accent); }
+  .card-header { display: flex; align-items: center; gap: 10px; }
+  .card-icon { font-size: 28px; width: 40px; text-align: center; }
+  .card-title { font-size: 15px; font-weight: 600; }
+  .card-cat { font-size: 11px; color: var(--dim); }
+  .card-desc { font-size: 13px; color: var(--dim); line-height: 1.4; flex: 1; }
+  .card-cmd { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; font-family: monospace; font-size: 12px; color: var(--accent); cursor: pointer; position: relative; word-break: break-all; }
+  .card-cmd:hover { border-color: var(--accent); }
+  .card-cmd::after { content: '📋 Copy'; position: absolute; right: 6px; top: 6px; font-family: 'Noto Sans', sans-serif; font-size: 10px; color: var(--dim); }
+  .copied { color: var(--success) !important; }
+  .copied::after { content: '✓ Copied' !important; color: var(--success) !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>📦 PAI App Store</h1>
+  <span>Install apps via Flatpak</span>
+  <a href="index.html">← Back to Chat</a>
+</header>
+
+<div class="notice">
+  <strong>ℹ️ First install?</strong> The first Flatpak app you install will download the runtime (~500MB). After that, installs are faster. Internet connection required.
+</div>
+
+<div class="search-bar">
+  <input type="text" id="search" placeholder="Search apps..." autocomplete="off">
+</div>
+
+<div class="categories" id="categories">
+  <button class="cat-btn active" data-cat="all">All</button>
+  <button class="cat-btn" data-cat="ai">🤖 AI</button>
+  <button class="cat-btn" data-cat="crypto">💰 Crypto</button>
+  <button class="cat-btn" data-cat="dev">🛠️ Dev</button>
+  <button class="cat-btn" data-cat="media">🎵 Media</button>
+  <button class="cat-btn" data-cat="comm">💬 Communication</button>
+  <button class="cat-btn" data-cat="gaming">🎮 Gaming</button>
+  <button class="cat-btn" data-cat="creative">🎨 Creative</button>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<script>
+const apps = [
+  // AI
+  { name: "Alpaca", icon: "🦙", desc: "Chat with local LLMs via Ollama", cat: "ai", id: "com.jeffser.Alpaca" },
+  { name: "Iotas", icon: "🧠", desc: "Markdown-based AI notepad with local models", cat: "ai", id: "org.gnome.World.Iotas" },
+
+  // Crypto
+  { name: "Electrum", icon: "⚡", desc: "Lightweight Bitcoin wallet", cat: "crypto", id: "org.electrum.electrum" },
+  { name: "Solana Wallet", icon: "☀️", desc: "Offline Solana wallet toolkit", cat: "crypto", cmd: "firefox file:///opt/pai-wallets/solana-wallet.html" },
+  { name: "Ethereum Wallet", icon: "💎", desc: "Offline Ethereum/EVM wallet toolkit", cat: "crypto", cmd: "firefox file:///opt/pai-wallets/ethereum-wallet.html" },
+  { name: "BIP39 Generator", icon: "🔑", desc: "Offline mnemonic seed phrase generator", cat: "crypto", cmd: "firefox file:///opt/pai-wallets/bip39.html" },
+
+  // Dev
+  { name: "VSCodium", icon: "💻", desc: "Free/open VS Code without telemetry", cat: "dev", id: "com.vscodium.codium" },
+  { name: "Postman", icon: "📬", desc: "API development and testing", cat: "dev", id: "com.getpostman.Postman" },
+  { name: "DBeaver", icon: "🗄️", desc: "Universal database manager", cat: "dev", id: "io.dbeaver.DBeaverCommunity" },
+  { name: "GitKraken", icon: "🐙", desc: "Visual Git client", cat: "dev", id: "com.axosoft.GitKraken" },
+
+  // Media
+  { name: "Spotify", icon: "🎵", desc: "Music streaming service", cat: "media", id: "com.spotify.Client" },
+  { name: "VLC", icon: "🎬", desc: "Play any media file", cat: "media", id: "org.videolan.VLC" },
+  { name: "OBS Studio", icon: "📹", desc: "Streaming and screen recording", cat: "media", id: "com.obsproject.Studio" },
+  { name: "Audacity", icon: "🎙️", desc: "Audio editor and recorder", cat: "media", id: "org.audacityteam.Audacity" },
+  { name: "Stremio", icon: "🍿", desc: "Stream movies and TV shows", cat: "media", id: "com.stremio.Stremio" },
+
+  // Communication
+  { name: "Discord", icon: "🎮", desc: "Voice, video, and text chat", cat: "comm", id: "com.discordapp.Discord" },
+  { name: "Slack", icon: "💼", desc: "Team messaging platform", cat: "comm", id: "com.slack.Slack" },
+  { name: "Telegram", icon: "✈️", desc: "Secure messaging app", cat: "comm", id: "org.telegram.desktop" },
+  { name: "Signal", icon: "🔒", desc: "Private encrypted messaging", cat: "comm", id: "org.signal.Signal" },
+
+  // Gaming
+  { name: "Steam", icon: "🎮", desc: "PC gaming platform", cat: "gaming", id: "com.valvesoftware.Steam" },
+  { name: "Lutris", icon: "🕹️", desc: "Open gaming platform for Linux", cat: "gaming", id: "net.lutris.Lutris" },
+  { name: "Bottles", icon: "🍷", desc: "Run Windows apps and games", cat: "gaming", id: "com.usebottles.bottles" },
+
+  // Creative
+  { name: "GIMP", icon: "🖌️", desc: "Image editor (Photoshop alternative)", cat: "creative", id: "org.gimp.GIMP" },
+  { name: "Blender", icon: "🧊", desc: "3D modeling, animation, rendering", cat: "creative", id: "org.blender.Blender" },
+  { name: "Inkscape", icon: "✒️", desc: "Vector graphics editor", cat: "creative", id: "org.inkscape.Inkscape" },
+  { name: "Kdenlive", icon: "🎞️", desc: "Professional video editor", cat: "creative", id: "org.kde.kdenlive" },
+  { name: "Krita", icon: "🎨", desc: "Digital painting application", cat: "creative", id: "org.kde.krita" },
+];
+
+let activeCat = 'all';
+
+function render(filter = '') {
+  const grid = document.getElementById('grid');
+  const filtered = apps.filter(a => {
+    const matchCat = activeCat === 'all' || a.cat === activeCat;
+    const matchSearch = !filter || a.name.toLowerCase().includes(filter) || a.desc.toLowerCase().includes(filter);
+    return matchCat && matchSearch;
+  });
+  grid.innerHTML = filtered.map(a => {
+    const isLocal = !!a.cmd;
+    const cmdText = isLocal ? a.cmd : `flatpak install -y flathub ${a.id}`;
+    const label = isLocal ? '🚀 Open' : '📋 Copy';
+    const copiedLabel = isLocal ? '✓ Opened' : '✓ Copied';
+    return `
+    <div class="card" data-cat="${a.cat}">
+      <div class="card-header">
+        <span class="card-icon">${a.icon}</span>
+        <div>
+          <div class="card-title">${a.name}</div>
+          <div class="card-cat">${a.cat.toUpperCase()}${isLocal ? ' · Installed' : ''}</div>
+        </div>
+      </div>
+      <div class="card-desc">${a.desc}</div>
+      <div class="card-cmd" onclick="copyCmd(this)" data-cmd="${cmdText}" data-local="${isLocal}">${cmdText}</div>
+    </div>`;
+  }).join('');
+}
+
+function copyCmd(el) {
+  const cmd = el.getAttribute('data-cmd');
+  navigator.clipboard.writeText(cmd).then(() => {
+    el.classList.add('copied');
+    setTimeout(() => el.classList.remove('copied'), 1500);
+  }).catch(() => {
+    // Fallback: select text
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  });
+}
+
+document.getElementById('search').addEventListener('input', e => {
+  render(e.target.value.toLowerCase());
+});
+
+document.getElementById('categories').addEventListener('click', e => {
+  if (!e.target.classList.contains('cat-btn')) return;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  e.target.classList.add('active');
+  activeCat = e.target.dataset.cat;
+  render(document.getElementById('search').value.toLowerCase());
+});
+
+render();
+</script>
+</body>
+</html>
