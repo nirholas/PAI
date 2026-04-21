@@ -1,0 +1,126 @@
+---
+title: "Persistence"
+description: "Save Ollama models, Open WebUI chat history, and WiFi credentials across PAI sessions with opt-in encrypted storage."
+section: "Guides"
+order: 4
+editPath: "website/src/content/docs/persistence.mdx"
+---
+
+## Persistence
+
+PAI is amnesic by default — the root filesystem runs from a read-only
+squashfs and every reboot starts from the image. The persistence system is
+**opt-in** encrypted storage on a separate partition of the boot USB that
+survives reboots. Available from **v0.2 onward**.
+
+### How it works
+
+PAI ships with the kernel cmdline parameters `persistence persistence-encryption=luks`.
+At boot, live-boot's initramfs scans for a partition labelled `persistence`,
+prompts for its LUKS passphrase if it finds one, and then bind-mounts the
+directories listed in the partition's `persistence.conf` over the
+corresponding paths in the live filesystem. Nothing is copied or
+"restored" — the bind-mounts make writes go directly to the encrypted
+partition for the lifetime of the session.
+
+```
+USB Drive
+├── [PAI ISO partition — read-only squashfs]
+└── [LUKS2 + ext4, label "persistence"]
+    ├── persistence.conf     ← which paths to bind-mount
+    ├── ollama-models/       ← → /var/lib/ollama
+    ├── webui-data/          ← → /var/lib/open-webui
+    ├── wifi-creds/          ← → /etc/NetworkManager/system-connections
+    └── home/                ← → /home/pai   (opt-in at setup)
+```
+
+### Setup (first time)
+
+On first boot PAI offers to run the setup wizard. You can also run it
+manually at any time:
+
+```bash
+sudo pai-persistence setup
+```
+
+The wizard (`pai-persistence-setup`):
+
+1. Detects the boot USB and **refuses** to target it.
+2. Lists eligible drives (unmounted, writable, ≥ 1 GiB, not the boot USB).
+3. Requires you to *type* the target device path to confirm.
+4. Asks for a LUKS passphrase (minimum 8 characters — choose well,
+   there is no recovery mechanism).
+5. Creates a new partition in the drive's free space, formats it
+   LUKS2/argon2id, writes an ext4 filesystem labelled `persistence`,
+   and drops a default `persistence.conf`.
+6. Optionally adds `/home/pai` to the persisted set.
+
+Reboot after setup to activate. live-boot will prompt for your
+passphrase on the console before the graphical session starts.
+
+### What's persisted by default
+
+| Path                                     | Contents                                 |
+| ---------------------------------------- | ---------------------------------------- |
+| `/var/lib/ollama`                        | Downloaded Ollama models                 |
+| `/var/lib/open-webui`                    | Open WebUI chat history and settings     |
+| `/etc/NetworkManager/system-connections` | Saved WiFi networks                      |
+| `/home/pai` *(opt-in)*                   | Dotfiles, shell history, user data       |
+
+You can extend `/persistence.conf` on the partition after setup — see
+[`/etc/pai/persistence.conf.example`](https://github.com/nirholas/pai/blob/main/config/includes.chroot_after_packages/etc/pai/persistence.conf.example)
+for available entries (system logs, extra home subdirectories, etc.).
+
+### Saving data
+
+With persistence active, writes go directly to the encrypted partition —
+there is no separate "save" step. The `pai-save` command forces a
+filesystem flush so pending writes hit the disk *now*:
+
+```bash
+pai-save          # fsync each persisted mount and report usage
+pai-save --list   # list the persisted paths without touching the fs
+```
+
+`pai-save-on-shutdown.service` runs this automatically on shutdown,
+reboot, and halt so the partition is consistent when power is cut.
+
+### Unlocking at boot
+
+Unlocking happens in the initramfs before the desktop starts. live-boot
+prompts for the passphrase on the system console; if you skip it
+(empty passphrase or Ctrl-C), PAI boots normally in its stock amnesic
+mode and no persisted data is touched.
+
+The waybar indicator (💾 Persist) and the login MOTD both show whether
+persistence is active in the current session. Under the hood both read
+`/run/pai-persistence-active`, a marker file written by
+`pai-persistence.service` once the bind-mounts are confirmed.
+
+### Ending a persisted session
+
+Reboot with `pai-shutdown`. There is no in-session "lock" command:
+live-boot holds the bind-mounts through the running services
+(`ollama`, `open-webui`, `NetworkManager`), so a clean teardown
+requires ending the session. Rebooting returns you to a fresh ephemeral
+boot — skip the passphrase prompt there if you want to keep the
+partition locked.
+
+### Security considerations
+
+- The LUKS passphrase is the only thing protecting the data. There is no
+  recovery mechanism — a lost passphrase means the data is gone.
+- The partition is LUKS2 with argon2id key derivation; a weak passphrase
+  is still weak. Pick something long and unique.
+- Forensic analysis of the USB will reveal that an encrypted partition
+  exists, but not its contents.
+- Enabling `/home/pai` persistence erodes PAI's anti-forensics posture —
+  dotfiles, browser profiles, and shell history all become durable.
+  Weigh convenience against threat model before opting in.
+
+### Checking status
+
+```bash
+pai-persistence status     # human-readable state, per-path mount check
+pai-save --list            # paths currently persisted
+```
