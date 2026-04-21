@@ -1,0 +1,221 @@
+/* ── Context menu ───────────────────────────────────────────────────────── */
+
+.context-menu {
+  position: fixed;
+  z-index: var(--z-modal);
+  background: var(--ctx-bg);
+  border: 1px solid var(--ctx-border);
+  border-radius: var(--r-icon);
+  padding: 4px;
+  min-width: 190px;
+  list-style: none;
+  margin: 0;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 2px 8px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.context-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  color: var(--fg);
+  cursor: default;
+  white-space: nowrap;
+  position: relative;
+  outline: none;
+  list-style: none;
+}
+
+.context-menu__item:hover,
+.context-menu__item:focus {
+  background: var(--ctx-hover);
+  color: var(--pai-blue);
+}
+
+/* Muted / disabled item */
+.context-menu__item--muted {
+  color: var(--fg-muted);
+  pointer-events: none;
+}
+
+/* Separator */
+.context-menu__sep {
+  height: 1px;
+  background: var(--ctx-border);
+  margin: 3px 8px;
+  list-style: none;
+}
+
+/* Submenu arrow */
+.context-menu__arrow {
+  margin-left: auto;
+  padding-left: 12px;
+  font-size: 8px;
+  opacity: 0.55;
+}
+
+/* Submenu container */
+.context-menu__item--has-sub {
+  position: relative;
+}
+
+.context-menu--sub {
+  display: none;
+  position: absolute;
+  left: calc(100% + 2px);
+  top: -4px;
+  min-width: 200px;
+}
+
+.context-menu__item--has-sub:hover > .context-menu--sub,
+.context-menu__item--has-sub:focus-within > .context-menu--sub {
+  display: block;
+}
+
+/* Wallpaper thumbnail in submenu */
+.context-menu__wp-thumb {
+  width: 48px;
+  height: 27px;
+  display: block;
+  flex-shrink: 0;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+}
+
+/* Active wallpaper highlight */
+.context-menu__item[aria-checked='true'] .context-menu__wp-thumb {
+  border-color: var(--pai-blue);
+  box-shadow: 0 0 0 1px var(--pai-blue);
+}
+
+/* ── Icon properties dialog ─────────────────────────────────────────────── */
+
+.icon-properties {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--r-window);
+  color: var(--fg);
+  padding: 0;
+  min-width: 300px;
+  max-width: 380px;
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.5),
+    0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.icon-properties::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+}
+
+.icon-properties__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  gap: 8px;
+}
+
+.icon-properties__title {
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  color: var(--fg);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.icon-properties__close {
+  background: none;
+  border: none;
+  color: var(--fg-muted);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0 2px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  transition: color var(--motion-duration) var(--motion-easing);
+}
+
+.icon-properties__close:hover {
+  color: var(--fg);
+}
+
+.icon-properties__close:focus-visible {
+  outline: 2px solid var(--pai-blue);
+  outline-offset: 2px;
+}
+
+.icon-properties__body {
+  padding: 14px;
+}
+
+.icon-properties__meta {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 16px;
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  margin-bottom: 12px;
+}
+
+.icon-properties__meta dt {
+  color: var(--fg-muted);
+}
+
+.icon-properties__meta dd {
+  color: var(--fg);
+}
+
+.icon-properties__note {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: var(--fg-muted);
+  line-height: 1.5;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  margin-top: 4px;
+}
+
+/* ── Toast (transient notices) ───────────────────────────────────────────── */
+
+.pai-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translate(-50%, 10px);
+  padding: 8px 16px;
+  background: rgba(22, 22, 30, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  color: var(--fg);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  opacity: 0;
+  pointer-events: none;
+  z-index: calc(var(--z-modal) + 30);
+  transition:
+    opacity var(--motion-duration) var(--motion-easing),
+    transform var(--motion-duration) var(--motion-easing);
+}
+
+.pai-toast.is-open {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
