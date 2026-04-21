@@ -1,0 +1,193 @@
+/* PAI Shortcuts cheatsheet overlay. */
+
+.shortcuts-help {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-modal) + 20);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.shortcuts-help[hidden] { display: none; }
+
+.shortcuts-help__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity var(--motion-duration) var(--motion-easing);
+  pointer-events: auto;
+}
+
+.shortcuts-help.is-open .shortcuts-help__backdrop { opacity: 1; }
+
+.shortcuts-help__panel {
+  position: relative;
+  width: min(92vw, 720px);
+  max-height: min(82vh, 720px);
+  display: flex;
+  flex-direction: column;
+  background: rgba(22, 22, 30, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(32px) saturate(170%);
+  -webkit-backdrop-filter: blur(32px) saturate(170%);
+  color: var(--fg);
+  overflow: hidden;
+  transform: translateY(8px) scale(0.985);
+  opacity: 0;
+  transition:
+    transform var(--motion-duration) var(--motion-easing),
+    opacity var(--motion-duration) var(--motion-easing);
+  pointer-events: auto;
+}
+
+.shortcuts-help.is-open .shortcuts-help__panel {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+.shortcuts-help__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.shortcuts-help__header h2 {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--fg);
+}
+
+.shortcuts-help__close {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--fg-muted);
+  font-size: 18px;
+  line-height: 1;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 120ms var(--motion-easing), color 120ms var(--motion-easing);
+}
+
+.shortcuts-help__close:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--fg);
+}
+
+.shortcuts-help__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--s-3) var(--s-4);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--s-4);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
+}
+
+.shortcuts-help__body::-webkit-scrollbar { width: 6px; }
+.shortcuts-help__body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 3px;
+}
+
+.shortcuts-help__group-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  margin: 0 0 var(--s-2);
+}
+
+.shortcuts-help__list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shortcuts-help__row {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--s-3);
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 6px;
+  transition: background 120ms var(--motion-easing);
+}
+
+.shortcuts-help__row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.shortcuts-help__row dt {
+  margin: 0;
+}
+
+.shortcuts-help__row dd {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--fg);
+}
+
+.shortcuts-help__row kbd {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 2px 8px;
+  color: var(--fg);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+}
+
+.shortcuts-help__footer {
+  padding: var(--s-2) var(--s-4);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--fg-muted);
+  font-family: var(--font-ui);
+  font-size: 11px;
+}
+
+.shortcuts-help__footer kbd {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  padding: 1px 6px;
+  margin: 0 2px;
+}
+
+.shortcuts-help__empty {
+  padding: var(--s-5) var(--s-4);
+  text-align: center;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shortcuts-help__panel,
+  .shortcuts-help__backdrop {
+    transition: opacity 120ms linear;
+    transform: none !important;
+  }
+}
