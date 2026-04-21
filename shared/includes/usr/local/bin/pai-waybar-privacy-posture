@@ -1,0 +1,122 @@
+#!/usr/bin/env python3
+"""Waybar custom module — aggregated privacy posture.
+
+Reports at a glance:
+  Tor daemon running
+  MAC spoofed (touch /tmp/.pai-mac-spoofed is set by pai-mac-spoof)
+  UFW enabled + default-deny inbound
+  DNS resolver host
+  Mullvad VPN status
+"""
+from __future__ import annotations
+import json
+import os
+import re
+import subprocess
+from pathlib import Path
+
+
+def run(cmd: list[str], timeout: float = 1.5) -> str:
+    try:
+        return subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL, timeout=timeout).strip()
+    except Exception:
+        return ""
+
+
+def tor_on() -> bool:
+    out = run(["systemctl", "is-active", "tor@default"])
+    return out == "active" or run(["pgrep", "-x", "tor"]) != ""
+
+
+def mac_spoofed() -> bool:
+    # Check if any active connection has random MAC configured via NetworkManager
+    out = run(["nmcli", "-g", "802-11-wireless.cloned-mac-address", "con", "show", "--active"])
+    if "random" in out.lower():
+        return True
+    out2 = run(["nmcli", "-g", "ethernet.cloned-mac-address", "con", "show", "--active"])
+    return "random" in out2.lower()
+
+
+def ufw_ok() -> bool:
+    out = run(["sudo", "-n", "ufw", "status"])
+    if not out:
+        out = run(["ufw", "status"])
+    if not out:
+        return False
+    if "Status: active" not in out:
+        return False
+    # default-deny check via `ufw status verbose` — best-effort
+    v = run(["sudo", "-n", "ufw", "status", "verbose"]) or run(["ufw", "status", "verbose"])
+    return "deny (incoming)" in v.lower() if v else True
+
+
+def dns_summary() -> str:
+    # resolv.conf first
+    try:
+        content = Path("/etc/resolv.conf").read_text()
+    except Exception:
+        content = ""
+    nameservers = re.findall(r"^nameserver\s+(\S+)", content, re.MULTILINE)
+    if not nameservers:
+        return "?"
+    first = nameservers[0]
+    if first.startswith("127."):
+        return "local"
+    if first in {"10.64.0.1", "194.242.2.2", "194.242.2.3", "194.242.2.4", "194.242.2.5", "194.242.2.6"}:
+        return "mullvad"
+    if first == "127.0.0.1":
+        return "tor"
+    return first
+
+
+def mullvad_vpn() -> str:
+    out = run(["mullvad", "status"])
+    if not out:
+        return ""
+    if "Connected" in out:
+        return "on"
+    return "off"
+
+
+def privacy_mode_on() -> bool:
+    return Path("/tmp/.pai-privacy-mode").exists()
+
+
+def main() -> None:
+    t = tor_on()
+    m = mac_spoofed()
+    u = ufw_ok()
+    d = dns_summary()
+    v = mullvad_vpn()
+    pm = privacy_mode_on()
+
+    icons = []
+    icons.append("🧅" if t else "·")
+    icons.append("🎭" if m else "·")
+    icons.append("🛡️" if u else "·")
+    if v == "on":
+        icons.append("🔒")
+    if pm:
+        icons.append("🕶️")
+
+    # "class" drives CSS color
+    if pm or t or v == "on":
+        cls = "active"
+    elif u:
+        cls = "idle"
+    else:
+        cls = "warn"
+
+    tooltip = (
+        f"Tor daemon:    {'on' if t else 'off'}\n"
+        f"MAC spoofed:   {'yes' if m else 'no'}\n"
+        f"UFW (default-deny in): {'yes' if u else 'no'}\n"
+        f"DNS resolver:  {d}\n"
+        f"Mullvad VPN:   {v or 'not installed'}\n"
+        f"Privacy mode:  {'on' if pm else 'off'}"
+    )
+    print(json.dumps({"text": " ".join(icons), "tooltip": tooltip, "class": cls}))
+
+
+if __name__ == "__main__":
+    main()
