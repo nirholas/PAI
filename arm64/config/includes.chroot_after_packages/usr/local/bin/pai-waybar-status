@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Waybar applet for pai-status.
+# Emits a compact JSON line suitable for Waybar's return-type=json modules.
+#
+# Classes:
+#   ok     — all private-mode defaults healthy
+#   warn   — pai-status reported one or more issues
+#   error  — pai-status failed to run
+set -euo pipefail
+
+if ! RAW=$(pai-status --json 2>/dev/null); then
+    printf '%s\n' '{"text":"🛡 ?","class":"error","tooltip":"pai-status unavailable"}'
+    exit 0
+fi
+
+# Extract fields with awk (no jq dependency).
+healthy=$(printf '%s' "$RAW" | awk -F'[:,]' '/"healthy"/{gsub(/[ \t]/,"",$2); print $2; exit}')
+ollama=$(printf '%s' "$RAW"  | awk -F'"' '/"state":/{print $4; exit}')
+outbound=$(printf '%s' "$RAW" | awk -F'[:,]' '/"outbound_established"/{gsub(/[ \t]/,"",$2); print $2; exit}')
+ufw=$(printf '%s' "$RAW"     | awk -F'"' '/"ufw_state":/{print $4; exit}')
+mac=$(printf '%s' "$RAW"     | awk -F'"' '/"mac_spoof":/{print $4; exit}')
+tor=$(printf '%s' "$RAW"     | awk -F'"' '/"tor":/{print $4; exit}')
+persist=$(printf '%s' "$RAW" | awk -F'"' '/"state":/{if(++n==2){print $4; exit}}')
+
+case "$healthy" in
+    true)  text="🛡 OK";   class="ok" ;;
+    false) text="🛡 !";    class="warn" ;;
+    *)     text="🛡 ?";    class="error" ;;
+esac
+
+tooltip="Ollama: ${ollama:-unknown}\nFirewall: ${ufw:-unknown}\nMAC spoof: ${mac:-unknown}\nTor: ${tor:-unknown}\nPersistence: ${persist:-unknown}\nOutbound connections: ${outbound:-?}\n\nClick to view full report"
+
+printf '{"text":"%s","class":"%s","tooltip":"%s"}\n' "$text" "$class" "$tooltip"
