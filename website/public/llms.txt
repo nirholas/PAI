@@ -1,0 +1,84 @@
+# PAI
+
+> PAI is a bootable USB Linux distribution for private, offline AI. Based on
+> Debian 12 + Sway + Ollama + Open WebUI, it runs local LLMs entirely on your
+> hardware — no cloud, no account, no telemetry. Flash the ISO to a USB stick,
+> boot any x86_64 or arm64 machine from it, and you have a complete AI
+> workstation that lives in RAM and vanishes when you shut down. Remove the
+> stick to return your machine to its previous state.
+
+Repository: https://github.com/nirholas/pai
+License: GPL v3
+Current version: 0.1.0 (April 2026)
+ISO downloads (hosted on Cloudflare at get.pai.direct due to GitHub's 2 GB asset limit):
+
+- amd64: https://get.pai.direct/pai-amd64.iso
+- arm64: https://get.pai.direct/pai-arm64.iso
+- SHA256: https://get.pai.direct/SHA256SUMS
+
+## Quick start
+
+- [Docs home](/docs/): full navigation of all documentation
+- [Installing and booting](/docs/first-steps/installing-and-booting/): flash a USB and boot PAI
+- [Using Ventoy](/docs/first-steps/using-ventoy/): boot PAI from a Ventoy multi-boot USB without wiping the drive
+- [Starting on Mac](/docs/first-steps/starting-on-mac/): UTM setup for Apple Silicon
+- [Starting on Windows](/docs/first-steps/starting-on-windows/): PowerShell flash.ps1 one-liner or VM setup
+- [First boot walkthrough](/docs/first-steps/first-boot-walkthrough/): what you see on first launch
+- [Desktop basics](/docs/first-steps/desktop-basics/): Sway, waybar, shortcuts
+- [Shutting down](/docs/first-steps/shutting-down/): secure shutdown and memory wipe
+
+## General
+
+- [System requirements](/docs/general/system-requirements/): hardware and compatibility
+- [Features and included software](/docs/general/features-included/): every app that ships
+- [Warnings and limitations](/docs/general/warnings-and-limitations/): honest boundaries
+- [How PAI works](/docs/general/how-pai-works/): architecture, stack, boot sequence
+
+## AI and models
+
+- [Using Open WebUI](/docs/ai/using-open-webui/): the chat interface
+- [Using Ollama](/docs/ai/using-ollama/): CLI, HTTP API, Python SDK
+- [Managing models](/docs/ai/managing-models/): pull, switch, remove
+- [Choosing a model](/docs/ai/choosing-a-model/): which model for your hardware
+
+## Privacy
+
+- [Privacy introduction](/docs/privacy/introduction-to-privacy/): threat model + toolbox
+- [Privacy mode (Tor)](/docs/privacy/privacy-mode-tor/): system-wide Tor routing
+- [Tor Browser](/docs/privacy/tor-browser/): anonymous web browsing
+- [MAC anonymization](/docs/privacy/mac-address-anonymization/): hardware ID spoofing
+- [Offline mode](/docs/privacy/offline-mode/): fully air-gapped workflow
+
+## Applications
+
+- [Encrypting files with GPG](/docs/apps/encrypting-files-gpg/): symmetric and public-key encryption
+- [Password management](/docs/apps/password-management/): KeePassXC on a live system
+- [Secure delete](/docs/apps/secure-delete/): permanently erasing files
+
+## Advanced
+
+- [Running in a VM](/docs/advanced/running-in-a-vm/): UTM, VirtualBox, VMware, KVM
+- [Building from source](/docs/advanced/building-from-source/): custom ISOs via live-build
+- [Boot options](/docs/advanced/boot-options/): GRUB and kernel parameters
+- [GPU setup](/docs/advanced/gpu-setup/): NVIDIA, AMD, Intel acceleration
+- [GPU passthrough](/docs/advanced/gpu-passthrough/): GPU in a VM via VFIO
+- [Troubleshooting](/docs/advanced/troubleshooting/): boot, display, AI, network fixes
+
+## Reference
+
+- [Keyboard shortcuts](/docs/reference/keyboard-shortcuts/): every shortcut
+- [Glossary](/docs/reference/glossary/): terminology
+- [FAQ](/docs/reference/faq/): cross-cutting questions
+
+## Project
+
+- [Roadmap](/docs/roadmap/): upcoming features
+- [Changelog](/docs/changelog/): version history
+- [Security policy](/docs/security/): threat model and responsible disclosure
+- [Comparison](/docs/COMPARISON/): PAI vs Tails, Qubes, and other privacy OSes
+
+## Optional
+
+- [Persistence (v0.2)](/docs/persistence/introduction/): planned encrypted storage layer
+- [Cloud builder operations](/docs/ops-cloud-builders/): running builds on GCE
+- [Contributing to docs](/docs/contributing-to-docs/): how to help improve the documentation
