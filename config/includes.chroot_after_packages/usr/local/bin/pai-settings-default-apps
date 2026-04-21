@@ -1,0 +1,94 @@
+#!/bin/bash
+# PAI Settings — default application handler registry.
+# Writes ~/.config/mimeapps.list via xdg-mime.
+set -euo pipefail
+
+STYLE=/etc/pai/wofi-shutdown.css
+WOFI=(wofi --dmenu --cache-file=/dev/null)
+[ -r "$STYLE" ] && WOFI+=(--style "$STYLE")
+
+if ! command -v xdg-mime >/dev/null 2>&1; then
+    zenity --error --text="xdg-utils is not installed." 2>/dev/null
+    exit 1
+fi
+
+set_default() {
+    local mime="$1" app="$2"
+    xdg-mime default "$app" "$mime" 2>/dev/null || true
+}
+
+pick_app() {
+    local label="$1"
+    shift
+    local choice
+    choice=$(printf '%s\n' "$@" | "${WOFI[@]}" --prompt "$label" --lines $# --width 340 --height $(( $# * 44 + 60 )) 2>/dev/null)
+    printf '%s' "$choice"
+}
+
+category=$(printf '%s\n' \
+    "🌐  Web browser" \
+    "📧  Email (mailto:)" \
+    "📝  Plain text editor" \
+    "🗂️  File manager" \
+    "🖼️  Image viewer" \
+    "🎬  Video player" \
+    "🎵  Audio player" \
+    "📄  PDF viewer" \
+    | "${WOFI[@]}" --prompt "Default apps — category" --lines 8 --width 360 --height 380 2>/dev/null)
+
+case "$category" in
+    *browser*)
+        app=$(pick_app "Default browser" "firefox-esr.desktop" "mullvad-browser.desktop" "torbrowser.desktop")
+        [ -n "$app" ] && {
+            set_default x-scheme-handler/http "$app"
+            set_default x-scheme-handler/https "$app"
+            set_default text/html "$app"
+        }
+        ;;
+    *Email*)
+        app=$(pick_app "Default mail client" "thunderbird.desktop" "evolution.desktop")
+        [ -n "$app" ] && set_default x-scheme-handler/mailto "$app"
+        ;;
+    *Plain\ text*)
+        app=$(pick_app "Default text editor" "codium.desktop" "geany.desktop" "mousepad.desktop" "org.gnome.gedit.desktop")
+        [ -n "$app" ] && {
+            set_default text/plain "$app"
+            set_default text/markdown "$app"
+        }
+        ;;
+    *File\ manager*)
+        app=$(pick_app "Default file manager" "thunar.desktop" "pcmanfm.desktop")
+        [ -n "$app" ] && set_default inode/directory "$app"
+        ;;
+    *Image*)
+        app=$(pick_app "Default image viewer" "org.gnome.eog.desktop" "gimp.desktop" "imv.desktop")
+        [ -n "$app" ] && {
+            for m in image/png image/jpeg image/webp image/gif image/svg+xml; do
+                set_default "$m" "$app"
+            done
+        }
+        ;;
+    *Video*)
+        app=$(pick_app "Default video player" "io.github.celluloid_player.Celluloid.desktop" "mpv.desktop")
+        [ -n "$app" ] && {
+            for m in video/mp4 video/x-matroska video/webm video/x-msvideo; do
+                set_default "$m" "$app"
+            done
+        }
+        ;;
+    *Audio*)
+        app=$(pick_app "Default audio player" "strawberry.desktop" "audacious.desktop" "mpv.desktop")
+        [ -n "$app" ] && {
+            for m in audio/mpeg audio/flac audio/ogg audio/x-wav audio/mp4; do
+                set_default "$m" "$app"
+            done
+        }
+        ;;
+    *PDF*)
+        app=$(pick_app "Default PDF viewer" "org.kde.okular.desktop" "firefox-esr.desktop" "xournalpp.desktop")
+        [ -n "$app" ] && set_default application/pdf "$app"
+        ;;
+esac
+
+zenity --info --title="Default apps" \
+    --text="Updated. Changes are saved in ~/.config/mimeapps.list." 2>/dev/null &
