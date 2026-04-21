@@ -1,0 +1,71 @@
+* {
+    font-family: "Noto Sans", sans-serif;
+    font-size: 13px;
+    color: #e0e0e0;
+}
+window#waybar {
+    background-color: rgba(20, 20, 30, 0.92);
+    border-radius: 12px;
+    border: 1px solid rgba(122, 162, 247, 0.15);
+}
+#custom-logo {
+    font-weight: bold;
+    padding: 0 12px;
+    color: #7aa2f7;
+}
+#custom-browser,
+#custom-terminal,
+#custom-files,
+#custom-editor {
+    padding: 0 8px;
+    font-size: 15px;
+}
+#custom-browser:hover,
+#custom-terminal:hover,
+#custom-files:hover,
+#custom-editor:hover {
+    background-color: rgba(122, 162, 247, 0.15);
+    border-radius: 6px;
+}
+#custom-ollama {
+    padding: 0 8px;
+}
+#custom-ollama.active {
+    color: #4ade80;
+}
+#custom-ollama.idle {
+    color: #fbbf24;
+}
+#custom-ollama.loading {
+    color: #888888;
+}
+#custom-crypto {
+    padding: 0 10px;
+    font-weight: bold;
+}
+#custom-crypto.up {
+    color: #4ade80;
+}
+#custom-crypto.down {
+    color: #f87171;
+}
+#custom-crypto.error {
+    color: #888888;
+}
+#custom-media {
+    padding: 0 8px;
+    color: #7aa2f7;
+}
+#custom-pai-status {
+    padding: 0 10px;
+    font-weight: bold;
+}
+#custom-pai-status.ok {
+    color: #4ade80;
+}
+#custom-pai-status.warn {
+    color: #fbbf24;
+}
+#custom-pai-status.error {
+    color: #f87171;
+}
