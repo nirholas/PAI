@@ -1,0 +1,486 @@
+---
+import AppStandalone from '../../layouts/AppStandalone.astro'
+import Head from '../../components/Head.astro'
+import manifest from '../../apps/files/manifest.json'
+
+const categories = [...new Set(manifest.map((item) => item.category))]
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <Head
+      title="Files — PAI"
+      description="Browse, organise, and work with your files on PAI — a local, offline file manager that never leaves your USB."
+      ogImage="/og/files.png"
+    />
+    <link rel="icon" type="image/svg+xml" href="/icons/files.svg" />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+        font-family: system-ui, sans-serif;
+        background: #0f0f1a;
+        color: #e0e0e0;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      #app-root {
+        flex: 1;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* ── Layout ── */
+      .fm-shell {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+      }
+
+      /* ── Sidebar ── */
+      .fm-sidebar {
+        width: 168px;
+        flex-shrink: 0;
+        background: rgba(8, 8, 18, 0.85);
+        border-right: 1px solid rgba(255, 255, 255, 0.07);
+        display: flex;
+        flex-direction: column;
+        padding: 0.75rem 0;
+        gap: 0.125rem;
+        overflow-y: auto;
+      }
+      .fm-sidebar-section {
+        padding: 0.5rem 0.875rem 0.25rem;
+        font-size: 0.6875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #555;
+      }
+      .fm-sidebar-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 0.875rem;
+        font-size: 0.8125rem;
+        color: #999;
+        cursor: pointer;
+        border-radius: 0;
+        transition:
+          background 0.12s,
+          color 0.12s;
+        user-select: none;
+        border: none;
+        background: none;
+        width: 100%;
+        text-align: left;
+      }
+      .fm-sidebar-item:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: #e0e0e0;
+      }
+      .fm-sidebar-item.active {
+        background: rgba(122, 162, 247, 0.12);
+        color: #7aa2f7;
+      }
+      .fm-sidebar-item-icon {
+        font-size: 0.9rem;
+        flex-shrink: 0;
+      }
+
+      /* ── Toolbar ── */
+      .fm-toolbar {
+        padding: 0.5rem 0.875rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        background: rgba(10, 10, 20, 0.6);
+        flex-shrink: 0;
+        font-size: 0.75rem;
+        color: #666;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .fm-toolbar-path {
+        color: #888;
+      }
+
+      /* ── Grid ── */
+      .fm-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.25rem;
+      }
+      .fm-content::-webkit-scrollbar {
+        width: 5px;
+      }
+      .fm-content::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .fm-content::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+      }
+
+      .fm-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 1rem;
+      }
+
+      /* ── Thumbnail tiles ── */
+      .fm-tile {
+        border-radius: 8px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        cursor: pointer;
+        transition:
+          border-color 0.15s,
+          background 0.15s,
+          transform 0.1s;
+        user-select: none;
+        display: flex;
+        flex-direction: column;
+      }
+      .fm-tile:hover {
+        border-color: rgba(122, 162, 247, 0.4);
+        background: rgba(122, 162, 247, 0.08);
+        transform: translateY(-1px);
+      }
+      .fm-tile:focus-visible {
+        outline: 2px solid #7aa2f7;
+        outline-offset: 2px;
+      }
+
+      .fm-thumb {
+        width: 100%;
+        aspect-ratio: 16/10;
+        object-fit: cover;
+        display: block;
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .fm-thumb-placeholder {
+        width: 100%;
+        aspect-ratio: 16/10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.03);
+        font-size: 1.5rem;
+        color: rgba(255, 255, 255, 0.15);
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+      .fm-thumb-placeholder span {
+        font-size: 0.625rem;
+        color: #444;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .fm-tile-caption {
+        padding: 0.4rem 0.5rem;
+        font-size: 0.6875rem;
+        color: #aaa;
+        line-height: 1.3;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* ── Lightbox styles ── */
+      .lb-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .lb-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.88);
+        backdrop-filter: blur(6px);
+      }
+      .lb-frame {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+        max-width: min(90vw, 900px);
+        width: 100%;
+        padding: 0 3rem;
+      }
+      .lb-close {
+        position: absolute;
+        top: -2.5rem;
+        right: 0;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: #aaa;
+        font-size: 1rem;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition:
+          background 0.15s,
+          color 0.15s;
+      }
+      .lb-close:hover {
+        background: rgba(255, 255, 255, 0.15);
+        color: #fff;
+      }
+      .lb-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: #ccc;
+        font-size: 1.75rem;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.15s;
+        line-height: 1;
+      }
+      .lb-arrow:hover {
+        background: rgba(255, 255, 255, 0.18);
+      }
+      .lb-prev {
+        left: 0;
+      }
+      .lb-next {
+        right: 0;
+      }
+      .lb-img-wrap {
+        width: 100%;
+        border-radius: 8px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        min-height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .lb-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 3rem;
+        color: #555;
+      }
+      .lb-placeholder-icon {
+        font-size: 2.5rem;
+      }
+      .lb-placeholder-msg {
+        font-size: 0.8125rem;
+      }
+      .lb-img {
+        width: 100%;
+        height: auto;
+        display: block;
+        border-radius: 8px;
+      }
+      .lb-preview {
+        width: 100%;
+        min-height: 200px;
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+      }
+      .lb-text {
+        width: 100%;
+        max-height: 70vh;
+        overflow: auto;
+        background: rgba(0, 0, 0, 0.35);
+        border-radius: 8px;
+        padding: 1rem 1.25rem;
+        font-family:
+          ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas,
+          monospace;
+        font-size: 0.8125rem;
+        line-height: 1.55;
+        color: #ddd;
+        white-space: pre-wrap;
+        word-break: break-word;
+        text-align: left;
+      }
+      .lb-media {
+        width: 100%;
+        padding: 3rem 1rem;
+        display: flex;
+        justify-content: center;
+      }
+      .lb-media audio {
+        width: 100%;
+        max-width: 520px;
+      }
+      .lb-video {
+        width: 100%;
+        max-height: 70vh;
+        border-radius: 8px;
+        background: #000;
+      }
+      .lb-pdf {
+        width: 100%;
+        height: 70vh;
+        border: 0;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .lb-fallback {
+        padding: 2.5rem 1.5rem;
+        color: #aaa;
+        font-size: 0.9rem;
+        text-align: center;
+        line-height: 1.6;
+      }
+      .lb-fallback a {
+        color: #7aa2f7;
+      }
+      .lb-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        gap: 1rem;
+      }
+      .lb-caption {
+        font-size: 0.875rem;
+        color: #ccc;
+        flex: 1;
+      }
+      .lb-counter {
+        font-size: 0.75rem;
+        color: #666;
+        flex-shrink: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <AppStandalone appId="files" />
+    <div id="app-root">
+      <div class="fm-shell">
+        <!-- Sidebar -->
+        <nav class="fm-sidebar" aria-label="File categories">
+          <div class="fm-sidebar-section">Places</div>
+          <button class="fm-sidebar-item active" data-category="all">
+            <span class="fm-sidebar-item-icon">🖼</span> All Screenshots
+          </button>
+          {
+            categories.map((cat) => (
+              <button class="fm-sidebar-item" data-category={cat}>
+                <span class="fm-sidebar-item-icon">📁</span> {cat}
+              </button>
+            ))
+          }
+        </nav>
+
+        <!-- Main pane -->
+        <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+          <div class="fm-toolbar">
+            <span class="fm-toolbar-path" id="toolbar-path">Screenshots</span>
+            <span>·</span>
+            <span id="toolbar-count">{manifest.length} items</span>
+          </div>
+          <div class="fm-content">
+            <div class="fm-grid" id="fm-grid"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+<script define:vars={{ manifest }}>
+  import { Lightbox } from '../../apps/files/lightbox.js'
+  import { bridge } from '../../apps/_bridge.js'
+
+  bridge.ready()
+
+  const grid = document.getElementById('fm-grid')
+  const toolbarCount = document.getElementById('toolbar-count')
+  const toolbarPath = document.getElementById('toolbar-path')
+  const lb = new Lightbox()
+
+  let currentCategory = 'all'
+
+  function renderGrid(category) {
+    currentCategory = category
+    const items =
+      category === 'all'
+        ? manifest
+        : manifest.filter((m) => m.category === category)
+
+    toolbarCount.textContent = `${items.length} item${items.length !== 1 ? 's' : ''}`
+    toolbarPath.textContent = category === 'all' ? 'Screenshots' : category
+
+    grid.innerHTML = ''
+    items.forEach((item, idx) => {
+      const tile = document.createElement('div')
+      tile.className = 'fm-tile'
+      tile.setAttribute('role', 'button')
+      tile.setAttribute('tabindex', '0')
+      tile.setAttribute('aria-label', `Open ${item.caption}`)
+
+      // If the thumb ever 404s we degrade to a silent, themed empty tile
+      // instead of lying about future content.
+      tile.innerHTML = `
+        <img class="fm-thumb" src="${item.thumb}" alt="${item.alt}"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+        <div class="fm-thumb-placeholder" style="display:none" aria-hidden="true">
+          <span>🖼</span><span>${item.caption}</span>
+        </div>
+        <div class="fm-tile-caption">${item.caption}</div>
+      `
+
+      const open = () => lb.open(items, idx)
+      tile.addEventListener('click', open)
+      tile.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          open()
+        }
+      })
+
+      grid.appendChild(tile)
+    })
+  }
+
+  // Sidebar navigation
+  document.querySelectorAll('.fm-sidebar-item').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document
+        .querySelectorAll('.fm-sidebar-item')
+        .forEach((b) => b.classList.remove('active'))
+      btn.classList.add('active')
+      renderGrid(btn.dataset.category)
+    })
+  })
+
+  renderGrid('all')
+</script>
