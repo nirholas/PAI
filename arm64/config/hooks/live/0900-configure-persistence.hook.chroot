@@ -1,0 +1,55 @@
+#!/bin/bash
+set -euo pipefail
+
+# ── Configure Persistence ─────────────────────────────────────────────
+# Runs inside the chroot during ISO build.
+# Sets up the persistence infrastructure:
+#   - Enables the state-marker service (writes /run/pai-persistence-active
+#     after live-boot mounts the persistence overlays; live-boot itself
+#     handles the LUKS passphrase prompt from the initramfs)
+#   - Enables auto-save on shutdown
+#   - Adds persistence status to login message
+# ──────────────────────────────────────────────────────────────────────
+
+echo "[pai] Configuring persistence support..."
+
+# ── 1. Enable services
+systemctl enable pai-persistence.service 2>/dev/null || true
+systemctl enable pai-save-on-shutdown.service 2>/dev/null || true
+
+# ── 2. Ensure scripts are executable (rsync should already preserve this,
+# but includes.chroot_after_packages occasionally loses the bit on copy)
+chmod +x /usr/local/bin/pai-save 2>/dev/null || true
+chmod +x /usr/local/bin/pai-persistence 2>/dev/null || true
+chmod +x /usr/local/bin/pai-persistence-setup 2>/dev/null || true
+chmod +x /usr/local/bin/pai-waybar-persistence 2>/dev/null || true
+
+# ── 3. Add persistence info to login motd
+# State is signalled by /run/pai-persistence-active, written by
+# pai-persistence.service once live-boot has bind-mounted the persisted
+# paths.  /var/lib/ollama is one of those paths, so `df` against it reports
+# the underlying encrypted partition's usage.
+cat > /etc/update-motd.d/20-persistence <<'MOTD'
+#!/bin/bash
+echo ""
+if [[ -f /run/pai-persistence-active ]]; then
+    read -r USED AVAIL < <(df -h --output=used,avail /var/lib/ollama 2>/dev/null | tail -1)
+    echo "  💾 Persistence: ACTIVE (${USED:-?} used, ${AVAIL:-?} free)"
+    echo "     Save now: pai-save"
+else
+    echo "  💾 Persistence: NOT ACTIVE (session is ephemeral)"
+    echo "     Set up: sudo pai-persistence setup"
+fi
+echo ""
+MOTD
+chmod +x /etc/update-motd.d/20-persistence
+
+# ── 4. Create ~/Documents, ~/Downloads, ~/Projects for user convenience
+mkdir -p /etc/skel/Documents
+mkdir -p /etc/skel/Downloads
+mkdir -p /etc/skel/Projects
+
+echo "[pai] Persistence support configured."
+echo "  - pai-save: sync persisted dirs to disk"
+echo "  - Auto-save on shutdown enabled"
+echo "  - State-marker service enabled (LUKS prompt handled by live-boot initramfs)"
