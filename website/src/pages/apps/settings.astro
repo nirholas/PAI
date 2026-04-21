@@ -1,0 +1,192 @@
+---
+import AppStandalone from '../../layouts/AppStandalone.astro'
+import Head from '../../components/Head.astro'
+import '../../shell/tokens.css'
+import '../../apps/settings/settings.css'
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <Head
+      title="Settings — PAI"
+      description="Configure appearance, sound, privacy, shortcuts, and more on your PAI desktop."
+      ogImage="/og/settings.png"
+    />
+    <link rel="icon" type="image/svg+xml" href="/icons/settings.svg" />
+  </head>
+  <body>
+    <AppStandalone appId="settings" />
+    <main class="set-root" id="set-root">
+      <nav class="set-nav" role="tablist" aria-label="Settings sections">
+        <button role="tab" aria-selected="true" data-section="appearance">Appearance</button>
+        <button role="tab" aria-selected="false" data-section="sound">Sound</button>
+        <button role="tab" aria-selected="false" data-section="privacy">Privacy</button>
+        <button role="tab" aria-selected="false" data-section="shortcuts">Shortcuts</button>
+        <button role="tab" aria-selected="false" data-section="about">About</button>
+      </nav>
+
+      <div class="set-main">
+        <section class="set-section active" data-section="appearance" role="tabpanel">
+          <h2>Appearance</h2>
+
+          <div class="set-row">
+            <div class="set-row-main">
+              <div class="set-row-label">Theme</div>
+              <div class="set-row-desc">Choose between dark, light, or follow your system preference.</div>
+            </div>
+            <select class="set-select set-theme">
+              <option value="dark">Dark</option>
+              <option value="light">Light</option>
+              <option value="auto">Auto</option>
+            </select>
+          </div>
+
+          <div class="set-row">
+            <div class="set-row-main">
+              <div class="set-row-label">Accent color</div>
+              <div class="set-row-desc">Highlights, links, and focus rings across the desktop.</div>
+            </div>
+            <div class="accent-row"></div>
+          </div>
+
+          <div class="set-row">
+            <div class="set-row-main" style="flex-basis:100%;">
+              <div class="set-row-label">Wallpaper</div>
+              <div class="set-row-desc">Background image for the PAI desktop.</div>
+              <div class="wall-grid"></div>
+            </div>
+          </div>
+
+          <div class="set-row">
+            <div class="set-row-main">
+              <div class="set-row-label">Desktop widgets</div>
+              <div class="set-row-desc">Show clock, workspace indicator, and other widgets.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="tog-widgets" />
+              <span class="track"></span>
+              <span class="thumb"></span>
+            </label>
+          </div>
+
+          <div class="set-row">
+            <div class="set-row-main">
+              <div class="set-row-label">Reduce motion</div>
+              <div class="set-row-desc">Minimize transitions and animations.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="tog-reduced-motion" />
+              <span class="track"></span>
+              <span class="thumb"></span>
+            </label>
+          </div>
+        </section>
+
+        <section class="set-section" data-section="sound" role="tabpanel">
+          <h2>Sound</h2>
+
+          <div class="set-row">
+            <div class="set-row-main">
+              <div class="set-row-label">Master sound</div>
+              <div class="set-row-desc">Enable or mute all system sounds.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="tog-sound" />
+              <span class="track"></span>
+              <span class="thumb"></span>
+            </label>
+          </div>
+
+          <div class="set-row">
+            <div class="set-row-main">
+              <div class="set-row-label">UI clicks</div>
+              <div class="set-row-desc">Tiny click sounds on button presses.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="tog-clicks" />
+              <span class="track"></span>
+              <span class="thumb"></span>
+            </label>
+          </div>
+
+          <div class="set-row">
+            <div class="set-row-main">
+              <div class="set-row-label">Volume</div>
+              <div class="set-row-desc">Master output level.</div>
+            </div>
+            <input type="range" min="0" max="100" value="70" class="range range-volume" aria-label="Volume" />
+            <span class="range-volume-label" style="min-width:40px;text-align:right;font-family:var(--font-mono);">70%</span>
+          </div>
+        </section>
+
+        <section class="set-section" data-section="privacy" role="tabpanel">
+          <h2>Privacy</h2>
+
+          <div class="set-row">
+            <div class="set-row-main">
+              <div class="set-row-label">Privacy mode</div>
+              <div class="set-row-desc">Dim the desktop and blur app content when PAI is not focused. Mirrors the <code>pai-privacy</code> flag on the live USB.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="tog-privacy" />
+              <span class="track"></span>
+              <span class="thumb"></span>
+            </label>
+          </div>
+
+          <p style="color:var(--fg-muted);font-size:0.85rem;margin-top:var(--s-4);line-height:1.6;">
+            PAI is amnesic by default — no history, no telemetry, no cloud. Everything you see here is stored
+            locally in your browser. For the full privacy model, see the
+            <button class="set-btn" style="margin-left:var(--s-1);" onclick="window.open('/apps/privacy','_self')">Privacy app</button>.
+          </p>
+        </section>
+
+        <section class="set-section" data-section="shortcuts" role="tabpanel">
+          <h2>Keyboard shortcuts</h2>
+          <p style="color:var(--fg-muted);font-size:0.85rem;margin-bottom:var(--s-4);">
+            These shortcuts are available across the PAI desktop.
+          </p>
+          <div class="sc-list"></div>
+        </section>
+
+        <section class="set-section" data-section="about" role="tabpanel">
+          <h2>About PAI</h2>
+
+          <div class="about-row">
+            <span class="k">Version</span>
+            <span class="v">2.0</span>
+          </div>
+          <div class="about-row">
+            <span class="k">Build</span>
+            <span class="v about-build"></span>
+          </div>
+          <div class="about-row">
+            <span class="k">Edition</span>
+            <span class="v">Desktop (web simulation)</span>
+          </div>
+          <div class="about-row">
+            <span class="k">Base</span>
+            <span class="v">Debian 12 + Sway + Ollama</span>
+          </div>
+          <div class="about-row">
+            <span class="k">License</span>
+            <span class="v">GPL v3</span>
+          </div>
+
+          <div style="margin-top:var(--s-5);display:flex;gap:var(--s-2);flex-wrap:wrap;">
+            <button class="set-btn open-about">Open About app</button>
+            <button class="set-btn set-reset">Reset all settings…</button>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      import { bridge } from '../../apps/_bridge.js'
+      import { mountSettings } from '../../apps/settings/settings.ts'
+      bridge.ready()
+      mountSettings(document.getElementById('set-root')!)
+    </script>
+  </body>
+</html>
