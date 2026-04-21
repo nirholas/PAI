@@ -1,0 +1,1660 @@
+#!/bin/bash
+set -euo pipefail
+
+# ── Install PAI Chat UI ──────────────────────────────────────────────
+# Runs inside the chroot during ISO build.
+# Creates a lightweight HTML/JS chat interface that talks to Ollama's
+# REST API directly. Served by Python's built-in http.server.
+# Zero external dependencies.
+# ──────────────────────────────────────────────────────────────────────
+
+echo "[pai] Installing PAI Chat UI..."
+
+CHAT_DIR="/opt/pai-chat"
+mkdir -p "$CHAT_DIR"
+
+cat > "$CHAT_DIR/index.html" <<'HTMLEOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PAI</title>
+<style>
+  :root {
+    --bg: #0f0f1a; --surface: #1a1a2e; --border: #2a2a3e;
+    --text: #e0e0e0; --accent: #7aa2f7; --dim: #888;
+    --success: #4ade80; --error: #f87171;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Noto Sans', system-ui, sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  #app-wrapper { display: flex; flex: 1; min-height: 0; }
+  .pai-nav { background: var(--surface); padding: 8px 20px; display: flex; gap: 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .pai-nav a { color: var(--accent); text-decoration: none; font-size: 14px; }
+  .pai-nav a:hover { text-decoration: underline; }
+  .pai-nav a.active { color: var(--text); font-weight: 600; }
+
+  /* ── Sidebar ──────────────────────────────────── */
+  #sidebar {
+    width: 260px; min-width: 260px; background: var(--surface);
+    border-right: 1px solid var(--border); display: flex;
+    flex-direction: column; overflow: hidden;
+    transition: margin-left 0.2s ease;
+  }
+  #sidebar.collapsed { margin-left: -260px; }
+  #sidebar-header { padding: 12px; border-bottom: 1px solid var(--border); }
+  #new-chat-btn {
+    width: 100%; padding: 10px 14px; background: var(--accent); color: #0f0f1a;
+    border: none; border-radius: 8px; font-size: 14px; font-weight: 600;
+    cursor: pointer; display: flex; align-items: center; gap: 8px; justify-content: center;
+  }
+  #new-chat-btn:hover { opacity: 0.9; }
+  #conv-list { flex: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 2px; }
+  .conv-item {
+    padding: 10px 12px; border-radius: 8px; cursor: pointer;
+    display: flex; align-items: flex-start; gap: 8px; position: relative;
+    border: 1px solid transparent;
+  }
+  .conv-item:hover { background: var(--bg); }
+  .conv-item.active { background: var(--bg); border-color: var(--border); }
+  .conv-info { flex: 1; min-width: 0; }
+  .conv-title { font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .conv-time { font-size: 11px; color: var(--dim); margin-top: 2px; }
+  .conv-delete {
+    background: none; border: none; color: var(--dim); cursor: pointer;
+    font-size: 14px; padding: 2px 4px; border-radius: 4px; opacity: 0; flex-shrink: 0;
+  }
+  .conv-item:hover .conv-delete { opacity: 1; }
+  .conv-delete:hover { color: var(--error); background: rgba(248,113,113,0.1); }
+  #sidebar-footer {
+    padding: 12px; border-top: 1px solid var(--border);
+    font-size: 11px; color: var(--dim); line-height: 1.4; text-align: center;
+  }
+
+  /* ── Main area ────────────────────────────────── */
+  #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; gap: 12px; }
+  #menu-btn {
+    background: none; border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text); font-size: 18px; cursor: pointer; padding: 4px 8px; line-height: 1;
+  }
+  #menu-btn:hover { background: var(--bg); }
+  header h1 { font-size: 18px; color: var(--accent); }
+  header span { font-size: 13px; color: var(--dim); }
+  #status { margin-left: auto; font-size: 12px; padding: 4px 10px; border-radius: 12px; }
+  .online { background: #1a3a1a; color: #4ade80; }
+  .offline { background: #3a1a1a; color: #f87171; }
+  #model-select { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); padding: 4px 8px; font-size: 12px; }
+  #gear-btn { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--dim); cursor: pointer; padding: 4px 8px; font-size: 16px; line-height: 1; transition: color 0.2s; }
+  #gear-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ── Chat ─────────────────────────────────────── */
+  #chat { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+  .msg { max-width: 80%; padding: 12px 16px; border-radius: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+  .msg.user { align-self: flex-end; background: var(--accent); color: #0f0f1a; border-bottom-right-radius: 4px; }
+  .msg.assistant { align-self: flex-start; background: var(--surface); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+  .msg.system { align-self: center; color: var(--dim); font-size: 13px; }
+  #input-area { background: var(--surface); border-top: 1px solid var(--border); padding: 16px 20px; display: flex; gap: 10px; }
+  #prompt { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 10px 14px; font-size: 14px; font-family: inherit; resize: none; outline: none; }
+  #prompt:focus { border-color: var(--accent); }
+  #send { background: var(--accent); color: #0f0f1a; border: none; border-radius: 8px; padding: 10px 20px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  #send:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ── Model Manager Panel ──────────────────────── */
+  #model-panel-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; display: none; }
+  #model-panel-overlay.open { display: block; }
+  #model-panel { position: fixed; top: 0; right: -420px; width: 400px; max-width: 90vw; height: 100vh; background: var(--surface); border-left: 1px solid var(--border); z-index: 101; transition: right 0.3s ease; display: flex; flex-direction: column; overflow: hidden; }
+  #model-panel.open { right: 0; }
+  .mp-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+  .mp-header h2 { font-size: 16px; color: var(--accent); }
+  .mp-close { background: none; border: none; color: var(--dim); font-size: 22px; cursor: pointer; padding: 0 4px; }
+  .mp-close:hover { color: var(--text); }
+  .mp-body { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 20px; }
+  .mp-section h3 { font-size: 13px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+  .mp-model-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; gap: 8px; }
+  .mp-model-info { flex: 1; min-width: 0; }
+  .mp-model-name { font-size: 14px; font-weight: 600; color: var(--text); word-break: break-all; }
+  .mp-model-meta { font-size: 11px; color: var(--dim); margin-top: 2px; }
+  .mp-btn { border: none; border-radius: 6px; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+  .mp-btn-delete { background: #3a1a1a; color: #f87171; }
+  .mp-btn-delete:hover { background: #4a1a1a; }
+  .mp-btn-pull { background: #1a2a3a; color: var(--accent); }
+  .mp-btn-pull:hover { background: #1a3a4a; }
+  .mp-btn-pull:disabled, .mp-btn-delete:disabled { opacity: 0.5; cursor: not-allowed; }
+  .mp-pull-row { display: flex; gap: 8px; }
+  .mp-pull-input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); padding: 8px 12px; font-size: 13px; font-family: inherit; outline: none; }
+  .mp-pull-input:focus { border-color: var(--accent); }
+  .mp-progress { margin-top: 8px; display: none; }
+  .mp-progress.active { display: block; }
+  .mp-progress-bar { width: 100%; height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
+  .mp-progress-fill { height: 100%; background: var(--accent); border-radius: 3px; width: 0%; transition: width 0.3s; }
+  .mp-progress-text { font-size: 11px; color: var(--dim); }
+  .mp-suggested-desc { font-size: 11px; color: var(--dim); }
+  .mp-empty { font-size: 13px; color: var(--dim); text-align: center; padding: 16px; }
+
+  /* ── Quick-action buttons ──────────────────────── */
+  #quick-actions { padding: 4px 20px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .quick-btn {
+    background: var(--surface); border: 1px solid var(--border); color: var(--dim);
+    padding: 4px 10px; border-radius: 12px; font-size: 12px; cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .quick-btn:hover { border-color: var(--accent); color: var(--text); }
+</style>
+</head>
+<body>
+<nav class="pai-nav">
+  <a href="/" class="active">&#128172; Chat</a>
+  <a href="/dashboard.html">&#128202; Dashboard</a>
+  <a href="/setup.html">&#9881; Setup</a>
+</nav>
+<div id="app-wrapper">
+<!-- Sidebar -->
+<div id="sidebar">
+  <div id="sidebar-header">
+    <button id="new-chat-btn">+ New Chat</button>
+  </div>
+  <div id="conv-list"></div>
+  <div id="sidebar-footer">Conversations are stored in memory only and will be cleared on reboot.</div>
+</div>
+
+<!-- Main area -->
+<div id="main">
+<header>
+  <button id="menu-btn" title="Toggle sidebar">&#9776;</button>
+  <h1>PAI</h1>
+  <span>PAI</span>
+  <select id="model-select"><option>loading...</option></select>
+  <button id="gear-btn" title="Model Manager">&#9881;</button>
+  <a href="apps.html" style="color:#7aa2f7;text-decoration:none;font-size:13px;margin-left:8px;">📦 App Store</a>
+  <div id="status" class="offline">checking...</div>
+</header>
+<div id="model-panel-overlay"></div>
+<div id="model-panel">
+  <div class="mp-header"><h2>Model Manager</h2><button class="mp-close">&times;</button></div>
+  <div class="mp-body">
+    <div class="mp-section">
+      <h3>Pull a Model</h3>
+      <div class="mp-pull-row">
+        <input class="mp-pull-input" id="pull-input" placeholder="e.g. llama3.2:1b">
+        <button class="mp-btn mp-btn-pull" id="pull-btn">Pull</button>
+      </div>
+      <div class="mp-progress" id="pull-progress">
+        <div class="mp-progress-bar"><div class="mp-progress-fill" id="pull-fill"></div></div>
+        <div class="mp-progress-text" id="pull-text"></div>
+      </div>
+    </div>
+    <div class="mp-section">
+      <h3>Installed Models</h3>
+      <div id="installed-models"><div class="mp-empty">Loading…</div></div>
+    </div>
+    <div class="mp-section">
+      <h3>Suggested Models</h3>
+      <div id="suggested-models"></div>
+    </div>
+  </div>
+</div>
+<div id="chat">
+  <div class="msg system">Welcome to PAI. Ollama is starting up - this may take a moment on first boot.</div>
+</div>
+<div id="quick-actions">
+  <button class="quick-btn" data-prompt="Analyze the current cryptocurrency market. What are the trends?">&#128202; Market Analysis</button>
+  <button class="quick-btn" data-prompt="Compare Bitcoin and Ethereum performance. Which looks stronger?">&#9878;&#65039; BTC vs ETH</button>
+  <button class="quick-btn" data-prompt="What's the current state of DeFi? Any opportunities?">&#127974; DeFi Overview</button>
+  <button class="quick-btn" data-prompt="Explain the current Bitcoin price action and what might happen next.">&#8383; BTC Analysis</button>
+  <button class="quick-btn" data-prompt="Write a simple Python script to track crypto prices using the CoinGecko API.">&#128013; Price Tracker Code</button>
+</div>
+<div id="input-area">
+  <textarea id="prompt" rows="1" placeholder="Ask anything..." autofocus></textarea>
+  <button id="send">Send</button>
+</div>
+</div><!-- /main -->
+</div><!-- /app-wrapper -->
+
+<script>
+const OLLAMA = 'http://localhost:11434';
+const STORAGE_KEY = 'pai-conversations';
+
+const chatEl = document.getElementById('chat');
+const promptEl = document.getElementById('prompt');
+const sendBtn = document.getElementById('send');
+const statusEl = document.getElementById('status');
+const modelSel = document.getElementById('model-select');
+const sidebar = document.getElementById('sidebar');
+const menuBtn = document.getElementById('menu-btn');
+const newChatBtn = document.getElementById('new-chat-btn');
+const convListEl = document.getElementById('conv-list');
+
+let generating = false;
+let conversations = [];
+let activeConvId = null;
+
+// ── LocalStorage helpers ──────────────────────────
+function loadConversations() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    conversations = raw ? JSON.parse(raw) : [];
+  } catch(e) { conversations = []; }
+}
+
+function saveConversations() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations));
+}
+
+function getActiveConv() {
+  return conversations.find(function(c) { return c.id === activeConvId; });
+}
+
+// ── Conversation CRUD ─────────────────────────────
+function createConversation() {
+  const conv = {
+    id: 'conv_' + Date.now(),
+    title: 'New Chat',
+    created: Date.now(),
+    messages: []
+  };
+  conversations.unshift(conv);
+  activeConvId = conv.id;
+  saveConversations();
+  renderConvList();
+  renderChat();
+  promptEl.focus();
+  return conv;
+}
+
+function deleteConversation(id) {
+  conversations = conversations.filter(function(c) { return c.id !== id; });
+  if (activeConvId === id) {
+    activeConvId = conversations.length > 0 ? conversations[0].id : null;
+  }
+  saveConversations();
+  renderConvList();
+  renderChat();
+}
+
+function switchConversation(id) {
+  activeConvId = id;
+  renderConvList();
+  renderChat();
+  promptEl.focus();
+}
+
+// ── Render sidebar list ───────────────────────────
+function renderConvList() {
+  convListEl.innerHTML = '';
+  conversations.forEach(function(conv) {
+    const item = document.createElement('div');
+    item.className = 'conv-item' + (conv.id === activeConvId ? ' active' : '');
+
+    const info = document.createElement('div');
+    info.className = 'conv-info';
+
+    const title = document.createElement('div');
+    title.className = 'conv-title';
+    title.textContent = conv.title;
+
+    const time = document.createElement('div');
+    time.className = 'conv-time';
+    time.textContent = formatTime(conv.created);
+
+    info.appendChild(title);
+    info.appendChild(time);
+    item.appendChild(info);
+
+    const del = document.createElement('button');
+    del.className = 'conv-delete';
+    del.innerHTML = '&#128465;';
+    del.title = 'Delete conversation';
+    del.addEventListener('click', function(e) {
+      e.stopPropagation();
+      deleteConversation(conv.id);
+    });
+    item.appendChild(del);
+
+    item.addEventListener('click', function() {
+      switchConversation(conv.id);
+    });
+
+    convListEl.appendChild(item);
+  });
+}
+
+function formatTime(ts) {
+  const d = new Date(ts);
+  const now = new Date();
+  if (d.toDateString() === now.toDateString()) {
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+}
+
+// ── Render chat messages ──────────────────────────
+function renderChat() {
+  chatEl.innerHTML = '';
+  const conv = getActiveConv();
+  if (!conv) {
+    addMsgEl('system', 'Start a new chat or select a conversation.');
+    return;
+  }
+  if (conv.messages.length === 0) {
+    addMsgEl('system', 'Welcome to PAI. Ollama is starting up - this may take a moment on first boot.');
+    return;
+  }
+  conv.messages.forEach(function(m) {
+    addMsgEl(m.role, m.content);
+  });
+}
+
+function addMsgEl(role, text) {
+  const d = document.createElement('div');
+  d.className = 'msg ' + role;
+  d.textContent = text;
+  chatEl.appendChild(d);
+  chatEl.scrollTop = chatEl.scrollHeight;
+  return d;
+}
+
+// ── Sidebar toggle ────────────────────────────────
+menuBtn.addEventListener('click', function() {
+  sidebar.classList.toggle('collapsed');
+});
+newChatBtn.addEventListener('click', function() {
+  createConversation();
+});
+
+// ── Status check ──────────────────────────────────
+async function checkStatus() {
+  try {
+    const r = await fetch(OLLAMA + '/api/tags');
+    const data = await r.json();
+    statusEl.textContent = 'online';
+    statusEl.className = 'online';
+    modelSel.innerHTML = '';
+    const models = data.models || [];
+    if (models.length === 0) {
+      const o = document.createElement('option');
+      o.textContent = 'no models yet';
+      modelSel.appendChild(o);
+    } else {
+      models.forEach(function(m) {
+        const o = document.createElement('option');
+        o.value = m.name;
+        o.textContent = m.name;
+        modelSel.appendChild(o);
+      });
+    }
+  } catch(e) {
+    statusEl.textContent = 'offline';
+    statusEl.className = 'offline';
+  }
+}
+
+// ── Crypto enrichment ─────────────────────────────
+const CRYPTO_KEYWORDS = ['bitcoin', 'btc', 'ethereum', 'eth', 'solana', 'sol', 'crypto', 'market', 'price', 'token', 'defi', 'trading', 'monero', 'xmr'];
+const CRYPTO_SYSTEM = 'You are PAI, an AI assistant specialized in cryptocurrency analysis and AI technology. When provided with market data, analyze trends, provide insights, and give balanced perspectives. Never provide financial advice - always note that this is for educational purposes only.';
+let cryptoCache = { data: null, ts: 0 };
+
+// Crypto data fetching is opt-in. Enable by going to PAI Settings -> Privacy
+// and toggling "Live crypto prices", or set localStorage key manually:
+//   localStorage.setItem('pai-crypto-enabled', 'true')
+async function isCryptoEnabled() {
+  return localStorage.getItem('pai-crypto-enabled') === 'true';
+}
+
+async function enrichWithCryptoData(userMessage) {
+  var lower = userMessage.toLowerCase();
+  var isCrypto = CRYPTO_KEYWORDS.some(function(k) { return lower.includes(k); });
+  if (!isCrypto) return { enriched: userMessage, isCrypto: false };
+  if (!(await isCryptoEnabled())) {
+    return { enriched: userMessage, isCrypto: true, offlineNote: true };
+  }
+  try {
+    var now = Date.now();
+    if (cryptoCache.data && (now - cryptoCache.ts) < 30000) {
+      return { enriched: formatCryptoContext(cryptoCache.data) + userMessage, isCrypto: true };
+    }
+    var r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,monero,dogecoin&vs_currencies=usd&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true');
+    var data = await r.json();
+    cryptoCache = { data: data, ts: now };
+    return { enriched: formatCryptoContext(data) + userMessage, isCrypto: true };
+  } catch(e) {
+    return { enriched: userMessage, isCrypto: true };
+  }
+}
+
+function formatCryptoContext(data) {
+  var context = '\n\n[Current Market Data]\n';
+  for (var coin in data) {
+    if (!data.hasOwnProperty(coin)) continue;
+    var info = data[coin];
+    var change = info.usd_24h_change != null ? info.usd_24h_change.toFixed(1) : 'N/A';
+    var mcap = info.usd_market_cap ? (info.usd_market_cap / 1e9).toFixed(1) + 'B' : 'N/A';
+    var vol = info.usd_24h_vol ? (info.usd_24h_vol / 1e9).toFixed(1) + 'B' : 'N/A';
+    context += coin + ': $' + info.usd.toLocaleString() + ' (24h: ' + change + '%, MCap: $' + mcap + ', Vol: $' + vol + ')\n';
+  }
+  context += '[Data as of: ' + new Date().toISOString() + ']\n\n';
+  return context;
+}
+
+// ── Quick-action buttons ──────────────────────────
+document.querySelectorAll('.quick-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    promptEl.value = btn.dataset.prompt;
+    send();
+  });
+});
+
+// ── Send message (multi-turn /api/chat) ───────────
+async function send() {
+  const text = promptEl.value.trim();
+  if (!text || generating) return;
+  const model = modelSel.value;
+  if (!model || model === 'no models yet' || model === 'loading...') {
+    addMsgEl('system', 'No model available. Wait for first-boot setup to finish pulling a model.');
+    return;
+  }
+
+  // Ensure we have an active conversation
+  let conv = getActiveConv();
+  if (!conv) conv = createConversation();
+
+  generating = true;
+  sendBtn.disabled = true;
+  promptEl.value = '';
+
+  // Enrich with crypto data if applicable
+  const crypto = await enrichWithCryptoData(text);
+
+  // Add user message (store original text, not enriched)
+  conv.messages.push({ role: 'user', content: text });
+  // Update title from first user message
+  if (conv.messages.filter(function(m) { return m.role === 'user'; }).length === 1) {
+    conv.title = text.length > 40 ? text.substring(0, 40) + '...' : text;
+  }
+  saveConversations();
+  renderConvList();
+
+  addMsgEl('user', text);
+  const el = addMsgEl('assistant', '');
+
+  // If crypto topic was detected but live data is disabled, show a notice
+  if (crypto.offlineNote) {
+    const notice = addMsgEl('system', 'Live crypto prices are disabled. Enable in PAI Settings \u2192 Privacy to get real-time market data in responses.');
+    notice.style.fontSize = '12px';
+  }
+
+  // Build messages array for multi-turn
+  const apiMessages = [];
+  if (crypto.isCrypto) {
+    apiMessages.push({ role: 'system', content: CRYPTO_SYSTEM });
+  }
+  conv.messages.forEach(function(m, idx) {
+    // For the last user message, use the enriched version
+    if (idx === conv.messages.length - 1 && m.role === 'user') {
+      apiMessages.push({ role: 'user', content: crypto.enriched });
+    } else {
+      apiMessages.push({ role: m.role, content: m.content });
+    }
+  });
+
+  let assistantText = '';
+  try {
+    const r = await fetch(OLLAMA + '/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: model, messages: apiMessages, stream: true })
+    });
+    const reader = r.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      buf += dec.decode(chunk.value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (let i = 0; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+        try {
+          const j = JSON.parse(lines[i]);
+          if (j.message && j.message.content) {
+            assistantText += j.message.content;
+            el.textContent = assistantText;
+            chatEl.scrollTop = chatEl.scrollHeight;
+          }
+        } catch(e2) {}
+      }
+    }
+  } catch (e) {
+    assistantText = 'Error: ' + e.message;
+    el.textContent = assistantText;
+  }
+
+  // Save assistant response
+  conv.messages.push({ role: 'assistant', content: assistantText });
+  saveConversations();
+
+  generating = false;
+  sendBtn.disabled = false;
+  promptEl.focus();
+}
+
+sendBtn.addEventListener('click', send);
+promptEl.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+});
+
+// ── Init conversations ────────────────────────────
+loadConversations();
+if (conversations.length > 0) {
+  activeConvId = conversations[0].id;
+} else {
+  createConversation();
+}
+renderConvList();
+renderChat();
+checkStatus();
+setInterval(checkStatus, 5000);
+
+// ── Model Manager ─────────────────────────────────
+const gearBtn = document.getElementById('gear-btn');
+const panel = document.getElementById('model-panel');
+const overlay = document.getElementById('model-panel-overlay');
+const closeBtn = panel.querySelector('.mp-close');
+const pullInput = document.getElementById('pull-input');
+const pullBtn = document.getElementById('pull-btn');
+const pullProgress = document.getElementById('pull-progress');
+const pullFill = document.getElementById('pull-fill');
+const pullText = document.getElementById('pull-text');
+const installedDiv = document.getElementById('installed-models');
+const suggestedDiv = document.getElementById('suggested-models');
+
+const SUGGESTED = [
+  { name: 'tinyllama', size: '637 MB', desc: 'Fast, lightweight' },
+  { name: 'phi3:mini', size: '2.3 GB', desc: 'Good balance of speed and quality' },
+  { name: 'llama3.2:1b', size: '1.3 GB', desc: "Meta's smallest Llama" },
+  { name: 'llama3.2:3b', size: '2.0 GB', desc: 'Better quality, still fast' },
+  { name: 'gemma2:2b', size: '1.6 GB', desc: "Google's compact model" },
+  { name: 'qwen2.5:1.5b', size: '1.0 GB', desc: "Alibaba's small model" },
+];
+
+function openPanel() { panel.classList.add('open'); overlay.classList.add('open'); refreshInstalled(); }
+function closePanel() { panel.classList.remove('open'); overlay.classList.remove('open'); }
+gearBtn.addEventListener('click', openPanel);
+closeBtn.addEventListener('click', closePanel);
+overlay.addEventListener('click', closePanel);
+
+function fmtBytes(b) {
+  if (b >= 1e9) return (b / 1e9).toFixed(1) + ' GB';
+  if (b >= 1e6) return (b / 1e6).toFixed(0) + ' MB';
+  return b + ' B';
+}
+function fmtDate(d) {
+  try { return new Date(d).toLocaleDateString(); } catch(e) { return ''; }
+}
+
+async function refreshInstalled() {
+  try {
+    const r = await fetch(OLLAMA + '/api/tags');
+    const data = await r.json();
+    const models = data.models || [];
+    if (models.length === 0) {
+      installedDiv.innerHTML = '<div class="mp-empty">No models installed</div>';
+    } else {
+      installedDiv.innerHTML = '';
+      models.forEach(function(m) {
+        const row = document.createElement('div');
+        row.className = 'mp-model-row';
+        row.innerHTML = '<div class="mp-model-info"><div class="mp-model-name"></div><div class="mp-model-meta"></div></div>';
+        row.querySelector('.mp-model-name').textContent = m.name;
+        row.querySelector('.mp-model-meta').textContent = fmtBytes(m.size) + (m.modified_at ? ' \u00b7 ' + fmtDate(m.modified_at) : '');
+        const btn = document.createElement('button');
+        btn.className = 'mp-btn mp-btn-delete';
+        btn.textContent = 'Delete';
+        btn.addEventListener('click', function() { deleteModel(m.name, btn); });
+        row.appendChild(btn);
+        installedDiv.appendChild(row);
+      });
+    }
+  } catch(e) {
+    installedDiv.innerHTML = '<div class="mp-empty">Ollama offline</div>';
+  }
+}
+
+async function deleteModel(name, btn) {
+  if (!confirm('Delete model "' + name + '"?')) return;
+  btn.disabled = true;
+  btn.textContent = '\u2026';
+  try {
+    await fetch(OLLAMA + '/api/delete', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name })
+    });
+  } catch(e) {}
+  await refreshInstalled();
+  await checkStatus();
+}
+
+async function pullModel(name) {
+  if (!name) return;
+  pullBtn.disabled = true;
+  pullInput.disabled = true;
+  pullProgress.classList.add('active');
+  pullFill.style.width = '0%';
+  pullText.textContent = 'Starting pull\u2026';
+  suggestedDiv.querySelectorAll('button').forEach(function(b) { if (b.dataset.model === name) b.disabled = true; });
+  try {
+    const r = await fetch(OLLAMA + '/api/pull', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name, stream: true })
+    });
+    const reader = r.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      buf += dec.decode(chunk.value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (let i = 0; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+        try {
+          const j = JSON.parse(lines[i]);
+          if (j.total && j.completed) {
+            const pct = Math.round((j.completed / j.total) * 100);
+            pullFill.style.width = pct + '%';
+            pullText.textContent = j.status + ' - ' + pct + '%';
+          } else if (j.status) {
+            pullText.textContent = j.status;
+          }
+        } catch(e2) {}
+      }
+    }
+    pullFill.style.width = '100%';
+    pullText.textContent = 'Done!';
+  } catch (e) {
+    pullText.textContent = 'Error: ' + e.message;
+  }
+  pullBtn.disabled = false;
+  pullInput.disabled = false;
+  suggestedDiv.querySelectorAll('button').forEach(function(b) { b.disabled = false; });
+  await refreshInstalled();
+  await checkStatus();
+  setTimeout(function() { pullProgress.classList.remove('active'); }, 3000);
+}
+
+pullBtn.addEventListener('click', function() { pullModel(pullInput.value.trim()); });
+pullInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') pullModel(pullInput.value.trim()); });
+
+// Render suggested models
+SUGGESTED.forEach(function(s) {
+  const row = document.createElement('div');
+  row.className = 'mp-model-row';
+  row.innerHTML = '<div class="mp-model-info"><div class="mp-model-name"></div><div class="mp-model-meta"></div></div>';
+  row.querySelector('.mp-model-name').textContent = s.name;
+  row.querySelector('.mp-model-meta').textContent = s.size + ' - ' + s.desc;
+  const btn = document.createElement('button');
+  btn.className = 'mp-btn mp-btn-pull';
+  btn.textContent = 'Pull';
+  btn.dataset.model = s.name;
+  btn.addEventListener('click', function() { pullModel(s.name); });
+  row.appendChild(btn);
+  suggestedDiv.appendChild(row);
+});
+</script>
+</body>
+</html>
+HTMLEOF
+
+# ── Welcome / First Boot Setup Page ───────────────────────────────────
+cat > "$CHAT_DIR/setup.html" <<'SETUPEOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PAI - Welcome</title>
+<style>
+  :root {
+    --bg: #0f0f1a; --surface: #1a1a2e; --border: #2a2a3e;
+    --text: #e0e0e0; --accent: #7aa2f7; --dim: #888;
+    --success: #4ade80; --error: #f87171;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Noto Sans', system-ui, sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* ── Nav bar ──────────────────────────────────── */
+  nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 20px; display: flex; align-items: center; gap: 4px; height: 44px; flex-shrink: 0; }
+  nav a { color: var(--dim); text-decoration: none; padding: 8px 14px; border-radius: 6px; font-size: 14px; transition: background 0.15s, color 0.15s; }
+  nav a:hover { background: var(--bg); color: var(--text); }
+  nav a.active { color: var(--accent); background: var(--bg); }
+  nav .brand { font-weight: 700; color: var(--accent); font-size: 15px; margin-right: 12px; }
+
+  /* ── Main content ─────────────────────────────── */
+  .content { flex: 1; overflow-y: auto; padding: 40px 20px 60px; display: flex; flex-direction: column; align-items: center; }
+  .welcome-header { text-align: center; margin-bottom: 40px; }
+  .welcome-header h1 { color: var(--accent); font-size: 32px; margin-bottom: 8px; }
+  .welcome-header p { color: var(--dim); font-size: 15px; }
+
+  /* ── Step sections ────────────────────────────── */
+  .step { width: 100%; max-width: 720px; margin-bottom: 36px; }
+  .step-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+  .step-num { background: var(--accent); color: #0f0f1a; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+  .step-header h2 { font-size: 18px; color: var(--text); font-weight: 600; }
+
+  /* ── Model cards ──────────────────────────────── */
+  .model-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px; }
+  .model-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; display: flex; align-items: flex-start; gap: 12px; }
+  .model-card.recommended { border-color: var(--accent); }
+  .model-card .mc-info { flex: 1; min-width: 0; }
+  .model-card .mc-name { font-size: 15px; font-weight: 600; }
+  .model-card .mc-meta { font-size: 12px; color: var(--dim); margin-top: 3px; line-height: 1.4; }
+  .mc-tag { display: inline-block; background: #1a2a3a; color: var(--accent); font-size: 11px; padding: 2px 8px; border-radius: 4px; margin-top: 4px; }
+  .mc-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+  .mc-pull-btn { background: #1a2a3a; color: var(--accent); border: none; border-radius: 6px; padding: 7px 16px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+  .mc-pull-btn:hover { background: #1a3a4a; }
+  .mc-pull-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .mc-pull-btn.installed { background: #1a3a1a; color: var(--success); cursor: default; }
+  .mc-progress { width: 120px; }
+  .mc-progress-bar { width: 100%; height: 5px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+  .mc-progress-fill { height: 100%; background: var(--accent); border-radius: 3px; width: 0%; transition: width 0.3s; }
+  .mc-progress-text { font-size: 10px; color: var(--dim); margin-top: 2px; text-align: right; }
+
+  /* ── Crypto cards ─────────────────────────────── */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; margin-bottom: 10px; display: flex; align-items: center; gap: 16px; }
+  .card-icon { font-size: 28px; flex-shrink: 0; width: 40px; text-align: center; }
+  .card-info { flex: 1; min-width: 0; }
+  .card-info h3 { font-size: 15px; color: var(--text); margin-bottom: 3px; }
+  .card-info p { font-size: 13px; color: var(--dim); line-height: 1.4; }
+  .card-btn { background: var(--accent); color: #0f0f1a; border: none; border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; white-space: nowrap; flex-shrink: 0; }
+  .card-btn:hover { opacity: 0.9; }
+  .card-btn.secondary { background: #1a2a3a; color: var(--accent); }
+  .card-btn.secondary:hover { background: #1a3a4a; }
+
+  /* ── Quick-start guide ────────────────────────── */
+  .guide-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 640px) { .guide-grid { grid-template-columns: 1fr; } }
+  .guide-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+  .guide-panel h3 { font-size: 14px; color: var(--accent); margin-bottom: 10px; }
+  .guide-panel pre { font-size: 12px; color: var(--text); line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+  .guide-panel .shortcut-row { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; }
+  .guide-panel .shortcut-row .key { color: var(--accent); font-family: monospace; font-size: 12px; }
+  .guide-panel .shortcut-row .desc { color: var(--dim); }
+
+  /* ── System status ────────────────────────────── */
+  .status-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+  .status-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center; }
+  .status-card .label { font-size: 12px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .status-card .value { font-size: 15px; font-weight: 600; }
+  .status-card .value.online { color: var(--success); }
+  .status-card .value.offline { color: var(--error); }
+  .status-card .value.checking { color: var(--dim); }
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="brand">PAI</span>
+  <a href="/">&#128172; Chat</a>
+  <a href="/dashboard.html">&#128202; Dashboard</a>
+  <a href="/setup.html" class="active">&#9881; Setup</a>
+</nav>
+
+<div class="content">
+  <div class="welcome-header">
+    <h1>Welcome to PAI</h1>
+    <p>Your AI + Crypto Workstation</p>
+  </div>
+
+  <!-- Step 1: AI Models -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">1</div>
+      <h2>Choose Your AI Model</h2>
+    </div>
+    <div class="model-grid" id="model-grid"></div>
+  </div>
+
+  <!-- Step 2: Crypto Tools -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">2</div>
+      <h2>Install Crypto Tools</h2>
+    </div>
+    <div class="card">
+      <div class="card-icon">&#8383;</div>
+      <div class="card-info">
+        <h3>Electrum (Bitcoin Wallet)</h3>
+        <p>Lightweight Bitcoin wallet pre-installed on PAI. Shortcut: Alt+B</p>
+      </div>
+      <button class="card-btn" onclick="window.open('http://localhost:8080','_self')">Open Chat to Ask</button>
+    </div>
+    <div class="card">
+      <div class="card-icon">&#9904;</div>
+      <div class="card-info">
+        <h3>Feather Wallet (Monero)</h3>
+        <p>Privacy-focused Monero wallet pre-installed on PAI. Shortcut: Alt+M</p>
+      </div>
+      <button class="card-btn" onclick="window.open('http://localhost:8080','_self')">Open Chat to Ask</button>
+    </div>
+    <div class="card">
+      <div class="card-icon">&#129418;</div>
+      <div class="card-info">
+        <h3>MetaMask</h3>
+        <p>Popular Ethereum &amp; EVM wallet - Ethereum, Polygon, Arbitrum, BSC, and more</p>
+      </div>
+      <a class="card-btn secondary" href="https://addons.mozilla.org/en-US/firefox/addon/ether-metamask/" target="_blank" rel="noopener noreferrer">Install Extension</a>
+    </div>
+    <div class="card">
+      <div class="card-icon">&#128123;</div>
+      <div class="card-info">
+        <h3>Phantom (Solana)</h3>
+        <p>Multi-chain wallet with strong Solana support. Also works with Ethereum and Bitcoin.</p>
+      </div>
+      <a class="card-btn secondary" href="https://addons.mozilla.org/en-US/firefox/addon/phantom-app/" target="_blank" rel="noopener noreferrer">Install Extension</a>
+    </div>
+    <div class="card">
+      <div class="card-icon">&#128048;</div>
+      <div class="card-info">
+        <h3>Rabby (Multi-chain)</h3>
+        <p>Multi-chain wallet by DeBank with built-in security checks and transaction previews</p>
+      </div>
+      <a class="card-btn secondary" href="https://addons.mozilla.org/en-US/firefox/addon/rabby-wallet/" target="_blank" rel="noopener noreferrer">Install Extension</a>
+    </div>
+  </div>
+
+  <!-- Step 3: Quick Start Guide -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">3</div>
+      <h2>Quick Start Guide</h2>
+    </div>
+    <div class="guide-grid">
+      <div class="guide-panel">
+        <h3>Keyboard Shortcuts</h3>
+        <div class="shortcut-row"><span class="key">Alt + Enter</span><span class="desc">Open terminal</span></div>
+        <div class="shortcut-row"><span class="key">Alt + B</span><span class="desc">Bitcoin wallet (Electrum)</span></div>
+        <div class="shortcut-row"><span class="key">Alt + M</span><span class="desc">Monero wallet (Feather)</span></div>
+        <div class="shortcut-row"><span class="key">Alt + F4</span><span class="desc">Close window</span></div>
+        <div class="shortcut-row"><span class="key">Alt + 1/2/3</span><span class="desc">Switch workspace</span></div>
+        <div class="shortcut-row"><span class="key">Alt + D</span><span class="desc">App launcher</span></div>
+      </div>
+      <div class="guide-panel">
+        <h3>Useful Links</h3>
+        <div class="shortcut-row"><span class="desc">PAI Chat</span><span class="key">localhost:8080</span></div>
+        <div class="shortcut-row"><span class="desc">Dashboard</span><span class="key">localhost:8080/dashboard.html</span></div>
+        <div class="shortcut-row"><span class="desc">Ollama API</span><span class="key">localhost:11434</span></div>
+      </div>
+      <div class="guide-panel">
+        <h3>Terminal Commands</h3>
+        <pre>pai-ask "question"      - Quick AI query
+pai-transcribe file     - Speech to text
+ollama list             - Show models
+ollama pull model       - Download model</pre>
+      </div>
+      <div class="guide-panel">
+        <h3>Privacy &amp; Storage</h3>
+        <pre>sudo pai-privacy on     - Enable Tor mode
+sudo pai-privacy off    - Disable Tor mode
+sudo pai-persistence setup
+                        - Encrypted USB storage</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 4: System Status -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">4</div>
+      <h2>System Status</h2>
+    </div>
+    <div class="status-grid">
+      <div class="status-card">
+        <div class="label">Ollama</div>
+        <div class="value checking" id="st-ollama">checking&hellip;</div>
+      </div>
+      <div class="status-card">
+        <div class="label">Models Installed</div>
+        <div class="value checking" id="st-models">checking&hellip;</div>
+      </div>
+      <div class="status-card">
+        <div class="label">Network</div>
+        <div class="value checking" id="st-network">checking&hellip;</div>
+      </div>
+      <div class="status-card">
+        <div class="label">Disk Space</div>
+        <div class="value checking" id="st-disk">checking&hellip;</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var OLLAMA = 'http://localhost:11434';
+var MODELS = [
+  { name: 'tinyllama',    size: '637 MB',  ram: '2 GB+', desc: 'Fastest, good for testing' },
+  { name: 'phi3:mini',    size: '2.3 GB',  ram: '4 GB+', desc: 'Best balance (recommended)', recommended: true },
+  { name: 'llama3.2:1b',  size: '1.3 GB',  ram: '4 GB+', desc: "Meta's compact model" },
+  { name: 'llama3.2:3b',  size: '2.0 GB',  ram: '4 GB+', desc: 'Better quality' },
+  { name: 'mistral:7b',   size: '4.1 GB',  ram: '8 GB+', desc: 'Excellent quality, needs more RAM' },
+  { name: 'codellama:7b', size: '3.8 GB',  ram: '8 GB+', desc: 'Specialized for code' }
+];
+
+var installedModels = {};
+var activePulls = {};
+
+function renderModels() {
+  var grid = document.getElementById('model-grid');
+  grid.innerHTML = '';
+  MODELS.forEach(function(m) {
+    var card = document.createElement('div');
+    card.className = 'model-card' + (m.recommended ? ' recommended' : '');
+    card.id = 'mc-' + m.name.replace(/[:.]/g, '-');
+
+    var isInstalled = !!installedModels[m.name];
+    var isPulling = !!activePulls[m.name];
+
+    var html = '<div class="mc-info">' +
+      '<div class="mc-name">' + esc(m.name) + '</div>' +
+      '<div class="mc-meta">' + esc(m.size) + ' &middot; RAM: ' + esc(m.ram) + ' &middot; ' + esc(m.desc) + '</div>';
+    if (m.recommended) html += '<span class="mc-tag">recommended</span>';
+    html += '</div><div class="mc-actions">';
+
+    if (isInstalled) {
+      html += '<button class="mc-pull-btn installed" disabled>Installed</button>';
+    } else if (isPulling) {
+      html += '<button class="mc-pull-btn" disabled>Pulling&hellip;</button>';
+      html += '<div class="mc-progress"><div class="mc-progress-bar"><div class="mc-progress-fill" id="pf-' + m.name.replace(/[:.]/g, '-') + '"></div></div>';
+      html += '<div class="mc-progress-text" id="pt-' + m.name.replace(/[:.]/g, '-') + '">starting&hellip;</div></div>';
+    } else {
+      html += '<button class="mc-pull-btn" data-model="' + esc(m.name) + '">Pull</button>';
+    }
+    html += '</div>';
+    card.innerHTML = html;
+
+    if (!isInstalled && !isPulling) {
+      card.querySelector('.mc-pull-btn').addEventListener('click', function() {
+        pullModel(m.name);
+      });
+    }
+    grid.appendChild(card);
+  });
+}
+
+function esc(s) {
+  var d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function pullModel(name) {
+  if (activePulls[name]) return;
+  activePulls[name] = true;
+  renderModels();
+
+  var key = name.replace(/[:.]/g, '-');
+  fetch(OLLAMA + '/api/pull', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: name, stream: true })
+  }).then(function(r) {
+    var reader = r.body.getReader();
+    var dec = new TextDecoder();
+    var buf = '';
+    function read() {
+      reader.read().then(function(result) {
+        if (result.done) {
+          delete activePulls[name];
+          refreshInstalled();
+          return;
+        }
+        buf += dec.decode(result.value, { stream: true });
+        var lines = buf.split('\n');
+        buf = lines.pop();
+        for (var i = 0; i < lines.length; i++) {
+          if (!lines[i].trim()) continue;
+          try {
+            var j = JSON.parse(lines[i]);
+            var fill = document.getElementById('pf-' + key);
+            var text = document.getElementById('pt-' + key);
+            if (j.total && j.completed) {
+              var pct = Math.round((j.completed / j.total) * 100);
+              if (fill) fill.style.width = pct + '%';
+              if (text) text.textContent = j.status + ' - ' + pct + '%';
+            } else if (j.status) {
+              if (text) text.textContent = j.status;
+            }
+          } catch(e) {}
+        }
+        read();
+      }).catch(function() {
+        delete activePulls[name];
+        renderModels();
+      });
+    }
+    read();
+  }).catch(function() {
+    delete activePulls[name];
+    renderModels();
+  });
+}
+
+function refreshInstalled() {
+  fetch(OLLAMA + '/api/tags').then(function(r) { return r.json(); }).then(function(data) {
+    installedModels = {};
+    var models = data.models || [];
+    models.forEach(function(m) { installedModels[m.name] = true; });
+
+    /* Also match short names to full tag names */
+    MODELS.forEach(function(def) {
+      models.forEach(function(m) {
+        if (m.name === def.name || m.name.indexOf(def.name) === 0) {
+          installedModels[def.name] = true;
+        }
+      });
+    });
+
+    renderModels();
+    updateStatus(models.length);
+  }).catch(function() {
+    renderModels();
+    updateStatusOffline();
+  });
+}
+
+/* ── System Status ─────────────────────────────── */
+function updateStatus(modelCount) {
+  var ol = document.getElementById('st-ollama');
+  ol.textContent = 'Online';
+  ol.className = 'value online';
+
+  var mc = document.getElementById('st-models');
+  mc.textContent = modelCount + ' installed';
+  mc.className = 'value' + (modelCount > 0 ? ' online' : '');
+}
+
+function updateStatusOffline() {
+  var ol = document.getElementById('st-ollama');
+  ol.textContent = 'Offline';
+  ol.className = 'value offline';
+
+  var mc = document.getElementById('st-models');
+  mc.textContent = '--';
+  mc.className = 'value';
+}
+
+function checkNetwork() {
+  var el = document.getElementById('st-network');
+  if (navigator.onLine) {
+    el.textContent = 'Connected';
+    el.className = 'value online';
+  } else {
+    el.textContent = 'Disconnected';
+    el.className = 'value offline';
+  }
+}
+
+function checkDisk() {
+  var el = document.getElementById('st-disk');
+  if (navigator.storage && navigator.storage.estimate) {
+    navigator.storage.estimate().then(function(est) {
+      if (est.quota) {
+        var gb = (est.quota / 1e9).toFixed(1);
+        el.textContent = gb + ' GB';
+        el.className = 'value';
+      }
+    }).catch(function() {
+      el.textContent = '--';
+      el.className = 'value';
+    });
+  } else {
+    el.textContent = '--';
+    el.className = 'value';
+  }
+}
+
+/* ── Init ──────────────────────────────────────── */
+refreshInstalled();
+checkNetwork();
+checkDisk();
+setInterval(refreshInstalled, 8000);
+setInterval(checkNetwork, 10000);
+window.addEventListener('online', checkNetwork);
+window.addEventListener('offline', checkNetwork);
+</script>
+</body>
+</html>
+SETUPEOF
+
+# ── Crypto Dashboard Page ─────────────────────────────────────────────
+cat > "$CHAT_DIR/dashboard.html" <<'DASHEOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data:; font-src 'self' data:; connect-src 'self' https://api.coingecko.com https://api.etherscan.io http://127.0.0.1:11434 http://localhost:11434;">
+<title>PAI - Crypto Dashboard</title>
+<style>
+  :root {
+    --bg: #0f0f1a; --surface: #1a1a2e; --border: #2a2a3e;
+    --text: #e0e0e0; --accent: #7aa2f7; --dim: #888;
+    --green: #4ade80; --red: #f87171; --yellow: #fbbf24;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Noto Sans', system-ui, sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+  .pai-nav { background: var(--surface); padding: 8px 20px; display: flex; gap: 20px; border-bottom: 1px solid var(--border); width: 100%; flex-shrink: 0; }
+  .pai-nav a { color: var(--accent); text-decoration: none; font-size: 14px; }
+  .pai-nav a:hover { text-decoration: underline; }
+  .pai-nav a.active { color: var(--text); font-weight: 600; }
+
+  .dash-content { flex: 1; overflow-y: auto; padding: 20px; }
+  .dash-header { text-align: center; margin-bottom: 24px; }
+  .dash-header h1 { color: var(--accent); font-size: 24px; margin-bottom: 4px; }
+  .dash-header p { color: var(--dim); font-size: 13px; }
+  .dash-header .last-update { font-size: 11px; color: var(--dim); margin-top: 4px; }
+
+  .dash-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  @media (max-width: 768px) { .dash-grid { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .panel h2 {
+    font-size: 14px; color: var(--dim); text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 12px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .panel.full-width { grid-column: 1 / -1; }
+
+  /* Price cards */
+  .price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 500px) { .price-grid { grid-template-columns: 1fr; } }
+  .price-card {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px;
+  }
+  .price-card .coin-name { font-size: 13px; color: var(--dim); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+  .price-card .coin-symbol { font-weight: 600; color: var(--text); }
+  .price-card .coin-price { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+  .price-card .coin-change { font-size: 13px; font-weight: 600; }
+  .price-card .coin-mcap { font-size: 11px; color: var(--dim); margin-top: 4px; }
+  .change-up { color: var(--green); }
+  .change-down { color: var(--red); }
+
+  /* Portfolio */
+  .portfolio-form { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .portfolio-form select, .portfolio-form input {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text); padding: 8px 10px; font-size: 13px; font-family: inherit; outline: none;
+  }
+  .portfolio-form select:focus, .portfolio-form input:focus { border-color: var(--accent); }
+  .portfolio-form input { width: 120px; }
+  .portfolio-form button {
+    background: var(--accent); color: #0f0f1a; border: none; border-radius: 6px;
+    padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .portfolio-form button:hover { opacity: 0.9; }
+  .portfolio-total { font-size: 20px; font-weight: 700; color: var(--accent); margin-bottom: 12px; }
+  .portfolio-list { display: flex; flex-direction: column; gap: 6px; }
+  .portfolio-row {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px;
+  }
+  .portfolio-row .pr-coin { font-weight: 600; width: 50px; }
+  .portfolio-row .pr-amount { color: var(--dim); font-size: 13px; width: 80px; }
+  .portfolio-row .pr-value { font-weight: 600; flex: 1; }
+  .portfolio-row .pr-bar-wrap { flex: 2; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .portfolio-row .pr-bar { height: 100%; background: var(--accent); border-radius: 4px; }
+  .portfolio-row .pr-pct { width: 40px; text-align: right; font-size: 12px; color: var(--dim); }
+  .portfolio-row .pr-del { background: none; border: none; color: var(--dim); cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px; }
+  .portfolio-row .pr-del:hover { color: var(--red); background: rgba(248,113,113,0.1); }
+
+  /* Trending */
+  .trending-list { display: flex; flex-direction: column; gap: 6px; }
+  .trending-item {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px;
+  }
+  .trending-item img { width: 24px; height: 24px; border-radius: 50%; }
+  .trending-item .tr-rank { color: var(--dim); font-size: 12px; width: 20px; }
+  .trending-item .tr-name { font-weight: 600; flex: 1; }
+  .trending-item .tr-symbol { color: var(--dim); font-size: 12px; }
+  .trending-item .tr-price { font-size: 13px; color: var(--dim); }
+
+  /* Quick links */
+  .links-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  @media (max-width: 600px) { .links-grid { grid-template-columns: repeat(2, 1fr); } }
+  .link-card {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px 10px; text-align: center; text-decoration: none; color: var(--text);
+    transition: border-color 0.2s, transform 0.1s;
+  }
+  .link-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .link-card .lc-icon { font-size: 24px; margin-bottom: 6px; }
+  .link-card .lc-name { font-size: 13px; font-weight: 600; }
+  .link-card .lc-desc { font-size: 11px; color: var(--dim); margin-top: 2px; }
+
+  /* Gas tracker */
+  .gas-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .gas-card {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px; text-align: center;
+  }
+  .gas-card .gas-label { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .gas-card .gas-value { font-size: 20px; font-weight: 700; }
+  .gas-card .gas-unit { font-size: 11px; color: var(--dim); }
+  .gas-low .gas-value { color: var(--green); }
+  .gas-avg .gas-value { color: var(--yellow); }
+  .gas-high .gas-value { color: var(--red); }
+
+  .no-data { color: var(--dim); font-size: 13px; text-align: center; padding: 20px; }
+  .loading { color: var(--dim); font-size: 13px; text-align: center; padding: 20px; }
+  .loading::after { content: '...'; animation: dots 1.4s steps(4, end) infinite; }
+  @keyframes dots { 0%,20% { content: ''; } 40% { content: '.'; } 60% { content: '..'; } 80%,100% { content: '...'; } }
+</style>
+</head>
+<body>
+<nav class="pai-nav">
+  <a href="/">&#128172; Chat</a>
+  <a href="/dashboard.html" class="active">&#128202; Dashboard</a>
+  <a href="/setup.html">&#9881; Setup</a>
+</nav>
+
+<div class="dash-content">
+  <!-- Opt-in gate: shown by default, hidden when crypto data is enabled -->
+  <div id="crypto-gate" style="background:#1a1a2e;border:1px solid #2a2a3e;border-radius:10px;padding:20px 24px;margin:20px auto;max-width:600px;text-align:center;display:none;">
+    <div style="font-size:24px;margin-bottom:10px;">&#128274;</div>
+    <h2 style="color:#7aa2f7;font-size:18px;margin-bottom:8px;">Crypto data requires online features</h2>
+    <p style="color:#888;font-size:14px;line-height:1.5;margin-bottom:16px;">Live prices and gas data are fetched from CoinGecko and Etherscan. Enable in <strong style="color:#e0e0e0;">PAI Settings &rarr; Privacy</strong> to activate.</p>
+    <button onclick="localStorage.setItem('pai-crypto-enabled','true');document.getElementById('crypto-gate').style.display='none';refreshAll();" style="background:#7aa2f7;color:#0f0f1a;border:none;border-radius:8px;padding:10px 22px;font-size:14px;font-weight:600;cursor:pointer;">Enable Live Crypto Data</button>
+  </div>
+  <div class="dash-header">
+    <h1>Crypto Dashboard</h1>
+    <p>Live prices &amp; portfolio tracking</p>
+    <div class="last-update" id="last-update"></div>
+  </div>
+
+  <div class="dash-grid">
+    <!-- Price Overview -->
+    <div class="panel full-width">
+      <h2>&#128176; Price Overview</h2>
+      <div class="price-grid" id="price-grid">
+        <div class="loading" id="price-loading">Loading prices</div>
+      </div>
+    </div>
+
+    <!-- Portfolio Tracker -->
+    <div class="panel">
+      <h2>&#128188; Portfolio</h2>
+      <div class="portfolio-form">
+        <select id="pf-coin">
+          <option value="bitcoin">BTC</option>
+          <option value="ethereum">ETH</option>
+          <option value="solana">SOL</option>
+          <option value="monero">XMR</option>
+        </select>
+        <input type="number" id="pf-amount" placeholder="Amount" min="0" step="any">
+        <button id="pf-add">Add</button>
+      </div>
+      <div class="portfolio-total" id="pf-total">$0.00</div>
+      <div class="portfolio-list" id="pf-list"></div>
+    </div>
+
+    <!-- Gas Tracker -->
+    <div class="panel">
+      <h2>&#9981; ETH Gas</h2>
+      <div class="gas-grid" id="gas-grid">
+        <div class="gas-card gas-low">
+          <div class="gas-label">Low</div>
+          <div class="gas-value" id="gas-low">--</div>
+          <div class="gas-unit">Gwei</div>
+        </div>
+        <div class="gas-card gas-avg">
+          <div class="gas-label">Average</div>
+          <div class="gas-value" id="gas-avg">--</div>
+          <div class="gas-unit">Gwei</div>
+        </div>
+        <div class="gas-card gas-high">
+          <div class="gas-label">High</div>
+          <div class="gas-value" id="gas-high">--</div>
+          <div class="gas-unit">Gwei</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trending -->
+    <div class="panel">
+      <h2>&#128293; Trending</h2>
+      <div class="trending-list" id="trending-list">
+        <div class="loading" id="trending-loading">Loading trending</div>
+      </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="panel">
+      <h2>&#128279; Quick Links</h2>
+      <div class="links-grid" id="links-grid"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  /* ── Config ─────────────────────────────────────────── */
+  var COINS = {
+    bitcoin:  { symbol: 'BTC', icon: '&#8383;' },
+    ethereum: { symbol: 'ETH', icon: '&#9830;' },
+    solana:   { symbol: 'SOL', icon: '&#9788;' },
+    monero:   { symbol: 'XMR', icon: '&#9670;' }
+  };
+
+  var QUICK_LINKS = [
+    { icon: '&#9939;',  name: 'Mempool',      desc: 'BTC explorer',     url: 'https://mempool.space' },
+    { icon: '&#9830;',  name: 'Etherscan',     desc: 'ETH explorer',     url: 'https://etherscan.io' },
+    { icon: '&#9788;',  name: 'Solscan',       desc: 'SOL explorer',     url: 'https://solscan.io' },
+    { icon: '&#129412;', name: 'Uniswap',      desc: 'ETH DEX',          url: 'https://app.uniswap.org' },
+    { icon: '&#127773;', name: 'Jupiter',      desc: 'Solana DEX',       url: 'https://jup.ag' },
+    { icon: '&#128202;', name: 'DeFi Llama',   desc: 'TVL tracker',      url: 'https://defillama.com' },
+    { icon: '&#128200;', name: 'CoinGecko',    desc: 'Market data',      url: 'https://www.coingecko.com' },
+    { icon: '&#128168;', name: 'Fear & Greed', desc: 'Market sentiment',  url: 'https://alternative.me/crypto/fear-and-greed-index/' }
+  ];
+
+  var REFRESH_MS = 60000;
+  var STORAGE_KEY = 'pai-portfolio';
+
+  /* ── Cache ──────────────────────────────────────────── */
+  var cache = { prices: null, pricesAt: 0, trending: null, trendingAt: 0, gas: null, gasAt: 0 };
+  var CACHE_TTL = 55000; // slightly less than refresh interval
+
+  /* ── DOM refs ───────────────────────────────────────── */
+  var priceGrid   = document.getElementById('price-grid');
+  var priceLoad   = document.getElementById('price-loading');
+  var pfCoin      = document.getElementById('pf-coin');
+  var pfAmount    = document.getElementById('pf-amount');
+  var pfAddBtn    = document.getElementById('pf-add');
+  var pfTotal     = document.getElementById('pf-total');
+  var pfList      = document.getElementById('pf-list');
+  var trendList   = document.getElementById('trending-list');
+  var trendLoad   = document.getElementById('trending-loading');
+  var gasLow      = document.getElementById('gas-low');
+  var gasAvg      = document.getElementById('gas-avg');
+  var gasHigh     = document.getElementById('gas-high');
+  var linksGrid   = document.getElementById('links-grid');
+  var lastUpdate  = document.getElementById('last-update');
+
+  /* ── Helpers ────────────────────────────────────────── */
+  function fmt(n) {
+    if (n == null) return '--';
+    if (n >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B';
+    if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+    if (n >= 1) return '$' + n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return '$' + n.toFixed(6);
+  }
+
+  function pct(n) {
+    if (n == null) return '--';
+    var s = n.toFixed(2);
+    return (n >= 0 ? '+' : '') + s + '%';
+  }
+
+  function loadPortfolio() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch(e) { return []; }
+  }
+
+  function savePortfolio(pf) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(pf));
+  }
+
+  /* ── Fetch with cache ───────────────────────────────── */
+  function cachedFetch(key, url) {
+    var now = Date.now();
+    if (cache[key] && (now - cache[key + 'At'] < CACHE_TTL)) {
+      return Promise.resolve(cache[key]);
+    }
+    return fetch(url).then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function(data) {
+      cache[key] = data;
+      cache[key + 'At'] = now;
+      return data;
+    });
+  }
+
+  /* ── Price Overview ─────────────────────────────────── */
+  function renderPrices(data) {
+    priceGrid.innerHTML = '';
+    var ids = Object.keys(COINS);
+    for (var i = 0; i < ids.length; i++) {
+      var id = ids[i];
+      var coin = COINS[id];
+      var d = data[id] || {};
+      var price = d.usd;
+      var change = d.usd_24h_change;
+      var mcap = d.usd_market_cap;
+      var up = change != null && change >= 0;
+
+      var card = document.createElement('div');
+      card.className = 'price-card';
+      card.innerHTML =
+        '<div class="coin-name">' + coin.icon + ' <span class="coin-symbol">' + coin.symbol + '</span></div>' +
+        '<div class="coin-price">' + fmt(price) + '</div>' +
+        '<div class="coin-change ' + (up ? 'change-up' : 'change-down') + '">' + pct(change) + '</div>' +
+        '<div class="coin-mcap">MCap: ' + fmt(mcap) + '</div>';
+      priceGrid.appendChild(card);
+    }
+  }
+
+  function fetchPrices() {
+    var url = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,monero&vs_currencies=usd&include_24hr_change=true&include_market_cap=true';
+    return cachedFetch('prices', url).then(function(data) {
+      if (priceLoad) { priceLoad.remove(); priceLoad = null; }
+      renderPrices(data);
+      lastUpdate.textContent = 'Updated: ' + new Date().toLocaleTimeString();
+      return data;
+    }).catch(function() {
+      if (priceLoad) priceLoad.textContent = 'No data - offline or rate limited';
+      else {
+        var existing = priceGrid.querySelector('.no-data');
+        if (!existing) {
+          var nd = document.createElement('div');
+          nd.className = 'no-data';
+          nd.textContent = 'No data - offline or rate limited';
+          priceGrid.appendChild(nd);
+        }
+      }
+      return null;
+    });
+  }
+
+  /* ── Portfolio ──────────────────────────────────────── */
+  function renderPortfolio(prices) {
+    var pf = loadPortfolio();
+    pfList.innerHTML = '';
+    var total = 0;
+    var values = [];
+
+    for (var i = 0; i < pf.length; i++) {
+      var entry = pf[i];
+      var p = prices && prices[entry.coin] ? prices[entry.coin].usd : 0;
+      var val = entry.amount * p;
+      total += val;
+      values.push({ idx: i, coin: entry.coin, amount: entry.amount, value: val });
+    }
+
+    pfTotal.textContent = fmt(total);
+
+    for (var j = 0; j < values.length; j++) {
+      var v = values[j];
+      var pcVal = total > 0 ? (v.value / total * 100) : 0;
+      var row = document.createElement('div');
+      row.className = 'portfolio-row';
+      row.innerHTML =
+        '<span class="pr-coin">' + (COINS[v.coin] ? COINS[v.coin].symbol : v.coin) + '</span>' +
+        '<span class="pr-amount">' + v.amount + '</span>' +
+        '<span class="pr-value">' + fmt(v.value) + '</span>' +
+        '<div class="pr-bar-wrap"><div class="pr-bar" style="width:' + pcVal.toFixed(1) + '%"></div></div>' +
+        '<span class="pr-pct">' + pcVal.toFixed(1) + '%</span>' +
+        '<button class="pr-del" data-idx="' + v.idx + '">&times;</button>';
+      pfList.appendChild(row);
+    }
+
+    pfList.querySelectorAll('.pr-del').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var idx = parseInt(this.dataset.idx);
+        var current = loadPortfolio();
+        current.splice(idx, 1);
+        savePortfolio(current);
+        renderPortfolio(cache.prices);
+      });
+    });
+  }
+
+  pfAddBtn.addEventListener('click', function() {
+    var coin = pfCoin.value;
+    var amount = parseFloat(pfAmount.value);
+    if (!coin || isNaN(amount) || amount <= 0) return;
+    var pf = loadPortfolio();
+    // Merge if same coin
+    var found = false;
+    for (var i = 0; i < pf.length; i++) {
+      if (pf[i].coin === coin) { pf[i].amount += amount; found = true; break; }
+    }
+    if (!found) pf.push({ coin: coin, amount: amount });
+    savePortfolio(pf);
+    pfAmount.value = '';
+    renderPortfolio(cache.prices);
+  });
+
+  pfAmount.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') pfAddBtn.click();
+  });
+
+  /* ── Trending ───────────────────────────────────────── */
+  function mkSpan(cls, text) {
+    var s = document.createElement('span');
+    s.className = cls;
+    s.textContent = text;
+    return s;
+  }
+  function renderTrending(data) {
+    trendList.textContent = '';
+    var coins = data.coins || [];
+    var limit = Math.min(coins.length, 5);
+    for (var i = 0; i < limit; i++) {
+      var c = coins[i].item || coins[i];
+      var item = document.createElement('div');
+      item.className = 'trending-item';
+      item.appendChild(mkSpan('tr-rank', '#' + (i + 1)));
+      var rawSrc = typeof c.small === 'string' ? c.small : (typeof c.thumb === 'string' ? c.thumb : '');
+      if (/^https:\/\//.test(rawSrc)) {
+        var img = document.createElement('img');
+        img.src = rawSrc;
+        img.alt = '';
+        item.appendChild(img);
+      }
+      item.appendChild(mkSpan('tr-name', typeof c.name === 'string' && c.name ? c.name : 'Unknown'));
+      item.appendChild(mkSpan('tr-symbol', typeof c.symbol === 'string' ? c.symbol : ''));
+      item.appendChild(mkSpan('tr-price', c.data && c.data.price ? fmt(c.data.price) : ''));
+      trendList.appendChild(item);
+    }
+    if (limit === 0) {
+      trendList.textContent = '';
+      var empty = document.createElement('div');
+      empty.className = 'no-data';
+      empty.textContent = 'No trending data';
+      trendList.appendChild(empty);
+    }
+  }
+
+  function fetchTrending() {
+    return cachedFetch('trending', 'https://api.coingecko.com/api/v3/search/trending').then(function(data) {
+      if (trendLoad) { trendLoad.remove(); trendLoad = null; }
+      renderTrending(data);
+    }).catch(function() {
+      if (trendLoad) trendLoad.textContent = 'No data';
+      else trendList.innerHTML = '<div class="no-data">No data</div>';
+    });
+  }
+
+  /* ── Gas Tracker ────────────────────────────────────── */
+  function fetchGas() {
+    return cachedFetch('gas', 'https://api.etherscan.io/api?module=gastracker&action=gasoracle').then(function(data) {
+      if (data && data.result && typeof data.result === 'object') {
+        gasLow.textContent  = data.result.SafeGasPrice  || '--';
+        gasAvg.textContent  = data.result.ProposeGasPrice || '--';
+        gasHigh.textContent = data.result.FastGasPrice   || '--';
+      }
+    }).catch(function() {
+      gasLow.textContent = '--';
+      gasAvg.textContent = '--';
+      gasHigh.textContent = '--';
+    });
+  }
+
+  /* ── Quick Links ────────────────────────────────────── */
+  function renderLinks() {
+    linksGrid.innerHTML = '';
+    for (var i = 0; i < QUICK_LINKS.length; i++) {
+      var l = QUICK_LINKS[i];
+      var a = document.createElement('a');
+      a.className = 'link-card';
+      a.href = l.url;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.innerHTML =
+        '<div class="lc-icon">' + l.icon + '</div>' +
+        '<div class="lc-name">' + l.name + '</div>' +
+        '<div class="lc-desc">' + l.desc + '</div>';
+      linksGrid.appendChild(a);
+    }
+  }
+
+  /* ── Init & Refresh ─────────────────────────────────── */
+  function refreshAll() {
+    fetchPrices().then(function(prices) {
+      renderPortfolio(prices);
+    });
+    fetchTrending();
+    fetchGas();
+  }
+  // Expose so the opt-in gate button can trigger a refresh
+  window.refreshAll = refreshAll;
+
+  renderLinks();
+  renderPortfolio(null);
+
+  // Only fetch live data when user has opted in
+  var gate = document.getElementById('crypto-gate');
+  if (localStorage.getItem('pai-crypto-enabled') === 'true') {
+    refreshAll();
+    setInterval(refreshAll, REFRESH_MS);
+  } else {
+    gate.style.display = 'block';
+  }
+})();
+</script>
+</body>
+</html>
+DASHEOF
+
+# Enable the service (uses open-webui.service filename for compatibility)
+systemctl enable open-webui.service 2>/dev/null || true
+
+echo "[pai] PAI Chat UI installed at $CHAT_DIR"
