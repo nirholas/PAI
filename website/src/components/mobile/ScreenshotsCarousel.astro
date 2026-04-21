@@ -1,0 +1,154 @@
+---
+const slides = [
+  {
+    label: 'PAI desktop shell',
+    caption: 'The PAI desktop — draggable windows, dock, topbar',
+    kind: 'desktop',
+    src: '/screenshots/desktop-overview.svg',
+  },
+  {
+    label: 'Local AI chat',
+    caption: 'Chat with local LLMs privately — no internet required',
+    kind: 'chat',
+    src: '/screenshots/open-webui-chat.svg',
+  },
+  {
+    label: 'Terminal',
+    caption: 'Full-featured terminal with zsh and common dev tools',
+    kind: 'terminal',
+    src: '/screenshots/terminal-neofetch.svg',
+  },
+  {
+    label: 'Flash tool',
+    caption: 'Guided USB flash wizard with OS autodetection',
+    kind: 'flash',
+    src: '/screenshots/flashing-usb.svg',
+  },
+]
+---
+
+<section class="screenshots-section" aria-labelledby="screenshots-heading">
+  <h2 id="screenshots-heading" class="section-heading">See PAI in action</h2>
+
+  <div class="carousel-wrapper">
+    <ul
+      class="carousel"
+      role="region"
+      aria-label="PAI screenshots"
+      aria-roledescription="carousel"
+    >
+      {
+        slides.map((slide, i) => (
+          <li
+            class="carousel__slide"
+            role="group"
+            aria-roledescription="slide"
+            aria-label={`${i + 1} of ${slides.length}: ${slide.label}`}
+          >
+            <div class={`screenshot screenshot--${slide.kind}`}>
+              <img
+                class="screenshot__img"
+                src={slide.src}
+                alt={slide.label}
+                loading={i === 0 ? 'eager' : 'lazy'}
+                decoding="async"
+                width="672"
+                height="420"
+              />
+            </div>
+            <p class="carousel__caption">{slide.caption}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+
+  <p class="carousel__hint" aria-hidden="true">← swipe →</p>
+</section>
+
+<style>
+  .screenshots-section {
+    padding: var(--s-7) 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .section-heading {
+    font-size: clamp(1.25rem, 3vw, 1.75rem);
+    font-weight: 700;
+    margin-bottom: var(--s-5);
+    color: var(--fg);
+  }
+
+  .carousel-wrapper {
+    margin: 0 calc(-1 * var(--s-5));
+    padding: 0 var(--s-5);
+    overflow: hidden;
+  }
+
+  @media (max-width: 600px) {
+    .carousel-wrapper {
+      margin: 0 calc(-1 * var(--s-4));
+      padding: 0 var(--s-4);
+    }
+  }
+
+  .carousel {
+    display: flex;
+    gap: var(--s-4);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: var(--s-3);
+    list-style: none;
+  }
+
+  .carousel::-webkit-scrollbar {
+    display: none;
+  }
+
+  .carousel__slide {
+    scroll-snap-align: start;
+    flex-shrink: 0;
+    width: min(80vw, 420px);
+  }
+
+  .screenshot {
+    aspect-ratio: 16 / 10;
+    border-radius: var(--r-window);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    background: #0f0f1a;
+  }
+
+  .screenshot__img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .carousel__caption {
+    font-size: 0.8125rem;
+    color: var(--fg-muted);
+    text-align: center;
+    margin-top: var(--s-2);
+    padding: 0 var(--s-2);
+  }
+
+  .carousel__hint {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--fg-muted);
+    margin-top: var(--s-2);
+    letter-spacing: 0.1em;
+  }
+
+  @media (any-pointer: fine) {
+    .carousel__hint {
+      display: none;
+    }
+  }
+
+</style>
