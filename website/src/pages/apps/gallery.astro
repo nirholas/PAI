@@ -1,0 +1,52 @@
+---
+import AppStandalone from '../../layouts/AppStandalone.astro'
+import Head from '../../components/Head.astro'
+import '../../shell/tokens.css'
+import '../../apps/gallery/gallery.css'
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <Head
+      title="Gallery — PAI"
+      description="Image gallery for PAI — browse built-in images, drop local files, lightbox view."
+      ogImage="/og/gallery.png"
+    />
+    <link rel="icon" type="image/svg+xml" href="/icons/gallery.svg" />
+  </head>
+  <body>
+    <AppStandalone appId="gallery" />
+    <main class="gal-root" id="gal-root">
+      <div class="gal-toolbar" role="toolbar" aria-label="Gallery toolbar">
+        <input class="gal-search" type="search" placeholder="Search images…" aria-label="Search" />
+        <select class="gal-sort" aria-label="Sort">
+          <option value="name-asc">Name A-Z</option>
+          <option value="name-desc">Name Z-A</option>
+          <option value="newest">Newest</option>
+          <option value="oldest">Oldest</option>
+        </select>
+        <button class="gal-btn gal-add">Add images…</button>
+        <input class="gal-file-input" type="file" accept="image/*" multiple hidden />
+        <span class="gal-spacer"></span>
+        <span class="gal-count"></span>
+      </div>
+      <div class="gal-grid"></div>
+      <div class="gal-drop">Drop images to add</div>
+      <div class="gal-lightbox" role="dialog" aria-label="Image viewer">
+        <button class="lb-close" aria-label="Close">✕</button>
+        <button class="lb-prev" aria-label="Previous">◀</button>
+        <img src="" alt="" />
+        <button class="lb-next" aria-label="Next">▶</button>
+        <div class="lb-caption"></div>
+      </div>
+    </main>
+
+    <script>
+      import { bridge } from '../../apps/_bridge.js'
+      import { mountGallery } from '../../apps/gallery/gallery.ts'
+      bridge.ready()
+      mountGallery(document.getElementById('gal-root')!)
+    </script>
+  </body>
+</html>
