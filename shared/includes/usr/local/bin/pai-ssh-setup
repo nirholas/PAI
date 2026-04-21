@@ -1,0 +1,39 @@
+#!/bin/bash
+set -euo pipefail
+
+# Generate SSH key if none exists
+SSH_DIR="$HOME/.ssh"
+
+if [[ -f "$SSH_DIR/id_ed25519" ]]; then
+    echo "SSH key already exists:"
+    cat "$SSH_DIR/id_ed25519.pub"
+    exit 0
+fi
+
+echo "=== PAI SSH Key Setup ==="
+echo ""
+read -rp "Email for SSH key (or press Enter to skip): " email
+
+if [[ -z "$email" ]]; then
+    echo "Skipped. Run 'pai-ssh-setup' later to generate a key."
+    exit 0
+fi
+
+mkdir -p "$SSH_DIR"
+chmod 700 "$SSH_DIR"
+
+echo "[PAI] WARNING: generating SSH key with no passphrase. Set one later with: ssh-keygen -p -f ~/.ssh/id_ed25519"
+ssh-keygen -t ed25519 -C "$email" -f "$SSH_DIR/id_ed25519" -N ""
+
+echo ""
+echo "=== Your SSH public key ==="
+echo ""
+cat "$SSH_DIR/id_ed25519.pub"
+echo ""
+echo "Copy this key to GitHub: https://github.com/settings/ssh/new"
+echo "Or run: gh auth login"
+echo ""
+
+# Start ssh-agent
+eval "$(ssh-agent -s)"
+ssh-add "$SSH_DIR/id_ed25519" 2>/dev/null
