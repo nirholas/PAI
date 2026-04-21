@@ -1,0 +1,70 @@
+#!/bin/bash
+set -euo pipefail
+
+STATUS_FILE="/tmp/.pai-privacy-mode"
+
+case "${1:-}" in
+    on)
+        echo "[pai] Enabling Privacy Mode (Tor)..."
+
+        # Start Tor if not running
+        systemctl start tor 2>/dev/null || true
+
+        # Wait for Tor to bootstrap
+        MAX_WAIT=30
+        WAITED=0
+        while ! curl -sf --socks5 127.0.0.1:9050 https://check.torproject.org/api/ip &>/dev/null; do
+            if [[ $WAITED -ge $MAX_WAIT ]]; then
+                echo "[pai] Tor failed to connect after ${MAX_WAIT}s"
+                exit 1
+            fi
+            sleep 2
+            WAITED=$((WAITED + 2))
+        done
+
+        # Set up iptables to force traffic through Tor
+        # Allow localhost
+        iptables -t nat -A OUTPUT -d 127.0.0.0/8 -j RETURN
+        # Allow Tor's own connections
+        iptables -t nat -A OUTPUT -m owner --uid-owner debian-tor -j RETURN
+        # Redirect all TCP to Tor's TransPort
+        iptables -t nat -A OUTPUT -p tcp -j REDIRECT --to-ports 9040
+        # Redirect DNS to Tor's DNSPort
+        iptables -t nat -A OUTPUT -p udp --dport 53 -j REDIRECT --to-ports 5353
+
+        # Configure Tor for transparent proxying
+        if ! grep -q "TransPort" /etc/tor/torrc; then
+            echo "TransPort 9040" >> /etc/tor/torrc
+            echo "DNSPort 5353" >> /etc/tor/torrc
+            systemctl reload tor
+        fi
+
+        touch "$STATUS_FILE"
+        echo "[pai] Privacy Mode ENABLED — all traffic routes through Tor"
+        ;;
+
+    off)
+        echo "[pai] Disabling Privacy Mode..."
+
+        # Flush iptables NAT rules
+        iptables -t nat -F OUTPUT
+
+        rm -f "$STATUS_FILE"
+        echo "[pai] Privacy Mode DISABLED — direct connection restored"
+        ;;
+
+    status)
+        if [[ -f "$STATUS_FILE" ]]; then
+            IP=$(curl -sf --socks5 127.0.0.1:9050 https://check.torproject.org/api/ip 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin).get('IP','unknown'))" 2>/dev/null || echo "checking...")
+            echo "Privacy Mode: ON"
+            echo "Tor IP: $IP"
+        else
+            echo "Privacy Mode: OFF"
+        fi
+        ;;
+
+    *)
+        echo "Usage: sudo pai-privacy {on|off|status}"
+        exit 1
+        ;;
+esac
