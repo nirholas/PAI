@@ -1,0 +1,48 @@
+#!/bin/bash
+# ── Install Ledger Live (amd64 only — no arm64 build upstream) ─────────
+set -euo pipefail
+
+LEDGER_VERSION="2.91.1"
+ARCH=$(dpkg --print-architecture)
+if [ "$ARCH" != "amd64" ]; then
+    echo "[pai] Ledger Live: no arm64 build upstream — skipping."
+    exit 0
+fi
+
+echo "[pai] Installing Ledger Live ${LEDGER_VERSION}..."
+
+# SHA512 checksum sourced from Ledger's official release metadata:
+#   https://download.live.ledger.com/latest-linux-2.91.1.yml
+# The sha512 field in that YAML is the base64-encoded SHA512 of the AppImage.
+# Hex equivalent: c270725d1a78b75e23ede6360008648cdd35e10f20d2d4c2af5f4aaa3b8f95957c5c55a6938722bdd14a5656d3605cf886ef4f241bd89e8fe58882e5709a290f
+LEDGER_SHA512="c270725d1a78b75e23ede6360008648cdd35e10f20d2d4c2af5f4aaa3b8f95957c5c55a6938722bdd14a5656d3605cf886ef4f241bd89e8fe58882e5709a290f"
+
+install -d -m 0755 /opt/ledger-live
+curl -fsSL -o /tmp/Ledger-Live.AppImage \
+    "https://download.live.ledger.com/releases/${LEDGER_VERSION}/linux/ledger-live-desktop-${LEDGER_VERSION}-linux-x86_64.AppImage" \
+    || { echo "[pai] Ledger Live download failed — skipping."; exit 0; }
+
+echo "${LEDGER_SHA512}  /tmp/Ledger-Live.AppImage" | sha512sum -c \
+    || { echo "[pai] ERROR: Ledger Live SHA512 mismatch — refusing to install."; rm -f /tmp/Ledger-Live.AppImage; exit 1; }
+
+mv /tmp/Ledger-Live.AppImage /opt/ledger-live/Ledger-Live.AppImage
+chmod +x /opt/ledger-live/Ledger-Live.AppImage
+
+cat > /usr/local/bin/ledger-live <<'WRAP'
+#!/bin/bash
+exec /opt/ledger-live/Ledger-Live.AppImage --no-sandbox "$@"
+WRAP
+chmod +x /usr/local/bin/ledger-live
+
+cat > /usr/share/applications/ledger-live.desktop <<'DESKTOP'
+[Desktop Entry]
+Type=Application
+Name=Ledger Live
+Comment=Manage Ledger hardware wallets
+Exec=ledger-live
+Icon=ledger-live
+Terminal=false
+Categories=Finance;Office;
+DESKTOP
+
+echo "[pai] Ledger Live installed."
