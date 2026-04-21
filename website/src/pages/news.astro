@@ -1,0 +1,77 @@
+---
+import { getCollection } from 'astro:content'
+import SitePage from '../layouts/SitePage.astro'
+
+type Post = { date: string; title: string; summary: string; href: string }
+
+const entries = await getCollection('changelog')
+
+const posts: Post[] = entries.length === 0
+  ? [
+      {
+        date: '2026-04-18',
+        title: 'Website refresh — standalone pages for Home, How PAI works, Install, Support, News',
+        summary: 'Dedicated pages alongside the OS shell demo. Documentation moved to docs.pai.direct.',
+        href: 'https://github.com/nirholas/pai/commits/main',
+      },
+    ]
+  : entries
+      .slice()
+      .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+      .map((entry) => ({
+        date: entry.data.date.toISOString().slice(0, 10),
+        title: entry.data.title,
+        summary: entry.data.description ?? '',
+        href: entry.data.githubUrl ?? 'https://github.com/nirholas/pai/releases',
+      }))
+---
+
+<SitePage
+  title="News — PAI"
+  description="Release announcements, project updates, and technical posts from the PAI project."
+  active="news"
+>
+  <article class="news">
+    <header>
+      <h1>News</h1>
+      <p class="lede">
+        Release announcements, project updates, and posts about what we're working on.
+      </p>
+    </header>
+
+    {posts.length === 0 ? (
+      <p class="empty">No posts yet.</p>
+    ) : (
+      <ol class="post-list">
+        {posts.map(p => (
+          <li>
+            <time>{p.date}</time>
+            <h2><a href={p.href}>{p.title}</a></h2>
+            <p>{p.summary}</p>
+          </li>
+        ))}
+      </ol>
+    )}
+
+    <p class="subscribe">
+      Follow along: <a href="https://github.com/nirholas/pai" target="_blank" rel="noreferrer">GitHub ↗</a>
+      · <a href="/changelog.xml">RSS</a>
+    </p>
+  </article>
+
+  <style>
+    .news { max-width: 760px; }
+    h1 { font-size: 40px; color: #fff; margin: 0 0 16px; font-weight: 700; }
+    .lede { font-size: 18px; line-height: 1.6; color: #c0c0d0; margin: 0 0 48px; }
+    .empty { color: #888; }
+    .post-list { list-style: none; padding: 0; margin: 0; }
+    .post-list li { padding: 24px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .post-list time { color: #888; font-size: 13px; font-family: ui-monospace, monospace; }
+    .post-list h2 { font-size: 20px; margin: 6px 0 8px; font-weight: 600; }
+    .post-list h2 a { color: #fff; text-decoration: none; }
+    .post-list h2 a:hover { color: #7aa2f7; }
+    .post-list p { color: #b0b0c0; font-size: 15px; line-height: 1.6; margin: 0; }
+    .subscribe { margin-top: 32px; color: #888; font-size: 14px; }
+    .subscribe a { color: #7aa2f7; }
+  </style>
+</SitePage>
