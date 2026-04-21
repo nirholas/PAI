@@ -1,0 +1,27 @@
+window {
+    background-color: #0f0f1a;
+    border: 1px solid #2a2a3e;
+    border-radius: 10px;
+    font-family: 'Noto Sans', sans-serif;
+    font-size: 14px;
+}
+
+#input {
+    background-color: #1a1a2e;
+    color: #7aa2f7;
+    border: 1px solid #2a2a3e;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin: 8px;
+}
+
+#entry {
+    padding: 8px 14px;
+    color: #e0e0e0;
+    border-radius: 6px;
+}
+
+#entry:selected {
+    background-color: #1a1a2e;
+    color: #7aa2f7;
+}
