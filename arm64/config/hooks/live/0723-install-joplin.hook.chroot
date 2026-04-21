@@ -1,0 +1,50 @@
+#!/bin/bash
+# ── Install Joplin (markdown notes) ────────────────────────────────────
+# Joplin is not packaged for Debian. We ship the official AppImage pinned
+# to a known version, with a wrapper that exec's it. Works on both amd64
+# and arm64 — Joplin ships AppImages for both.
+set -euo pipefail
+
+JOPLIN_VERSION="2.14.22"
+ARCH=$(dpkg --print-architecture)
+case "$ARCH" in
+    amd64) JOPLIN_SUFFIX="x86_64" ;;
+    arm64) JOPLIN_SUFFIX="arm64"  ;;
+    *) echo "[pai] Joplin: unsupported arch $ARCH"; exit 0 ;;
+esac
+
+echo "[pai] Installing Joplin ${JOPLIN_VERSION} (${ARCH})..."
+
+install -d -m 0755 /opt/joplin
+curl -fsSL -o /opt/joplin/Joplin.AppImage \
+    "https://github.com/laurent22/joplin/releases/download/v${JOPLIN_VERSION}/Joplin-${JOPLIN_VERSION}-${JOPLIN_SUFFIX}.AppImage" \
+    || { echo "[pai] Joplin download failed — leaving wrapper absent."; exit 0; }
+chmod +x /opt/joplin/Joplin.AppImage
+
+cat > /usr/local/bin/joplin <<'WRAP'
+#!/bin/bash
+exec /opt/joplin/Joplin.AppImage --no-sandbox "$@"
+WRAP
+chmod +x /usr/local/bin/joplin
+
+# Pre-seed welcome note
+install -d -m 0755 /etc/skel/.config/joplin-desktop
+cat > /etc/skel/.config/joplin-desktop/welcome-note.md <<'NOTE'
+# Welcome to Joplin on PAI
+
+PAI is offline-by-default. Joplin stores your notes locally by default.
+
+## Sync (optional, opt-in)
+
+Joplin supports end-to-end encrypted sync to WebDAV, Nextcloud, Dropbox,
+OneDrive, or S3. If you want sync, open: *Tools → Options → Sync*. Set
+the E2EE passphrase first — never sync plaintext.
+
+## Persistence
+
+PAI is a live USB. Notes only survive reboot if your USB has a
+persistence partition. Run `pai-persistence-setup` from a terminal to
+enable it, or back up your notebook to external media before shutdown.
+NOTE
+
+echo "[pai] Joplin installed."
