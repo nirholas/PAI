@@ -1,0 +1,204 @@
+#!/bin/bash
+# PAI Settings — two-level wofi-driven settings launcher.
+# Top-level menu routes to category submenus; submenus launch GUI tools or
+# pai-settings-* helper scripts. Cancelling a submenu returns to the top.
+set -euo pipefail
+
+STYLE=/etc/pai/wofi-shutdown.css
+WOFI_ARGS=(--dmenu --cache-file=/dev/null)
+[ -r "$STYLE" ] && WOFI_ARGS+=(--style "$STYLE")
+
+pick() {
+    local prompt="$1" lines="$2" width="$3"
+    shift 3
+    printf '%s\n' "$@" | wofi "${WOFI_ARGS[@]}" \
+        --prompt "$prompt" --lines "$lines" --width "$width" --height $((lines * 38 + 60)) 2>/dev/null
+}
+
+run_or_warn() {
+    if command -v "$1" >/dev/null 2>&1; then
+        "$@" &
+    else
+        notify_missing "$1"
+    fi
+}
+
+notify_missing() {
+    if command -v zenity >/dev/null 2>&1; then
+        zenity --warning --no-wrap --title="PAI Settings" \
+            --text="<b>$1</b> is not installed on this system." 2>/dev/null &
+    else
+        foot -e sh -c "echo '$1 is not installed.'; read -rp 'Press Enter...' _" &
+    fi
+}
+
+menu_system() {
+    local choice
+    choice=$(pick "System" 7 300 \
+        "🕐  Date & Time" \
+        "⌨️  Keyboard" \
+        "🖱️  Mouse & Touchpad" \
+        "🔋  Power" \
+        "🖥️  Display" \
+        "🔊  Sound" \
+        "ℹ️  About")
+    case "$choice" in
+        *Date*)      run_or_warn pai-settings-datetime ;;
+        *Keyboard*)  run_or_warn pai-settings-keyboard ;;
+        *Mouse*)     run_or_warn pai-settings-pointer ;;
+        *Power*)     run_or_warn pai-settings-power ;;
+        *Display*)   run_or_warn wdisplays ;;
+        *Sound*)     run_or_warn pavucontrol ;;
+        *About*)     run_or_warn pai-settings-about ;;
+        *)           main ;;
+    esac
+}
+
+menu_network() {
+    local choice
+    choice=$(pick "Network" 4 300 \
+        "📶  Wi-Fi / Wired" \
+        "🔵  Bluetooth" \
+        "🛡️  Firewall status" \
+        "🧅  Tor / Privacy mode")
+    case "$choice" in
+        *Wi-Fi*)     run_or_warn nm-connection-editor ;;
+        *Bluetooth*) run_or_warn blueman-manager ;;
+        *Firewall*)  foot -e sh -c 'sudo ufw status verbose; echo; read -rp "Press Enter..." _' & ;;
+        *Tor*)       run_or_warn pai-privacy ;;
+        *)           main ;;
+    esac
+}
+
+menu_privacy() {
+    local choice
+    choice=$(pick "Privacy & Security" 10 340 \
+        "🕵️  Privacy mode (MAC + Tor)" \
+        "🗝️  Keys (passwords, SSH, GPG, age)" \
+        "🔏  Encryption (Kleopatra)" \
+        "📦  VeraCrypt containers" \
+        "💾  Persistence" \
+        "🧹  Metadata scrubber (mat2)" \
+        "🛡️  VPN (Mullvad)" \
+        "📡  Network analyzer (Wireshark)" \
+        "⛏️  Monero full node" \
+        "💬  SimpleX Chat")
+    case "$choice" in
+        *Privacy\ mode*)   run_or_warn pai-privacy ;;
+        *Keys*)            run_or_warn pai-settings-keys ;;
+        *Encryption*)      run_or_warn kleopatra ;;
+        *VeraCrypt*)       run_or_warn veracrypt ;;
+        *Persistence*)     run_or_warn pai-persistence ;;
+        *Metadata*)        foot -e sh -c 'echo "Right-click files in Thunar → Strip metadata (mat2)."; echo; echo "Or run: mat2 <file>"; read -rp "Press Enter..." _' & ;;
+        *VPN*)             run_or_warn mullvad-gui ;;
+        *Wireshark*)       run_or_warn wireshark ;;
+        *Monero\ full*)    run_or_warn pai-settings-monerod ;;
+        *SimpleX*)         run_or_warn simplex-chat-desktop ;;
+        *)                 main ;;
+    esac
+}
+
+menu_ai() {
+    local choice
+    choice=$(pick "AI / Ollama" 4 300 \
+        "🧠  Pick default model" \
+        "⬇️  Pull a model" \
+        "🌐  Open Web UI" \
+        "📊  GPU / status")
+    case "$choice" in
+        *default\ model*) if command -v pai-recommend-model &>/dev/null; then run_or_warn pai-recommend-model; else run_or_warn pai-settings-pull-model; fi ;;
+        *Pull*)           run_or_warn pai-settings-pull-model ;;
+        *Web\ UI*)        xdg-open http://localhost:8080 >/dev/null 2>&1 & ;;
+        *status*)         if command -v pai-status &>/dev/null; then foot -e sh -c 'pai-status; echo; read -rp "Press Enter..." _'; else foot -e sh -c 'ollama list; echo; read -rp "Press Enter..." _'; fi & ;;
+        *)                main ;;
+    esac
+}
+
+menu_appearance() {
+    local choice
+    choice=$(pick "Appearance" 2 300 \
+        "🎨  GTK theme" \
+        "🖼️  Wallpaper")
+    case "$choice" in
+        *theme*)     run_or_warn lxappearance ;;
+        *Wallpaper*) run_or_warn pai-settings-wallpaper ;;
+        *)           main ;;
+    esac
+}
+
+menu_apps() {
+    local choice
+    choice=$(pick "Apps & Defaults" 3 300 \
+        "🚀  Browse installed apps" \
+        "🔗  Default apps" \
+        "♿  Accessibility")
+    case "$choice" in
+        *Browse*)        wofi --show drun --cache-file=/dev/null & ;;
+        *Default*)       run_or_warn pai-settings-default-apps ;;
+        *Accessibility*) run_or_warn pai-settings-accessibility ;;
+        *)               main ;;
+    esac
+}
+
+menu_storage() {
+    local choice
+    choice=$(pick "Storage & Devices" 3 300 \
+        "💽  Disks" \
+        "🖨️  Printers" \
+        "🗂️  Files")
+    case "$choice" in
+        *Disks*)    run_or_warn gnome-disks ;;
+        *Printers*) run_or_warn system-config-printer ;;
+        *Files*)    run_or_warn thunar ;;
+        *)          main ;;
+    esac
+}
+
+menu_users() {
+    run_or_warn pai-settings-users
+}
+
+menu_updates() {
+    run_or_warn pai-settings-updates
+}
+
+menu_advanced() {
+    local choice
+    choice=$(pick "Advanced" 2 300 \
+        "⚙️  Processes" \
+        "💻  Terminal")
+    case "$choice" in
+        *Processes*) run_or_warn lxtask ;;
+        *Terminal*)  run_or_warn foot ;;
+        *)           main ;;
+    esac
+}
+
+main() {
+    local choice
+    choice=$(pick "Settings" 10 300 \
+        "🖥️  System" \
+        "📶  Network" \
+        "🔒  Privacy & Security" \
+        "🧠  AI / Ollama" \
+        "🎨  Appearance" \
+        "🚀  Apps & Defaults" \
+        "💽  Storage & Devices" \
+        "👤  Users & Login" \
+        "⬆️  Updates" \
+        "🧰  Advanced")
+    case "$choice" in
+        *System*)              menu_system ;;
+        *Network*)             menu_network ;;
+        *Privacy*)             menu_privacy ;;
+        *AI*)                  menu_ai ;;
+        *Appearance*)          menu_appearance ;;
+        *Apps*)                menu_apps ;;
+        *Storage*)             menu_storage ;;
+        *Users*)               menu_users ;;
+        *Updates*)             menu_updates ;;
+        *Advanced*)            menu_advanced ;;
+    esac
+}
+
+main
