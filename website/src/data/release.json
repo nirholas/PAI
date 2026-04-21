@@ -1,0 +1,15 @@
+{
+  "version": "0.1.0-rc1",
+  "buildDate": "2026-04-20",
+  "isoName": "pai-amd64.iso",
+  "sizeBytes": 8943835136,
+  "sizeMB": 8530,
+  "sha256": "7e88f4a6ac1cbec6fbfc0caf30ce85e7121fee2c1a663b393f66671d7798dd06",
+  "sha256Arm64": "f6e7dca3f6713126066aa7324999d3475c18c3c68d25b9e96553b92a55744bd2",
+  "gpgFingerprint": "",
+  "downloadUrl": "https://get.pai.direct/pai-amd64.iso",
+  "downloadUrlArm64": "https://get.pai.direct/pai-arm64.iso",
+  "signatureUrl": "https://get.pai.direct/pai-amd64.iso.asc",
+  "releaseUrl": "https://github.com/nirholas/pai/releases/tag/v0.1.0-rc1",
+  "buildWorkflowUrl": "https://github.com/nirholas/pai/actions"
+}
