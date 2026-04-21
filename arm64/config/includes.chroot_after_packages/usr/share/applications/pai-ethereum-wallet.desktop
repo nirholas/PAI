@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Ethereum Wallet
+Comment=Offline Ethereum/EVM wallet toolkit
+Exec=firefox file:///opt/pai-wallets/ethereum-wallet.html
+Icon=wallet
+Type=Application
+Categories=Finance;
+Keywords=ethereum;eth;evm;wallet;crypto;
