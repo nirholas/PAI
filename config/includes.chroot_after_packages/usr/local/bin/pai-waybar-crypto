@@ -1,0 +1,68 @@
+#!/bin/bash
+# Waybar custom module: crypto price ticker
+# Uses CoinGecko free API (no key required, 30 req/min limit)
+
+CACHE="/tmp/.pai-crypto-cache"
+CACHE_AGE=55  # seconds
+
+# Use cache if fresh enough
+if [[ -f "$CACHE" ]]; then
+    AGE=$(( $(date +%s) - $(stat -c %Y "$CACHE") ))
+    if [[ $AGE -lt $CACHE_AGE ]]; then
+        cat "$CACHE"
+        exit 0
+    fi
+fi
+
+# Fetch prices
+DATA=$(curl -sf --max-time 5 \
+    "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true" \
+    2>/dev/null)
+
+if [[ -z "$DATA" ]]; then
+    echo '{"text": "₿ ---.--", "tooltip": "Price data unavailable", "class": "error"}'
+    exit 0
+fi
+
+# Parse with python3 (already installed)
+RESULT=$(python3 -c "
+import json, sys
+d = json.loads(sys.stdin.read())
+btc = d.get('bitcoin', {})
+eth = d.get('ethereum', {})
+sol = d.get('solana', {})
+
+btc_price = btc.get('usd', 0)
+btc_change = btc.get('usd_24h_change', 0)
+eth_price = eth.get('usd', 0)
+eth_change = eth.get('usd_24h_change', 0)
+sol_price = sol.get('usd', 0)
+sol_change = sol.get('usd_24h_change', 0)
+
+# Format prices
+if btc_price >= 1000:
+    btc_str = f'{btc_price/1000:.1f}k'
+else:
+    btc_str = f'{btc_price:.0f}'
+
+eth_str = f'{eth_price:,.0f}'
+sol_str = f'{sol_price:.0f}'
+
+# Arrow indicators
+btc_arrow = '\u25b2' if btc_change >= 0 else '\u25bc'
+eth_arrow = '\u25b2' if eth_change >= 0 else '\u25bc'
+
+cls = 'up' if btc_change >= 0 else 'down'
+
+text = f'\u20bf \${btc_str} {btc_arrow}  \u039e \${eth_str}'
+tooltip = f'BTC: \${btc_price:,.2f} ({btc_change:+.1f}%)\nETH: \${eth_price:,.2f} ({eth_change:+.1f}%)\nSOL: \${sol_price:,.2f} ({sol_change:+.1f}%)'
+
+print(json.dumps({'text': text, 'tooltip': tooltip, 'class': cls}))
+" <<< "$DATA" 2>/dev/null)
+
+if [[ -n "$RESULT" ]]; then
+    echo "$RESULT" > "$CACHE"
+    echo "$RESULT"
+else
+    echo '{"text": "₿ ---.--", "tooltip": "Parse error", "class": "error"}'
+fi
