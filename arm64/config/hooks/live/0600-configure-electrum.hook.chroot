@@ -1,0 +1,23 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "[pai] Configuring Electrum Bitcoin wallet..."
+
+# Pre-create config directory with sane defaults
+mkdir -p /etc/skel/.electrum
+
+# Electrum config — auto-connect, dark theme
+cat > /etc/skel/.electrum/config <<'EOF'
+{
+    "auto_connect": true,
+    "check_updates": false,
+    "dark_theme": true,
+    "decimal_point": 8,
+    "fee_level": 2,
+    "show_fee": true,
+    "use_rbf": true,
+    "dont_show_testnet_warning": true
+}
+EOF
+
+echo "[pai] Electrum configured."
