@@ -1,0 +1,16 @@
+{
+  "version": "0.1.0-rc1",
+  "tag": "v0.1.0-rc1",
+  "publishedAt": "2026-04-17T00:00:00Z",
+  "prerelease": true,
+  "signingKeyFingerprint": "",
+  "files": [
+    {
+      "name": "pai-0.1.0-rc1-amd64.iso",
+      "arch": "amd64",
+      "size": 0,
+      "sha256": "",
+      "url": "https://github.com/nirholas/pai/releases/download/v0.1.0-rc1/pai-0.1.0-rc1-amd64.iso"
+    }
+  ]
+}
