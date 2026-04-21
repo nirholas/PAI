@@ -1,0 +1,62 @@
+#!/bin/bash
+# ── Install Joplin (markdown notes) ────────────────────────────────────
+# Joplin is not packaged for Debian. We ship the official AppImage pinned
+# to a known version, with a wrapper that exec's it. Works on both amd64
+# and arm64 — Joplin ships AppImages for both.
+set -euo pipefail
+
+JOPLIN_VERSION="2.14.22"
+ARCH=$(dpkg --print-architecture)
+case "$ARCH" in
+    amd64) JOPLIN_SUFFIX="x86_64" ;;
+    arm64) JOPLIN_SUFFIX="arm64"  ;;
+    *) echo "[pai] Joplin: unsupported arch $ARCH"; exit 0 ;;
+esac
+
+echo "[pai] Installing Joplin ${JOPLIN_VERSION} (${ARCH})..."
+
+# SHA512 checksums from official release assets on GitHub:
+#   https://github.com/laurent22/joplin/releases/tag/v2.14.22
+# File: Joplin-2.14.22.AppImage.sha512 (amd64 / x86_64 only)
+JOPLIN_SHA512_amd64="fe4503d153e82d0b6802d6e14810c3159438899cd8da86464f402a4d6e4cc7db4b82240a8ff83ea6c1b197b7ef1d5f9c7a8580a428a906ef08590123cd489b83"
+
+install -d -m 0755 /opt/joplin
+curl -fsSL -o /tmp/Joplin.AppImage \
+    "https://github.com/laurent22/joplin/releases/download/v${JOPLIN_VERSION}/Joplin-${JOPLIN_VERSION}-${JOPLIN_SUFFIX}.AppImage" \
+    || { echo "[pai] Joplin download failed — leaving wrapper absent."; exit 0; }
+
+# Verify SHA512 for amd64; arm64 builds do not have an upstream .sha512 file
+if [ "$ARCH" = "amd64" ]; then
+    echo "${JOPLIN_SHA512_amd64}  /tmp/Joplin.AppImage" | sha512sum -c \
+        || { echo "[pai] ERROR: Joplin SHA512 mismatch — refusing to install."; rm -f /tmp/Joplin.AppImage; exit 1; }
+fi
+mv /tmp/Joplin.AppImage /opt/joplin/Joplin.AppImage
+chmod +x /opt/joplin/Joplin.AppImage
+
+cat > /usr/local/bin/joplin <<'WRAP'
+#!/bin/bash
+exec /opt/joplin/Joplin.AppImage --no-sandbox "$@"
+WRAP
+chmod +x /usr/local/bin/joplin
+
+# Pre-seed welcome note
+install -d -m 0755 /etc/skel/.config/joplin-desktop
+cat > /etc/skel/.config/joplin-desktop/welcome-note.md <<'NOTE'
+# Welcome to Joplin on PAI
+
+PAI is offline-by-default. Joplin stores your notes locally by default.
+
+## Sync (optional, opt-in)
+
+Joplin supports end-to-end encrypted sync to WebDAV, Nextcloud, Dropbox,
+OneDrive, or S3. If you want sync, open: *Tools → Options → Sync*. Set
+the E2EE passphrase first — never sync plaintext.
+
+## Persistence
+
+PAI is a live USB. Notes only survive reboot if your USB has a
+persistence partition. Run `pai-persistence-setup` from a terminal to
+enable it, or back up your notebook to external media before shutdown.
+NOTE
+
+echo "[pai] Joplin installed."
