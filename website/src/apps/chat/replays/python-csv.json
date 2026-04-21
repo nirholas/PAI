@@ -1,0 +1,15 @@
+{
+  "id": "python-csv",
+  "title": "Help me write a Python script to parse CSV.",
+  "model": "llama3.2:3b",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Help me write a Python script to parse a CSV file. I want to read it, filter rows where the \"status\" column equals \"active\", and print the results as a table."
+    },
+    {
+      "role": "assistant",
+      "content": "Here's a clean script using Python's built-in `csv` module plus `tabulate` for nice table output:\n\n```python\nimport csv\nfrom tabulate import tabulate\n\ndef parse_csv(filepath: str, status_filter: str = \"active\") -> None:\n    with open(filepath, newline=\"\", encoding=\"utf-8\") as f:\n        reader = csv.DictReader(f)\n        rows = [\n            row for row in reader\n            if row.get(\"status\", \"\").lower() == status_filter.lower()\n        ]\n\n    if not rows:\n        print(f\"No rows with status='{status_filter}' found.\")\n        return\n\n    headers = list(rows[0].keys())\n    table = [[row[h] for h in headers] for row in rows]\n    print(tabulate(table, headers=headers, tablefmt=\"rounded_outline\"))\n\nif __name__ == \"__main__\":\n    import sys\n    filepath = sys.argv[1] if len(sys.argv) > 1 else \"data.csv\"\n    parse_csv(filepath)\n```\n\n**To run it:**\n```bash\npip install tabulate\npython parse_csv.py your_file.csv\n```\n\n**What it does:**\n1. Opens the CSV with `DictReader` so columns are named\n2. Filters rows where `status` == `\"active\"` (case-insensitive)\n3. Prints a formatted table with `tabulate`\n\n**Don't have `tabulate`?** Replace the last two lines with:\n```python\nprint(\",\".join(headers))\nfor row in rows:\n    print(\",\".join(row[h] for h in headers))\n```\n\nWant me to add CSV writing, pagination, or a different output format?"
+    }
+  ]
+}
