@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=App Store
+Comment=Browse and install apps from Flathub
+Exec=gnome-software --mode=overview
+Icon=org.gnome.Software
+Type=Application
+Categories=System;PackageManager;
+Keywords=store;apps;install;flatpak;
