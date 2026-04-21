@@ -1,0 +1,54 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "[pai] Installing Feather Wallet (Monero)..."
+
+FEATHER_VERSION="2.6.7"
+# Feather publishes releases on GitHub with per-file .asc GPG signatures.
+FEATHER_BASE_URL="https://github.com/feather-wallet/feather/releases/download/${FEATHER_VERSION}"
+FEATHER_ARCHIVE="feather-${FEATHER_VERSION}-linux.zip"
+INSTALL_DIR="/opt/feather-wallet"
+
+# Feather Wallet release signing key
+# Fingerprint: 8185 E158 A333 30C7 FD61 BC0D 1F76 E155 CEFB A71C
+# Source: https://docs.featherwallet.org/guides/release-signing-key
+gpg --keyserver hkps://keys.openpgp.org --recv-keys 8185E158A33330C7FD61BC0D1F76E155CEFBA71C \
+    || gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys 8185E158A33330C7FD61BC0D1F76E155CEFBA71C \
+    || { echo "[pai] WARNING: Could not fetch Feather signing key — skipping install."; exit 0; }
+
+mkdir -p "$INSTALL_DIR"
+
+cd /tmp
+if ! curl -fSL -o feather.zip "${FEATHER_BASE_URL}/${FEATHER_ARCHIVE}"; then
+    echo "[pai] WARNING: Failed to download Feather Wallet. Skipping."
+    exit 0
+fi
+curl -fSL -o feather.zip.asc "${FEATHER_BASE_URL}/${FEATHER_ARCHIVE}.asc" \
+    || { echo "[pai] WARNING: Failed to download Feather signature — skipping install."; rm -f feather.zip; exit 0; }
+if ! gpg --verify feather.zip.asc feather.zip; then
+    echo "[pai] ERROR: Feather Wallet GPG verification failed — refusing to install."
+    rm -f feather.zip feather.zip.asc
+    exit 1
+fi
+rm -f feather.zip.asc
+
+unzip -o feather.zip -d "$INSTALL_DIR/"
+rm -f feather.zip
+
+# The binary may be named feather or feather-<version> — find and normalize it
+if [ -f "$INSTALL_DIR/feather" ]; then
+    FEATHER_BIN="$INSTALL_DIR/feather"
+else
+    FEATHER_BIN=$(find "$INSTALL_DIR" -maxdepth 1 -name 'feather*' -type f | head -1)
+    if [ -n "$FEATHER_BIN" ] && [ "$FEATHER_BIN" != "$INSTALL_DIR/feather" ]; then
+        mv "$FEATHER_BIN" "$INSTALL_DIR/feather"
+    fi
+    FEATHER_BIN="$INSTALL_DIR/feather"
+fi
+
+chmod +x "$FEATHER_BIN"
+
+# Create symlink
+ln -sf "$FEATHER_BIN" /usr/local/bin/feather-wallet
+
+echo "[pai] Feather Wallet installed."
