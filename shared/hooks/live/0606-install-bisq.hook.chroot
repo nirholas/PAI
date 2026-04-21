@@ -1,0 +1,44 @@
+#!/bin/bash
+# ── Install Bisq (decentralized Bitcoin exchange) ──────────────────────
+# Bisq publishes amd64 debs only.
+set -euo pipefail
+
+BISQ_VERSION="1.9.17"
+ARCH=$(dpkg --print-architecture)
+if [ "$ARCH" != "amd64" ]; then
+    echo "[pai] Bisq is amd64-only — skipping on $ARCH."
+    exit 0
+fi
+
+echo "[pai] Installing Bisq ${BISQ_VERSION}..."
+
+cd /tmp
+curl -fsSL -o bisq.deb \
+    "https://github.com/bisq-network/bisq/releases/download/v${BISQ_VERSION}/Bisq-64bit-${BISQ_VERSION}.deb" \
+    || { echo "[pai] Bisq download failed — skipping."; exit 0; }
+
+# GPG verification — Bisq release signing key (Alejandro Garcia, E222AA02)
+# Key fingerprint: B493 3191 06CC 3D1F 252E 19CB F806 F422 E222 AA02
+# Key is published alongside each release on GitHub.
+curl -fsSL -o bisq-signing-key.asc \
+    "https://github.com/bisq-network/bisq/releases/download/v${BISQ_VERSION}/E222AA02.asc" \
+    || { echo "[pai] Bisq signing key download failed — skipping install."; rm -f bisq.deb; exit 0; }
+gpg --import bisq-signing-key.asc
+curl -fsSL -o bisq.deb.asc \
+    "https://github.com/bisq-network/bisq/releases/download/v${BISQ_VERSION}/Bisq-64bit-${BISQ_VERSION}.deb.asc" \
+    || { echo "[pai] Bisq signature download failed — skipping install."; rm -f bisq.deb bisq-signing-key.asc; exit 0; }
+if ! gpg --verify bisq.deb.asc bisq.deb; then
+    echo "[pai] ERROR: Bisq GPG verification failed — refusing to install."
+    rm -f bisq.deb bisq.deb.asc bisq-signing-key.asc
+    exit 1
+fi
+rm -f bisq-signing-key.asc bisq.deb.asc
+
+DEBIAN_FRONTEND=noninteractive apt-get install -y /tmp/bisq.deb \
+    || echo "[pai] Bisq install failed — non-fatal."
+rm -f /tmp/bisq.deb
+
+apt-get clean
+rm -rf /var/lib/apt/lists/*
+
+echo "[pai] Bisq installed."
