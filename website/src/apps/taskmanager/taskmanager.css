@@ -1,0 +1,142 @@
+/* Task Manager — PAI */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-ui);
+  overflow: hidden;
+  font-size: 13px;
+}
+
+.tm-root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.tm-tabs {
+  flex: 0 0 auto;
+  display: flex;
+  background: var(--bg-elev);
+  border-bottom: 1px solid var(--border);
+}
+.tm-tab {
+  padding: var(--s-3) var(--s-4);
+  background: transparent;
+  color: var(--fg-muted);
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.tm-tab[aria-selected="true"] { color: var(--pai-blue); border-bottom-color: var(--pai-blue); }
+.tm-tab:hover { color: var(--fg); }
+.tm-tab:focus-visible { outline: 2px solid var(--pai-blue); outline-offset: -2px; }
+
+.tm-panel {
+  flex: 1;
+  overflow: auto;
+  padding: var(--s-3);
+  display: none;
+}
+.tm-panel.active { display: block; }
+
+/* ── Processes table */
+.tm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.tm-table th, .tm-table td {
+  padding: var(--s-2) var(--s-3);
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.tm-table th {
+  font-weight: 600;
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  background: var(--bg-elev);
+  position: sticky;
+  top: 0;
+}
+.tm-table tr:hover { background: color-mix(in srgb, var(--pai-blue) 8%, transparent); }
+
+.pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.pill.active { background: color-mix(in srgb, var(--pai-green) 22%, transparent); color: var(--pai-green); }
+.pill.inactive { background: color-mix(in srgb, var(--fg-muted) 22%, transparent); color: var(--fg-muted); }
+.pill.focused { background: color-mix(in srgb, var(--pai-blue) 22%, transparent); color: var(--pai-blue); }
+.pill.min { background: color-mix(in srgb, var(--pai-yellow) 22%, transparent); color: var(--pai-yellow); }
+
+.tm-action-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--fg);
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: var(--r-icon);
+  cursor: pointer;
+  margin-right: var(--s-1);
+}
+.tm-action-btn:hover { background: var(--bg-elev); border-color: var(--pai-blue); }
+.tm-action-btn.danger:hover { border-color: var(--pai-red); color: var(--pai-red); }
+
+/* ── Metrics panel */
+.tm-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--s-3);
+}
+.metric {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--r-icon);
+  padding: var(--s-3);
+}
+.metric-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: var(--s-2);
+}
+.metric-label {
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+}
+.metric-value {
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--pai-blue);
+}
+.metric canvas {
+  width: 100%;
+  height: 80px;
+  display: block;
+  background: var(--bg);
+  border-radius: var(--r-icon);
+}
+
+.tm-empty {
+  color: var(--fg-muted);
+  text-align: center;
+  padding: var(--s-5);
+  font-size: 0.85rem;
+}
