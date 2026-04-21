@@ -1,0 +1,78 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "[pai] Installing Open WebUI..."
+
+# Install Python 3 + pip (python3 already present via live-build base)
+apt-get install -y --no-install-recommends python3-pip python3-venv
+
+# Create a venv so we don't pollute system Python
+python3 -m venv /opt/open-webui-venv
+
+# Install open-webui into the venv
+/opt/open-webui-venv/bin/pip install --no-cache-dir open-webui
+
+# Create data directory (will be on persistence overlay if configured)
+mkdir -p /var/lib/open-webui
+
+# ── Brand Open WebUI as PAI ──────────────────────────────────────────
+OW_STATIC=""
+for pat in \
+    '/opt/open-webui-venv/lib/python*/site-packages/open_webui/static' \
+    '/opt/open-webui-venv/lib64/python*/site-packages/open_webui/static'
+do
+    for d in $pat; do
+        if [ -d "$d" ]; then
+            OW_STATIC="$d"
+            break 2
+        fi
+    done
+done
+
+if [ -z "$OW_STATIC" ]; then
+    OW_STATIC=$(find /opt/open-webui-venv -type d -path '*/open_webui/static' 2>/dev/null | head -n1)
+fi
+
+if [ -z "$OW_STATIC" ] || [ ! -d "$OW_STATIC" ]; then
+    echo "[pai] FATAL: could not locate open_webui/static dir for branding"
+    find /opt/open-webui-venv -maxdepth 6 -type d -name static 2>/dev/null | head -20
+    exit 1
+fi
+
+echo "[pai] Branding Open WebUI at: $OW_STATIC"
+
+if [ -f /usr/share/pai/pai-logo.png ]; then
+    cp /usr/share/pai/pai-logo.png "$OW_STATIC/pai-logo.png"
+    cp /usr/share/pai/pai-logo.png "$OW_STATIC/logo.png" 2>/dev/null || true
+    cp /usr/share/pai/pai-logo.png "$OW_STATIC/static/logo.png" 2>/dev/null || true
+fi
+if [ -f /usr/share/pai/favicon.png ]; then
+    cp /usr/share/pai/favicon.png  "$OW_STATIC/favicon.png"
+    cp /usr/share/pai/favicon.png  "$OW_STATIC/favicon.ico" 2>/dev/null || true
+fi
+
+echo "[pai] Stripping '(Open WebUI)' suffix from frontend bundles..."
+SCRUBBED=0
+while IFS= read -r f; do
+    sed -i \
+        -e 's| (Open WebUI)||g' \
+        -e 's|(Open WebUI)||g' \
+        -e 's|Open WebUI|PAI|g' \
+        "$f"
+    SCRUBBED=$((SCRUBBED + 1))
+done < <(grep -rl 'Open WebUI' "$OW_STATIC" 2>/dev/null || true)
+echo "[pai] Scrubbed $SCRUBBED file(s)."
+
+# Wrapper script so systemd has a clean entry point.
+# Runtime configuration lives in /etc/pai/open-webui.env (loaded by systemd).
+cat > /usr/local/bin/open-webui-serve <<'EOF'
+#!/bin/bash
+exec /opt/open-webui-venv/bin/open-webui serve
+EOF
+chmod +x /usr/local/bin/open-webui-serve
+
+# Enable service
+systemctl enable open-webui.service 2>/dev/null || true
+
+echo "[pai] Open WebUI installed."
+echo "[pai] Size: $(du -sh /opt/open-webui-venv | cut -f1)"
