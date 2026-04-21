@@ -1,0 +1,14 @@
+[Unit]
+Description=Qdrant (local vector DB)
+After=default.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/.local/share/qdrant
+ExecStartPre=/bin/mkdir -p %h/.local/share/qdrant/storage %h/.local/share/qdrant/snapshots
+ExecStart=/opt/qdrant/qdrant --config-path /opt/qdrant/config/production.yaml
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
