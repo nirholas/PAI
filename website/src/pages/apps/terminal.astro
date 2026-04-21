@@ -1,0 +1,148 @@
+---
+import AppStandalone from '../../layouts/AppStandalone.astro'
+import Head from '../../components/Head.astro'
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <Head
+      title="Terminal — PAI"
+      description="A full Linux terminal inside PAI — runs locally in your browser preview and on the live USB."
+      ogImage="/og/terminal.png"
+    />
+    <link rel="icon" type="image/svg+xml" href="/icons/terminal.svg" />
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      html, body {
+        height: 100%;
+        background: #0a0a12;
+        color: #e0e0e0;
+        font-family: 'PixelOperator', 'Courier New', monospace;
+        font-size: 14px;
+      }
+
+      body { display: flex; flex-direction: column; overflow: hidden; }
+
+      #app-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .sim-banner {
+        background: #1f1200;
+        border-bottom: 1px solid #4a2800;
+        color: #fbbf24;
+        font-size: 11px;
+        padding: 3px 12px;
+        text-align: center;
+        letter-spacing: 0.03em;
+        flex-shrink: 0;
+        font-family: system-ui, sans-serif;
+      }
+
+      #terminal {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px 14px;
+        outline: none;
+        cursor: text;
+        scrollbar-width: thin;
+        scrollbar-color: #2a2a3e transparent;
+      }
+
+      #term-output { white-space: pre-wrap; word-break: break-all; line-height: 1.6; }
+
+      #term-output > div { min-height: 1.6em; }
+
+      .term-input-row {
+        display: flex;
+        align-items: baseline;
+        line-height: 1.6;
+        white-space: pre;
+        padding-top: 2px;
+      }
+
+      #term-display { word-break: break-all; }
+
+      #term-cursor {
+        color: #e0e0e0;
+        animation: blink 1.1s step-start infinite;
+      }
+
+      @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50%       { opacity: 0; }
+      }
+
+      /* Prompt */
+      .term-ps1   { color: #4ade80; }
+      .term-sep   { color: #555; }
+      .term-cwd   { color: #7aa2f7; }
+      .term-dollar{ color: #555; }
+
+      /* Global output colours used by command modules */
+      :global(.term-dim)   { color: #555; }
+      :global(.term-cmd)   { color: #7aa2f7; }
+      :global(.term-err)   { color: #f87171; }
+      :global(.term-warn)  { color: #fbbf24; }
+      :global(.term-stream){ display: inline; white-space: pre-wrap; }
+      :global(.term-inputecho) { color: #888; }
+
+      :global(.t-dim)  { color: #555; }
+      :global(.t-cmd)  { color: #7aa2f7; }
+      :global(.t-dir)  { color: #7aa2f7; }
+      :global(.t-file) { color: #e0e0e0; }
+      :global(.t-warn) { color: #fbbf24; }
+
+      /* Neofetch */
+      :global(.neofetch)  { line-height: 1.45; }
+      :global(.nf-art)    { display: inline-block; vertical-align: top; margin-right: 20px; }
+      :global(.nf-info)   { display: inline-block; vertical-align: top; }
+      :global(.nf-label)  { color: #7aa2f7; }
+      :global(.nf-red)    { color: #f87171; }
+      :global(.nf-blue)   { color: #7aa2f7; }
+      :global(.nf-yellow) { color: #fbbf24; }
+      :global(.nf-palette){ color: #0a0a12; background: #0a0a12; }
+      :global(.nf-p1)     { color: #f87171; background: #f87171; }
+      :global(.nf-p2)     { color: #4ade80; background: #4ade80; }
+      :global(.nf-p3)     { color: #fbbf24; background: #fbbf24; }
+      :global(.nf-p4)     { color: #7aa2f7; background: #7aa2f7; }
+      :global(.nf-p5)     { color: #9f7aea; background: #9f7aea; }
+      :global(.nf-p6)     { color: #f472b6; background: #f472b6; }
+      :global(.nf-p7)     { color: #e0e0e0; background: #e0e0e0; }
+    </style>
+  </head>
+  <body>
+    <AppStandalone appId="terminal" />
+    <main id="app-content">
+      <div class="sim-banner" role="status" aria-live="polite">
+        ⚡ Non-networked simulation &mdash; Real PAI is a bootable live USB OS
+      </div>
+      <div id="terminal" role="region" aria-label="Terminal emulator" tabindex="0">
+        <div id="term-output"></div>
+        <div class="term-input-row" aria-live="off" aria-atomic="true">
+          <span class="term-ps1">pai@demo</span><span
+            class="term-sep">:</span><span
+            class="term-cwd">~</span><span
+            class="term-dollar">$&nbsp;</span><span
+            id="term-display"></span><span
+            id="term-cursor" aria-hidden="true">█</span>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
+
+<script>
+  import { bridge } from '../../apps/_bridge.js'
+  import { createREPL } from '../../apps/terminal/repl.js'
+
+  bridge.ready()
+
+  const container = document.getElementById('terminal')!
+  createREPL(container, () => bridge.close())
+</script>
