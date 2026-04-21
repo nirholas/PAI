@@ -1,0 +1,125 @@
+# PAI — Sway config
+
+# Use Alt as modifier
+set $mod Mod1
+
+# Terminal
+bindsym $mod+Return exec foot
+
+# Close window
+bindsym $mod+F4 kill
+
+# Lock screen
+bindsym $mod+l exec swaylock -f -c 000000
+
+# App launcher
+bindsym $mod+d exec wofi --show drun
+
+# PAI unified launcher (Chat, Files, Models, Terminal, Status, ...)
+bindsym $mod+Shift+space exec pai-launcher
+
+# Settings menu
+bindsym $mod+s exec pai-settings
+
+# Focus
+bindsym $mod+Left focus left
+bindsym $mod+Down focus down
+bindsym $mod+Up focus up
+bindsym $mod+Right focus right
+
+# Move windows
+bindsym $mod+Shift+Left move left
+bindsym $mod+Shift+Down move down
+bindsym $mod+Shift+Up move up
+bindsym $mod+Shift+Right move right
+
+# Workspaces
+bindsym $mod+1 workspace number 1
+bindsym $mod+2 workspace number 2
+bindsym $mod+3 workspace number 3
+bindsym $mod+Shift+1 move container to workspace number 1
+bindsym $mod+Shift+2 move container to workspace number 2
+bindsym $mod+Shift+3 move container to workspace number 3
+
+# Resize mode
+mode "resize" {
+    bindsym Left resize shrink width 10px
+    bindsym Right resize grow width 10px
+    bindsym Up resize shrink height 10px
+    bindsym Down resize grow height 10px
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+bindsym $mod+r mode "resize"
+
+# Float the About window at a fixed size
+for_window [app_id="firefox-esr" title="About PAI"] floating enable, resize set 960 640, move position center
+
+# Wallpaper
+output * bg /usr/share/backgrounds/pai-wallpaper.svg fill #0f0f1a
+
+# Status bar
+bar {
+    swaybar_command waybar
+}
+
+# Gaps and borders
+gaps inner 4
+default_border pixel 2
+
+# NOTE: App-launch keybindings ($mod+b, $mod+e, $mod+Shift+t, etc.)
+# live in /etc/sway/profile.d/<profile>.conf so each profile (ai, dev,
+# crypto, privacy, full) gets its own app set. They're loaded via the
+# `include` at the bottom of this file.
+
+# Shutdown menu (with optional memory wipe)
+bindsym $mod+Shift+e exec pai-shutdown
+bindsym XF86PowerOff exec pai-shutdown
+
+# Media keys
+bindsym XF86AudioPlay exec playerctl play-pause
+bindsym XF86AudioNext exec playerctl next
+bindsym XF86AudioPrev exec playerctl previous
+bindsym XF86AudioRaiseVolume exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+
+bindsym XF86AudioLowerVolume exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-
+bindsym XF86AudioMute exec wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
+
+# Brightness (laptops)
+bindsym XF86MonBrightnessUp exec brightnessctl set 5%+
+bindsym XF86MonBrightnessDown exec brightnessctl set 5%-
+
+# Screenshot (Print = full screen, Shift+Print = select region)
+bindsym Print exec grim ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png
+bindsym Shift+Print exec grim -g "$(slurp)" ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png
+
+# ── Autostart ────────────────────────────────────────────────────────────
+
+# Network tray
+exec nm-applet --indicator
+
+# Bluetooth tray
+exec blueman-applet
+
+# Notifications
+exec mako
+
+# App dock
+
+# Create standard user directories (Downloads, Documents, Pictures, etc.)
+exec xdg-user-dirs-update
+
+# Welcome greeter (shown once per boot)
+exec sleep 2 && [ ! -f /tmp/.pai-welcomed ] && pai-welcome
+
+# Launch Open WebUI after greeter completes (or after 5-minute fallback timeout)
+exec bash -c 'WAITED=0; until [ -f /tmp/.pai-welcomed ] || [ $WAITED -ge 300 ]; do sleep 1; WAITED=$((WAITED+1)); done; firefox-esr http://localhost:8080'
+
+# Auto-lock after 10 min idle, screen off after 15
+exec swayidle -w \
+    timeout 600 'swaylock -f -c 000000' \
+    timeout 900 'swaymsg "output * dpms off"' \
+    resume 'swaymsg "output * dpms on"' \
+    before-sleep 'swaylock -f -c 000000'
+
+# ── Load profile-specific keybindings ────────────────────────────────────
+include /etc/sway/profile.d/active.conf
