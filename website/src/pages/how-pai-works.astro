@@ -1,0 +1,103 @@
+---
+import SitePage from '../layouts/SitePage.astro'
+---
+
+<SitePage
+  title="How PAI works — PAI"
+  description="PAI is a bootable Linux OS on a USB drive. It runs local AI models without touching your computer's disk, leaves no trace, and works offline."
+  active="how"
+>
+  <article class="how">
+    <header class="how-hero">
+      <h1>How PAI works</h1>
+      <p class="lede">
+        PAI is a complete operating system on a USB drive. You plug it in,
+        boot from it, and run a private AI workstation. When you're done,
+        you shut down, pull out the USB, and the computer is exactly how
+        you found it.
+      </p>
+    </header>
+
+    <section class="how-section">
+      <h2>1. It's a separate operating system</h2>
+      <p>
+        PAI is Debian Linux with a privacy-focused desktop and local AI tools
+        pre-installed. It runs entirely from the USB drive — your installed
+        Windows, macOS, or Linux is never touched. Your hard drive isn't
+        mounted unless you explicitly ask for it.
+      </p>
+    </section>
+
+    <section class="how-section">
+      <h2>2. AI runs locally, not in the cloud</h2>
+      <p>
+        PAI ships with <a href="https://ollama.com" target="_blank" rel="noreferrer">Ollama</a>
+        and a chat UI. Models like Llama, Mistral, and Phi run directly on your
+        hardware. No API keys, no accounts, no requests leaving your machine.
+      </p>
+      <p>
+        For conversations that don't need the internet, PAI doesn't need the
+        internet. You can unplug ethernet and turn off Wi-Fi — the AI keeps working.
+      </p>
+    </section>
+
+    <section class="how-section">
+      <h2>3. It leaves no trace by default</h2>
+      <p>
+        Everything runs in RAM. When you shut down, the memory is wiped and
+        the session is gone. No browser history, no cookies, no cached files
+        on the host computer.
+      </p>
+      <p>
+        If you <em>want</em> to keep data across sessions (models, chats, notes,
+        keys), PAI offers an encrypted persistent volume on the USB drive itself.
+        You set the passphrase; without it the data is unreadable.
+      </p>
+    </section>
+
+    <section class="how-section">
+      <h2>4. Network is hardened</h2>
+      <p>
+        The firewall denies all inbound traffic by default. MAC addresses are
+        randomized on every boot. Tor is built in and one-click to enable for
+        the whole session.
+      </p>
+    </section>
+
+    <section class="how-section">
+      <h2>5. You own the stack</h2>
+      <p>
+        PAI is free software under the GPLv3. The build scripts, hooks, and
+        packages are all public. You can audit the image, build your own,
+        or fork it.
+      </p>
+      <p>
+        <a href="https://docs.pai.direct/architecture/" target="_blank" rel="noreferrer">
+          Read the full architecture docs →
+        </a>
+      </p>
+    </section>
+
+    <div class="how-cta">
+      <a href="/install" class="cta-btn">Install PAI →</a>
+    </div>
+  </article>
+
+  <style>
+    .how { max-width: 720px; }
+    .how-hero { margin-bottom: 48px; }
+    .how-hero h1 { font-size: 40px; font-weight: 700; color: #fff; margin: 0 0 16px; line-height: 1.15; }
+    .lede { font-size: 18px; line-height: 1.6; color: #c0c0d0; margin: 0; }
+    .how-section { margin-bottom: 36px; }
+    .how-section h2 { font-size: 20px; color: #fff; margin: 0 0 10px; font-weight: 600; }
+    .how-section p { font-size: 15px; line-height: 1.7; color: #b0b0c0; margin: 0 0 12px; }
+    .how-section a { color: #7aa2f7; }
+    .how-cta { margin-top: 48px; padding-top: 32px; border-top: 1px solid rgba(255,255,255,0.06); }
+    .cta-btn {
+      display: inline-block; background: #7aa2f7; color: #0b0b12;
+      padding: 12px 24px; border-radius: 8px; font-weight: 700;
+      text-decoration: none; font-size: 15px;
+    }
+    .cta-btn:hover { opacity: 0.9; }
+  </style>
+</SitePage>
