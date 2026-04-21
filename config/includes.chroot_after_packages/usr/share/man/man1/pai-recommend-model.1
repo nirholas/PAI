@@ -1,0 +1,80 @@
+.TH PAI-RECOMMEND-MODEL 1 "April 2026" "PAI" "PAI User Commands"
+.SH NAME
+pai-recommend-model \- suggest an Ollama model sized for this hardware
+.SH SYNOPSIS
+.B pai-recommend-model
+.RI [ --name | --json | --shell | --explain | -h | --help ]
+.SH DESCRIPTION
+.B pai-recommend-model
+is the single source of truth for model sizing on PAI. It inspects
+available system RAM and, when present, a supported GPU's VRAM, then
+prints an Ollama model tier that will run well on this machine.
+.PP
+The command is consumed by the first-boot model picker
+.RB ( pai-model-picker ),
+the interactive
+.B pai-models
+TUI, the
+.B pai-status
+dashboard, and any future PAI tooling that needs to answer \(lqwhat
+should I run here?\(rq. Calling a shared recommender keeps the sizing
+logic in one place instead of drifting across consumers.
+.SH OPTIONS
+.TP
+.B --name
+Print only the model name, suitable for scripts
+.RI ( e.g. " ollama pull \(dq$(pai-recommend-model --name)\(dq" ).
+.TP
+.B --json
+Structured JSON with every detected field (model, tier, pull_needed,
+size_note, RAM, GPU, effective memory, decision source).
+.TP
+.B --shell
+Eval-able
+.B PAI_*
+shell variable assignments, for scripts that want to source the
+recommender rather than parse JSON.
+.TP
+.B --explain
+Human-readable output with the reasoning behind the recommendation.
+.TP
+.BR -h ", " --help
+Print usage and exit.
+.SH EXIT STATUS
+.TP
+.B 0
+Recommendation produced.
+.TP
+.B 1
+Could not detect system RAM.
+.TP
+.B 2
+Usage error.
+.SH EXAMPLES
+Pull the recommended model in a shell script:
+.PP
+.RS
+.EX
+MODEL=$(pai-recommend-model --name)
+ollama pull "$MODEL"
+.EE
+.RE
+.PP
+Source the recommendation into environment variables:
+.PP
+.RS
+.EX
+eval "$(pai-recommend-model --shell)"
+echo "$PAI_MODEL needs $PAI_SIZE_NOTE"
+.EE
+.RE
+.SH FILES
+.TP
+.I /usr/local/bin/pai-recommend-model
+The executable.
+.SH SEE ALSO
+.BR pai-models (1),
+.BR pai-status (1),
+.BR ollama (1)
+.SH AUTHOR
+The PAI project \[em] https://pai.direct
