@@ -1,0 +1,297 @@
+/* Dock — floating pill launcher */
+
+/* The dock lives inside .shell__dock (footer, flex-shrink:0).
+   We give the footer 0 height and overflow:visible so the pill floats. */
+
+.shell__dock {
+  height: 0;
+  overflow: visible;
+  position: relative;
+  z-index: var(--z-dock);
+}
+
+#dock {
+  position: fixed;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 10px;
+  background: rgba(18, 18, 26, 0.68);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  z-index: var(--z-dock);
+  white-space: nowrap;
+}
+
+/* ─── Separator ──────────────────────────────────────────────────────────────── */
+
+.dock-sep {
+  width: 1px;
+  height: 32px;
+  background: var(--border);
+  flex-shrink: 0;
+  margin: 0 4px;
+}
+
+/* ─── Icon button ────────────────────────────────────────────────────────────── */
+
+.dock-icon {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 10px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s ease, transform 0.12s ease;
+}
+
+.dock-icon:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.dock-icon:active { transform: translateY(0); }
+
+.dock-icon:focus-visible {
+  outline: 2px solid var(--pai-blue);
+  outline-offset: 2px;
+}
+
+/* ─── Icon face ──────────────────────────────────────────────────────────────── */
+
+.dock-icon-face {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  pointer-events: none;
+}
+
+.dock-icon-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+}
+
+.dock-icon-fallback {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  background: var(--app-color, var(--pai-blue));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0f0f1a;
+  font-weight: 700;
+  font-size: 15px;
+  font-family: var(--font-ui, system-ui);
+}
+
+/* ─── Running / focused indicator — Win12-style underline bar ────────────────── */
+
+.dock-icon--running::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.55);
+  transition: width 0.15s ease, background 0.15s ease;
+  pointer-events: none;
+}
+
+.dock-icon--focused::after {
+  width: 18px;
+  background: var(--pai-blue, #7aa2f7);
+}
+
+/* ─── Context menu ───────────────────────────────────────────────────────────── */
+
+.dock-ctx-menu {
+  position: fixed;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--r-window);
+  padding: 4px;
+  z-index: calc(var(--z-dock) + 10);
+  min-width: 164px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.dock-ctx-menu button {
+  display: block;
+  width: 100%;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: var(--fg);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 4px;
+  font-family: var(--font-ui);
+}
+
+.dock-ctx-menu button:hover { background: rgba(122, 162, 247, 0.12); }
+.dock-ctx-menu button:focus-visible {
+  outline: 2px solid var(--pai-blue);
+  outline-offset: -2px;
+}
+
+.dock-ctx-sep {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 8px;
+}
+
+/* ─── Window-count badge ─────────────────────────────────────────────────────── */
+
+.dock-icon-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  line-height: 14px;
+  color: #0f0f1a;
+  background: var(--pai-blue);
+  border-radius: 7px;
+  text-align: center;
+  pointer-events: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* ─── Hover preview ──────────────────────────────────────────────────────── */
+
+.dock-preview {
+  position: fixed;
+  z-index: calc(var(--z-dock) + 20);
+  min-width: 200px;
+  max-width: 280px;
+  padding: 8px;
+  background: rgba(22, 22, 30, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  color: var(--fg);
+  font-family: var(--font-ui);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity 120ms var(--motion-easing),
+    transform 120ms var(--motion-easing);
+  pointer-events: auto;
+}
+
+.dock-preview.is-open {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.dock-preview__header {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  padding: 2px 6px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 6px;
+}
+
+.dock-preview__title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.dock-preview__sub {
+  display: block;
+  font-size: 11px;
+  color: var(--fg-muted);
+  margin-top: 2px;
+}
+
+.dock-preview__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dock-preview__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--fg);
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.dock-preview__item:hover,
+.dock-preview__item:focus-visible {
+  background: rgba(122, 162, 247, 0.14);
+  border-color: rgba(122, 162, 247, 0.35);
+  outline: none;
+}
+
+.dock-preview__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  flex-shrink: 0;
+}
+
+.dock-preview__dot.is-focused {
+  background: var(--pai-blue);
+}
+
+.dock-preview__name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dock-preview__meta {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.dock-preview__row {
+  padding: 4px 8px;
+}
