@@ -1,0 +1,303 @@
+/* PAI desktop widgets */
+
+.widget-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.widget-layer[hidden] { display: none; }
+
+.widget {
+  position: absolute;
+  min-width: 180px;
+  max-width: 320px;
+  padding: var(--s-3);
+  background: rgba(22, 22, 30, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  color: var(--fg);
+  font-family: var(--font-ui);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  pointer-events: auto;
+  user-select: none;
+}
+
+.widget__header {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  margin-bottom: var(--s-2);
+  cursor: move;
+  display: flex;
+  align-items: center;
+}
+
+/* ── Clock ─────────────────────────────────────────────────────────────────── */
+
+.widget-clock {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: var(--s-3);
+  align-items: center;
+}
+
+.widget-clock__analog {
+  width: 92px;
+  height: 92px;
+}
+
+.widget-clock__digital {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.widget-clock__time {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+
+.widget-clock__date {
+  font-size: 11px;
+  color: var(--fg-muted);
+}
+
+/* ── Sysmon ────────────────────────────────────────────────────────────────── */
+
+.widget-sysmon {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.widget-sysmon__row {
+  display: grid;
+  grid-template-columns: 36px 1fr 36px;
+  gap: var(--s-2);
+  align-items: center;
+  font-size: 11px;
+  color: var(--fg);
+}
+
+.widget-sysmon__row > span:first-child {
+  font-family: var(--font-mono);
+  color: var(--fg-muted);
+  letter-spacing: 0.05em;
+}
+
+.widget-sysmon__row > span:last-child {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--fg);
+}
+
+.widget-sysmon__bar {
+  position: relative;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.widget-sysmon__bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--pai-green), var(--pai-blue));
+  transition: width 400ms var(--motion-easing);
+}
+
+.widget-sysmon__note {
+  font-size: 10px;
+  color: var(--fg-muted);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* ── Note ──────────────────────────────────────────────────────────────────── */
+
+.widget-note__area {
+  width: 100%;
+  min-height: 120px;
+  resize: vertical;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  color: var(--fg);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.4;
+  padding: var(--s-2);
+  box-sizing: border-box;
+}
+
+.widget-note__area:focus {
+  outline: none;
+  border-color: var(--pai-blue);
+  box-shadow: 0 0 0 2px rgba(122, 162, 247, 0.22);
+}
+
+/* ── Sysinfo ───────────────────────────────────────────────────────────────── */
+
+.widget-sysinfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.widget-sysinfo__logo {
+  width: 40px;
+  height: 40px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+.widget-sysinfo__title {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--fg);
+  letter-spacing: 0.04em;
+}
+
+.widget-sysinfo__tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--pai-blue);
+  letter-spacing: 0.05em;
+}
+
+.widget-sysinfo__meta {
+  font-size: 10px;
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+}
+
+/* ── Manager overlay ──────────────────────────────────────────────────────── */
+
+.widget-mgr {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-modal) + 20);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.widget-mgr__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity var(--motion-duration) var(--motion-easing);
+  pointer-events: auto;
+}
+
+.widget-mgr.is-open .widget-mgr__backdrop { opacity: 1; }
+
+.widget-mgr__panel {
+  position: relative;
+  width: min(92vw, 420px);
+  background: rgba(22, 22, 30, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(32px) saturate(170%);
+  -webkit-backdrop-filter: blur(32px) saturate(170%);
+  color: var(--fg);
+  transform: translateY(8px) scale(0.985);
+  opacity: 0;
+  transition:
+    transform var(--motion-duration) var(--motion-easing),
+    opacity var(--motion-duration) var(--motion-easing);
+  pointer-events: auto;
+}
+
+.widget-mgr.is-open .widget-mgr__panel {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+.widget-mgr__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.widget-mgr__header h2 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  font-family: var(--font-ui);
+}
+
+.widget-mgr__close {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--fg-muted);
+  font-size: 18px;
+  line-height: 1;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.widget-mgr__close:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--fg);
+}
+
+.widget-mgr__list {
+  list-style: none;
+  margin: 0;
+  padding: var(--s-2) var(--s-3);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.widget-mgr__row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  transition: background 120ms var(--motion-easing);
+}
+
+.widget-mgr__row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.widget-mgr__row input {
+  accent-color: var(--pai-blue);
+}
+
+.widget-mgr__footer {
+  padding: var(--s-2) var(--s-4);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 11px;
+  color: var(--fg-muted);
+  font-family: var(--font-ui);
+}
