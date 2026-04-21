@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=BIP39 Mnemonic Generator
+Comment=Offline BIP39 seed phrase generator
+Exec=firefox file:///opt/pai-wallets/bip39.html
+Icon=security-high
+Type=Application
+Categories=Finance;
+Keywords=bip39;mnemonic;seed;bitcoin;wallet;crypto;
