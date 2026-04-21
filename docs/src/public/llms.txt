@@ -1,0 +1,55 @@
+# PAI
+
+> PAI is a bootable USB Linux distribution for private, offline AI. It is a
+> Debian 12 live image with Sway, Ollama, and Open WebUI preinstalled. Users
+> flash the ISO to a USB stick (or flash the arm64 image to a Raspberry Pi SD
+> card via Raspberry Pi Imager using PAI's custom repository at
+> `https://pai.direct/imager.json`), boot the target machine from it, and
+> land in a self-contained AI workstation that runs entirely on-device — no
+> installation, no cloud account, no telemetry. Pull the stick out to return
+> to the host OS.
+
+PAI targets amd64 and arm64 hardware and is licensed under GPL v3. The source
+of truth for the project is <https://github.com/nirholas/pai>. ISO artifacts
+are hosted on Google Cloud Storage because they exceed GitHub's per-asset
+size limit.
+
+## Getting started
+
+- [Quickstart](/quickstart.md): flash a USB stick and boot PAI in about a minute
+- [Installation](/installation.md): supported hardware and boot requirements
+- [USB flashing](/USB-FLASHING.md): per-OS flashing guides (Linux, macOS, Windows — `flash.ps1` PowerShell one-liner recommended on Windows; Rufus is a graphical alternative)
+- [Raspberry Pi Imager](/first-steps/using-raspberry-pi-imager.md): install PAI on a Pi via Raspberry Pi Imager's custom repository (`https://pai.direct/imager.json`)
+- [Using Ventoy](/first-steps/using-ventoy.md): boot PAI from a Ventoy multi-boot USB without re-flashing — drag-and-drop the ISO onto a Ventoy drive
+- [Using PAI](/using-pai.md): the desktop, apps, and day-to-day workflow
+
+## Privacy and security
+
+- [Privacy posture](/PRIVACY.md): what PAI does and does not send over the network
+- [Privacy mode](/privacy-mode.md): optional Tor routing and hardening toggles
+- [Security model](/security.md): threat model, firewall defaults, MAC randomization
+- [Persistence](/persistence.md): how opt-in encrypted persistence works (roadmap)
+
+## Reference
+
+- [Architecture](/architecture.md): how the ISO is built and what's on it
+- [Models](/models.md): which LLMs ship on the ISO and how to pull more
+- [FAQ](/FAQ.md)
+- [Known issues](/KNOWN_ISSUES.md)
+- [Glossary](/GLOSSARY.md)
+
+## Project
+
+- [Philosophy](/PHILOSOPHY.md): why PAI exists and what it refuses to be
+- [Roadmap](/roadmap.md): what's planned next
+- [Changelog](/changelog.md): version history
+- [Governance](/governance.md) and [Maintainers](/MAINTAINERS.md)
+- [Contributing to docs](/contributing-to-docs.md)
+
+## Optional
+
+- [Build from source](/building-from-source.md)
+- [Build in the cloud](/build-in-cloud.md)
+- [Cloud builder operations runbook](/ops-cloud-builders.md)
+- [Comparison with similar projects](/COMPARISON.md)
+- [Acknowledgments](/ACKNOWLEDGMENTS.md)
