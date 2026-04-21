@@ -1,0 +1,17 @@
+[Unit]
+Description=PAI MAC Address Randomization
+Before=NetworkManager.service
+After=sys-subsystem-net-devices-*.device
+Wants=network-pre.target
+Before=network-pre.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/pai-mac-spoof
+RemainAfterExit=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target
