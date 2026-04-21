@@ -1,0 +1,48 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "[pai] Installing Feather Wallet (Monero)..."
+
+FEATHER_VERSION="2.6.7"
+# Try ARM64 AppImage first, then fall back to standard Linux
+FEATHER_URL_ARM64="https://featherwallet.org/files/releases/linux/feather-${FEATHER_VERSION}-linux-arm64.zip"
+FEATHER_URL_FALLBACK="https://featherwallet.org/files/releases/linux/feather-${FEATHER_VERSION}-linux.zip"
+INSTALL_DIR="/opt/feather-wallet"
+
+mkdir -p "$INSTALL_DIR"
+
+cd /tmp
+
+# Try ARM64 build first
+if curl -fSL -o feather.zip "$FEATHER_URL_ARM64" 2>/dev/null; then
+    echo "[pai] Downloaded ARM64 Feather Wallet."
+elif curl -fSL -o feather.zip "$FEATHER_URL_FALLBACK" 2>/dev/null; then
+    echo "[pai] WARNING: No ARM64 build found. Downloaded standard build (may not work on ARM64)."
+else
+    echo "[pai] WARNING: Failed to download Feather Wallet."
+    echo "[pai] Monero wallet not available. You can install monero-cli manually:"
+    echo "[pai]   sudo apt install monero"
+    echo "[pai] Skipping Feather Wallet installation."
+    exit 0
+fi
+
+unzip -o feather.zip -d "$INSTALL_DIR/"
+rm -f feather.zip
+
+# The binary may be named feather or feather-<version> — find and normalize it
+if [ -f "$INSTALL_DIR/feather" ]; then
+    FEATHER_BIN="$INSTALL_DIR/feather"
+else
+    FEATHER_BIN=$(find "$INSTALL_DIR" -maxdepth 1 -name 'feather*' -type f | head -1)
+    if [ -n "$FEATHER_BIN" ] && [ "$FEATHER_BIN" != "$INSTALL_DIR/feather" ]; then
+        mv "$FEATHER_BIN" "$INSTALL_DIR/feather"
+    fi
+    FEATHER_BIN="$INSTALL_DIR/feather"
+fi
+
+chmod +x "$FEATHER_BIN"
+
+# Create symlink
+ln -sf "$FEATHER_BIN" /usr/local/bin/feather-wallet
+
+echo "[pai] Feather Wallet installed."
