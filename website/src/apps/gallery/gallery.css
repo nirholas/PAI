@@ -1,0 +1,167 @@
+/* Gallery app — PAI */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-ui);
+  overflow: hidden;
+}
+
+.gal-root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.gal-toolbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-3);
+  background: var(--bg-elev);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.gal-toolbar input, .gal-toolbar select {
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-icon);
+  padding: 4px 8px;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  outline: none;
+}
+.gal-toolbar input:focus, .gal-toolbar select:focus { border-color: var(--pai-blue); }
+
+.gal-btn {
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-icon);
+  padding: 4px 10px;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+}
+.gal-btn:hover { background: color-mix(in srgb, var(--pai-blue) 15%, var(--bg)); }
+
+.gal-spacer { flex: 1; }
+.gal-count { color: var(--fg-muted); font-size: 0.8rem; }
+
+.gal-grid {
+  flex: 1;
+  overflow: auto;
+  padding: var(--s-3);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--s-2);
+  align-content: start;
+  position: relative;
+}
+
+.gal-tile {
+  aspect-ratio: 1;
+  border-radius: var(--r-icon);
+  overflow: hidden;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  position: relative;
+  transition: transform var(--motion-duration) var(--motion-easing),
+              border-color var(--motion-duration) var(--motion-easing);
+}
+.gal-tile:hover { transform: scale(1.03); border-color: var(--pai-blue); }
+.gal-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.gal-tile .meta {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  background: linear-gradient(transparent, rgba(0,0,0,0.7));
+  color: #fff;
+  font-size: 0.7rem;
+  padding: var(--s-3) var(--s-2) var(--s-1);
+  opacity: 0;
+  transition: opacity var(--motion-duration) var(--motion-easing);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gal-tile:hover .meta { opacity: 1; }
+
+.gal-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: var(--fg-muted);
+  padding: var(--s-7);
+}
+
+.gal-drop {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--pai-blue) 15%, transparent);
+  border: 3px dashed var(--pai-blue);
+  pointer-events: none;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: var(--pai-blue);
+  font-size: 1.2rem;
+  font-weight: 600;
+  z-index: 3;
+}
+.gal-drop.active { display: flex; }
+
+/* ── Lightbox */
+.gal-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.95);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.gal-lightbox.open { display: flex; }
+.gal-lightbox img {
+  max-width: 92vw;
+  max-height: 88vh;
+  object-fit: contain;
+}
+.gal-lightbox .lb-close,
+.gal-lightbox .lb-prev,
+.gal-lightbox .lb-next {
+  position: absolute;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: var(--r-icon);
+  padding: var(--s-2) var(--s-3);
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+.gal-lightbox .lb-close { top: var(--s-3); right: var(--s-3); }
+.gal-lightbox .lb-prev { left: var(--s-3); top: 50%; transform: translateY(-50%); }
+.gal-lightbox .lb-next { right: var(--s-3); top: 50%; transform: translateY(-50%); }
+.gal-lightbox .lb-caption {
+  position: absolute;
+  bottom: var(--s-3);
+  left: 50%;
+  transform: translateX(-50%);
+  color: #fff;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  background: rgba(0,0,0,0.5);
+  padding: var(--s-1) var(--s-3);
+  border-radius: var(--r-icon);
+}
