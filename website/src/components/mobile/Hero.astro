@@ -1,0 +1,144 @@
+---
+---
+
+<section class="hero">
+  <a href="/" class="hero__logo-link" aria-label="PAI home">
+    <img src="/logo/pai-logo.png" alt="PAI logo" width="96" height="96" class="hero__logo" />
+  </a>
+
+  <h1 class="hero__tagline">A complete AI workstation. On a USB stick.</h1>
+
+  <p class="hero__sub">
+    Boot on any x86 PC and get Ollama, Llama 3, Mistral, Phi and more — pre-configured and ready
+    to run. No install, no setup, no accounts. Pull the stick when you're done.
+  </p>
+
+  <div class="hero__ctas">
+    <a href="#download" class="btn btn--primary">Download PAI</a>
+    <a href="/apps/docs" class="btn btn--secondary">Read docs →</a>
+  </div>
+
+  <div class="hero__quick-try">
+    <span class="hero__quick-try-label">Try it now:</span>
+    <pre><code>curl -fsSL https://pai.direct/try | bash</code></pre>
+    <span class="hero__quick-try-os">Windows: <code>irm https://pai.direct/try.ps1 | iex</code></span>
+  </div>
+</section>
+
+<style>
+  .hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: var(--s-8) 0 var(--s-7);
+    gap: var(--s-5);
+  }
+
+  .hero__logo-link {
+    display: inline-block;
+    border-radius: var(--r-window);
+  }
+
+  .hero__logo {
+    width: 96px;
+    height: 96px;
+    image-rendering: pixelated;
+  }
+
+  .hero__tagline {
+    font-size: clamp(1.75rem, 5vw, 2.75rem);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: var(--fg);
+    max-width: 20ch;
+  }
+
+  .hero__sub {
+    font-size: clamp(1rem, 2.5vw, 1.125rem);
+    color: var(--fg-muted);
+    max-width: 50ch;
+    line-height: 1.6;
+  }
+
+  .hero__ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-3);
+    justify-content: center;
+  }
+
+  .hero__quick-try {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--s-2);
+    font-size: 0.875rem;
+    color: var(--fg-muted);
+  }
+
+  .hero__quick-try-label {
+    font-weight: 600;
+    color: var(--fg);
+  }
+
+  .hero__quick-try pre {
+    margin: 0;
+    padding: var(--s-2) var(--s-4);
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--r-icon);
+    font-size: 0.8125rem;
+    overflow-x: auto;
+    max-width: 100%;
+  }
+
+  .hero__quick-try code {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  .hero__quick-try-os code {
+    font-size: 0.8125rem;
+    background: var(--bg-elev);
+    padding: 0.125em 0.375em;
+    border-radius: 4px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--s-3) var(--s-6);
+    border-radius: var(--r-icon);
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition:
+      background-color var(--motion-duration) var(--motion-easing),
+      color var(--motion-duration) var(--motion-easing),
+      box-shadow var(--motion-duration) var(--motion-easing);
+    min-height: 44px;
+  }
+
+  .btn--primary {
+    background: var(--pai-blue);
+    color: #0f0f1a;
+  }
+
+  .btn--primary:hover {
+    background: color-mix(in srgb, var(--pai-blue) 85%, white);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--pai-blue) 30%, transparent);
+  }
+
+  .btn--secondary {
+    background: var(--bg-elev);
+    color: var(--fg);
+    border: 1px solid var(--border);
+  }
+
+  .btn--secondary:hover {
+    border-color: var(--pai-blue);
+    color: var(--pai-blue);
+  }
+</style>
