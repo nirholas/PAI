@@ -1,0 +1,29 @@
+#!/bin/bash
+# PAI Settings — check and apply updates to the persistence layer.
+# On a pure live system, updates cannot persist — explain that.
+set -euo pipefail
+
+persistent=0
+if findmnt --source /dev/disk/by-label/persistence >/dev/null 2>&1; then
+    persistent=1
+fi
+
+if [ $persistent -eq 0 ]; then
+    zenity --info --no-wrap --title="Updates" --text=\
+"This is a live system with no persistence enabled.\n\nSystem packages cannot be updated because changes would be wiped at reboot.\n\nTo enable persistence so updates can stick, open:\n<b>Settings → Privacy & Security → Persistence</b>" 2>/dev/null
+    exit 0
+fi
+
+action=$(printf '%s\n' \
+    "🔍  Check for updates" \
+    "⬆️  Upgrade all packages" \
+    | wofi --dmenu --prompt "Updates" --lines 2 --width 320 --height 160 --cache-file=/dev/null 2>/dev/null)
+
+case "$action" in
+    *Check*)
+        foot -e sh -c 'sudo apt update && apt list --upgradable 2>/dev/null; echo; read -rp "Press Enter..." _' &
+        ;;
+    *Upgrade*)
+        foot -e sh -c 'sudo apt update && sudo apt upgrade -y; echo; read -rp "Press Enter..." _' &
+        ;;
+esac
