@@ -1,0 +1,39 @@
+#!/bin/bash
+set -euo pipefail
+
+# PAI Transcribe — speech-to-text using whisper.cpp
+# Usage: pai-transcribe <audio-file>
+#        pai-transcribe --mic  (record from microphone)
+
+MODEL="/usr/share/whisper-models/ggml-tiny.en.bin"
+
+if [[ "${1:-}" == "--mic" ]]; then
+    echo "Recording... Press Ctrl+C to stop."
+    TMPFILE=$(mktemp --suffix=.wav /tmp/pai-record-XXXXXX)
+    # Record using pipewire/arecord
+    if command -v pw-record &>/dev/null; then
+        pw-record --target 0 "$TMPFILE" &
+        RECORD_PID=$!
+        read -rp "Press Enter to stop recording..."
+        kill $RECORD_PID 2>/dev/null
+    elif command -v arecord &>/dev/null; then
+        arecord -f S16_LE -r 16000 -c 1 "$TMPFILE" &
+        RECORD_PID=$!
+        read -rp "Press Enter to stop recording..."
+        kill $RECORD_PID 2>/dev/null
+    else
+        echo "ERROR: No audio recorder found."
+        exit 1
+    fi
+    echo "Transcribing..."
+    whisper-cpp -m "$MODEL" -f "$TMPFILE" 2>/dev/null
+    rm -f "$TMPFILE"
+elif [[ -f "${1:-}" ]]; then
+    whisper-cpp -m "$MODEL" -f "$1" 2>/dev/null
+else
+    echo "Usage: pai-transcribe <audio-file>"
+    echo "       pai-transcribe --mic"
+    echo ""
+    echo "Supported formats: wav, mp3, flac, ogg"
+    echo "Model: $(basename "$MODEL")"
+fi
