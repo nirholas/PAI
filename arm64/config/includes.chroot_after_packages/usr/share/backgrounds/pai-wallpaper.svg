@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <defs>
+    <!-- Background gradient -->
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a0a14"/>
+      <stop offset="100%" stop-color="#0f0f1a"/>
+    </linearGradient>
+    <!-- Subtle grid pattern -->
+    <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+      <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#1a1a2e" stroke-width="0.5" opacity="0.4"/>
+    </pattern>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+
+  <!-- Grid overlay -->
+  <rect width="1920" height="1080" fill="url(#grid)"/>
+
+  <!-- Centered PAI text -->
+  <text x="960" y="510" text-anchor="middle" dominant-baseline="central"
+        font-family="sans-serif" font-size="140" font-weight="bold"
+        fill="#7aa2f7" opacity="0.3" letter-spacing="20">PAI</text>
+
+</svg>
