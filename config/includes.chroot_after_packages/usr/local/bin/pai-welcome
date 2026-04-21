@@ -1,0 +1,171 @@
+#!/bin/bash
+# PAI first-boot greeter — 5-page setup wizard
+
+# Only show once per boot
+[ -f /tmp/.pai-welcomed ] && exit 0
+
+PROFILE=$(cat /run/pai-profile 2>/dev/null || echo "full")
+
+# ── helpers ───────────────────────────────────────────────────────────────────
+
+_confirm_cancel() {
+    zenity --question \
+        --title="PAI Setup" \
+        --text="Cancel setup and go straight to the desktop?\n\nYou can re-run it later from the app menu." \
+        --ok-label="Cancel setup" \
+        --cancel-label="Continue setup" \
+        --width=360 2>/dev/null
+}
+
+# ── page 1: welcome + keyboard layout ────────────────────────────────────────
+
+LAYOUT=$(zenity --list \
+    --title="PAI — Setup  (1 of 5)" \
+    --text="<big><b>Welcome to PAI</b></big>\n\nChoose your keyboard layout to get started." \
+    --column="Code" --column="Layout" \
+    --hide-column=1 --print-column=1 \
+    --width=480 --height=500 \
+    us "English (US)" \
+    gb "English (UK)" \
+    de "German" \
+    fr "French" \
+    es "Spanish" \
+    it "Italian" \
+    pt "Portuguese" \
+    br "Portuguese (Brazil)" \
+    ru "Russian" \
+    jp "Japanese" \
+    se "Swedish" \
+    no "Norwegian" \
+    dk "Danish" \
+    "fi" "Finnish" \
+    nl "Dutch" \
+    pl "Polish" \
+    ch "Swiss" \
+    ca "Canadian French" \
+    2>/dev/null) || { _confirm_cancel && { touch /tmp/.pai-welcomed; exit 0; } || exec pai-welcome; }
+
+setxkbmap "$LAYOUT" 2>/dev/null || true
+
+# ── page 2: admin password ────────────────────────────────────────────────────
+
+while true; do
+    PW_RESULT=$(zenity --forms \
+        --title="PAI — Setup  (2 of 5)" \
+        --text="<big><b>Admin Password</b></big>\n\nThis password unlocks the screen and authorises system actions.\n<small>Leave blank to skip — you can set one later with <tt>passwd</tt>.</small>" \
+        --add-password="Password" \
+        --add-password="Confirm password" \
+        --width=460 \
+        2>/dev/null) || { _confirm_cancel && { touch /tmp/.pai-welcomed; exit 0; } || continue; }
+
+    PW1=$(printf '%s' "$PW_RESULT" | cut -d'|' -f1)
+    PW2=$(printf '%s' "$PW_RESULT" | cut -d'|' -f2)
+
+    if [ -z "$PW1" ]; then
+        unset PW1 PW2 PW_RESULT
+        break
+    fi
+
+    if [ "$PW1" != "$PW2" ]; then
+        zenity --error \
+            --title="PAI — Password mismatch" \
+            --text="The two passwords don't match.\nPlease try again." \
+            --width=340 2>/dev/null || true
+        unset PW1 PW2 PW_RESULT
+        continue
+    fi
+
+    # Set password via pipe — never written to disk in plaintext
+    printf 'pai:%s\n' "$PW1" | sudo chpasswd 2>/dev/null || true
+    unset PW1 PW2 PW_RESULT
+    break
+done
+
+# ── page 3: privacy / tor ─────────────────────────────────────────────────────
+
+zenity --question \
+    --title="PAI — Setup  (3 of 5)" \
+    --text="<big><b>Privacy Mode</b></big>\n\nRoute all internet traffic through Tor for anonymity.\n\n  <b>Enable Tor</b>  — all connections via Tor  (private, slower)\n  <b>Skip</b>        — direct connection  (default, faster)\n\nYou can toggle this any time from the taskbar." \
+    --ok-label="Enable Tor" \
+    --cancel-label="Skip" \
+    --width=500 2>/dev/null \
+    && sudo pai-privacy on 2>/dev/null || true
+
+# ── page 4: model picker ──────────────────────────────────────────────────────
+
+TOTAL_RAM_KB=$(awk '/MemTotal/{print $2}' /proc/meminfo)
+TOTAL_RAM_GB=$(( TOTAL_RAM_KB / 1024 / 1024 ))
+
+if   [ "$TOTAL_RAM_GB" -ge 32 ]; then RECOMMENDED="qwen3:14b";  REC_DESC="Best for 32 GB  (8.5 GB download)"
+elif [ "$TOTAL_RAM_GB" -ge 16 ]; then RECOMMENDED="qwen3:8b";   REC_DESC="Best for 16 GB  (4.9 GB download)"
+elif [ "$TOTAL_RAM_GB" -ge 8  ]; then RECOMMENDED="qwen3:4b";   REC_DESC="Best for 8 GB   (2.5 GB download)"
+else                                   RECOMMENDED="qwen3:0.6b"; REC_DESC="Best for 4 GB   (400 MB download)"
+fi
+
+EXISTING=$(ollama list 2>/dev/null | awk 'NR>1{printf "%s  ", $1}' | sed 's/  $//' || true)
+if [ -n "$EXISTING" ]; then
+    MODEL_NOTE="<b>Already installed:</b>  $EXISTING\n\n"
+else
+    MODEL_NOTE="No models installed yet.\n\n"
+fi
+
+CHOSEN=$(zenity --list \
+    --title="PAI — Setup  (4 of 5)" \
+    --text="<big><b>AI Model</b></big>\n\n${MODEL_NOTE}System RAM:  ${TOTAL_RAM_GB} GB" \
+    --column="id" --column="Option" \
+    --hide-column=1 --print-column=1 \
+    --width=540 --height=380 \
+    "$RECOMMENDED" "  *  $RECOMMENDED  — $REC_DESC  (recommended)" \
+    "skip"          "     Skip — install models later with  ollama pull" \
+    "custom"        "     Enter a model name manually" \
+    2>/dev/null) || CHOSEN="skip"
+
+case "$CHOSEN" in
+    skip|"") ;;
+    custom)
+        CNAME=$(zenity --entry \
+            --title="PAI — Custom model" \
+            --text="Ollama model name  (e.g. llama3.2:3b, phi3:mini):" \
+            --width=420 2>/dev/null || true)
+        [ -n "$CNAME" ] && foot -e bash -c "ollama pull '$CNAME'; echo; read -rp 'Done. Press Enter to close.' _" &
+        ;;
+    *)
+        foot -e bash -c "ollama pull '$CHOSEN'; echo; read -rp 'Done. Press Enter to close.' _" &
+        ;;
+esac
+
+# ── page 5: ready ─────────────────────────────────────────────────────────────
+
+PRIV_STATUS=$( [ -f /tmp/.pai-privacy-mode ] && echo "ON  (Tor routing)" || echo "OFF  (direct connection)" )
+
+zenity --info \
+    --title="PAI — Setup  (5 of 5)" \
+    --text="<big><b>You're ready!</b></big>
+
+<b>Profile:</b>       $PROFILE
+<b>Keyboard:</b>      $LAYOUT
+<b>Privacy:</b>       $PRIV_STATUS
+
+<b>Key shortcuts:</b>
+  <b>Alt + Return</b>       open terminal
+  <b>Alt + D</b>            search &amp; launch apps
+  <b>Alt + S</b>            system settings
+  <b>Alt + Shift + E</b>    shutdown / memory wipe
+
+Open WebUI is opening in Firefox.
+Your AI runs entirely on this device — no cloud, no tracking." \
+    --ok-label="Start PAI" \
+    --width=480 2>/dev/null || true
+
+# Offer persistence setup — shows until user sets it up or declines for this session
+pai-persistence prompt 2>/dev/null || true
+
+# First-boot model picker (Task 03) — RAM-tier based suggestion + optional pull.
+# Skipped automatically if the user already accepted a model on page 4, or if
+# the standalone picker has been run before (its own sentinel). Safe offline.
+if [ "${CHOSEN:-skip}" = "skip" ] || [ -z "${CHOSEN:-}" ]; then
+    pai-model-picker 2>/dev/null || true
+fi
+
+# Mark greeter complete — unblocks the Firefox launch in sway config
+touch /tmp/.pai-welcomed
