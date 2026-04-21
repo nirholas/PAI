@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <defs>
+    <radialGradient id="bg-midnight" cx="50%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="#0a0a1f"/>
+      <stop offset="100%" stop-color="#030308"/>
+    </radialGradient>
+    <filter id="noise">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feBlend in="SourceGraphic" mode="screen" result="blend"/>
+      <feComposite in="blend" in2="SourceGraphic" operator="in"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1920" height="1080" fill="url(#bg-midnight)"/>
+
+  <!-- Subtle noise grain -->
+  <rect width="1920" height="1080" fill="#7aa2f7" opacity="0.02" filter="url(#noise)"/>
+
+  <!-- Stars: small dots scattered across canvas -->
+  <g fill="#ffffff">
+    <circle cx="142"  cy="89"   r="0.8" opacity="0.7"/>
+    <circle cx="387"  cy="43"   r="1.2" opacity="0.9"/>
+    <circle cx="628"  cy="127"  r="0.7" opacity="0.5"/>
+    <circle cx="891"  cy="67"   r="1.0" opacity="0.8"/>
+    <circle cx="1134" cy="38"   r="0.8" opacity="0.6"/>
+    <circle cx="1421" cy="104"  r="1.1" opacity="0.9"/>
+    <circle cx="1687" cy="55"   r="0.7" opacity="0.7"/>
+    <circle cx="74"   cy="214"  r="0.9" opacity="0.6"/>
+    <circle cx="314"  cy="198"  r="1.3" opacity="0.8"/>
+    <circle cx="567"  cy="241"  r="0.7" opacity="0.5"/>
+    <circle cx="812"  cy="167"  r="1.0" opacity="0.9"/>
+    <circle cx="1058" cy="223"  r="0.8" opacity="0.7"/>
+    <circle cx="1289" cy="179"  r="1.2" opacity="0.6"/>
+    <circle cx="1534" cy="247"  r="0.9" opacity="0.8"/>
+    <circle cx="1798" cy="191"  r="1.0" opacity="0.7"/>
+    <circle cx="198"  cy="356"  r="0.8" opacity="0.6"/>
+    <circle cx="445"  cy="312"  r="1.1" opacity="0.9"/>
+    <circle cx="723"  cy="378"  r="0.7" opacity="0.5"/>
+    <circle cx="967"  cy="334"  r="1.3" opacity="0.8"/>
+    <circle cx="1201" cy="367"  r="0.9" opacity="0.7"/>
+    <circle cx="1467" cy="323"  r="1.0" opacity="0.6"/>
+    <circle cx="1712" cy="389"  r="0.8" opacity="0.9"/>
+    <circle cx="89"   cy="498"  r="1.2" opacity="0.7"/>
+    <circle cx="356"  cy="467"  r="0.7" opacity="0.5"/>
+    <circle cx="601"  cy="512"  r="1.0" opacity="0.8"/>
+    <circle cx="848"  cy="478"  r="0.8" opacity="0.6"/>
+    <circle cx="1112" cy="523"  r="1.1" opacity="0.9"/>
+    <circle cx="1345" cy="489"  r="0.9" opacity="0.7"/>
+    <circle cx="1589" cy="534"  r="1.3" opacity="0.8"/>
+    <circle cx="1856" cy="501"  r="0.7" opacity="0.5"/>
+    <circle cx="167"  cy="634"  r="0.8" opacity="0.6"/>
+    <circle cx="423"  cy="601"  r="1.0" opacity="0.8"/>
+    <circle cx="678"  cy="645"  r="0.7" opacity="0.5"/>
+    <circle cx="934"  cy="612"  r="1.2" opacity="0.9"/>
+    <circle cx="1178" cy="656"  r="0.9" opacity="0.7"/>
+    <circle cx="1412" cy="623"  r="1.1" opacity="0.8"/>
+    <circle cx="1667" cy="667"  r="0.8" opacity="0.6"/>
+    <circle cx="234"  cy="756"  r="1.3" opacity="0.9"/>
+    <circle cx="489"  cy="723"  r="0.7" opacity="0.5"/>
+    <circle cx="745"  cy="767"  r="1.0" opacity="0.8"/>
+    <circle cx="1001" cy="734"  r="0.8" opacity="0.6"/>
+    <circle cx="1256" cy="778"  r="1.1" opacity="0.7"/>
+    <circle cx="1512" cy="745"  r="0.9" opacity="0.9"/>
+    <circle cx="1768" cy="789"  r="1.2" opacity="0.8"/>
+    <circle cx="112"  cy="878"  r="0.8" opacity="0.5"/>
+    <circle cx="378"  cy="845"  r="1.0" opacity="0.7"/>
+    <circle cx="634"  cy="889"  r="0.7" opacity="0.6"/>
+    <circle cx="890"  cy="856"  r="1.3" opacity="0.9"/>
+    <circle cx="1145" cy="900"  r="0.9" opacity="0.8"/>
+    <circle cx="1389" cy="867"  r="1.1" opacity="0.6"/>
+    <circle cx="1634" cy="912"  r="0.8" opacity="0.7"/>
+    <circle cx="1889" cy="878"  r="1.0" opacity="0.5"/>
+    <!-- blue-tinted brighter stars -->
+    <circle cx="960"  cy="280"  r="1.5" fill="#7aa2f7" opacity="0.5"/>
+    <circle cx="456"  cy="560"  r="1.3" fill="#9f7aea" opacity="0.4"/>
+    <circle cx="1456" cy="760"  r="1.4" fill="#7aa2f7" opacity="0.4"/>
+    <circle cx="234"  cy="920"  r="1.2" fill="#9f7aea" opacity="0.3"/>
+  </g>
+
+  <!-- Faint nebula hint: two soft glows -->
+  <ellipse cx="400" cy="300" rx="280" ry="160" fill="#9f7aea" opacity="0.025"/>
+  <ellipse cx="1520" cy="700" rx="320" ry="180" fill="#7aa2f7" opacity="0.02"/>
+
+  <!-- Watermark text -->
+  <text x="960" y="510" text-anchor="middle" dominant-baseline="central"
+        font-family="sans-serif" font-size="140" font-weight="bold"
+        fill="#7aa2f7" opacity="0.15" letter-spacing="20">PAI</text>
+  <text x="960" y="580" text-anchor="middle" dominant-baseline="central"
+        font-family="sans-serif" font-size="22"
+        fill="#9f7aea" opacity="0.4">PAI</text>
+</svg>
