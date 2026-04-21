@@ -1,0 +1,26 @@
+#!/bin/bash
+# ── Install Mullvad Browser (hardened Firefox, no Tor routing) ─────────
+# Uses the Mullvad apt repository. amd64 only — Mullvad does not publish
+# an arm64 browser build.
+set -euo pipefail
+
+ARCH=$(dpkg --print-architecture)
+if [ "$ARCH" != "amd64" ]; then
+    echo "[pai] Mullvad Browser is amd64-only — skipping on $ARCH."
+    exit 0
+fi
+
+echo "[pai] Installing Mullvad Browser..."
+
+install -d -m 0755 /etc/apt/keyrings
+curl -fsSL https://repository.mullvad.net/deb/mullvad-keyring.asc \
+    | gpg --dearmor -o /etc/apt/keyrings/mullvad-keyring.gpg
+
+cat > /etc/apt/sources.list.d/mullvad.list <<'REPO'
+deb [signed-by=/etc/apt/keyrings/mullvad-keyring.gpg] https://repository.mullvad.net/deb/stable bookworm main
+REPO
+
+apt-get update
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends mullvad-browser
+
+echo "[pai] Mullvad Browser installed."
