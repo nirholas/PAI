@@ -1,0 +1,12 @@
+---
+question: "Is this really private?"
+order: 1
+---
+
+Yes — genuinely private, not "trust us" private.
+
+PAI runs entirely in RAM and never touches your computer's hard drive. The host OS is never mounted. All AI inference happens locally via Ollama; your prompts never leave your machine. When you shut down, RAM is cleared and no forensic trace remains — no chat history, no downloaded files, no browser cookies, nothing.
+
+The network stack adds further protection: your MAC address is randomized on every boot, the firewall denies all incoming connections, and Ollama binds only to `localhost`. Even if someone is on the same Wi-Fi network, they cannot reach your AI session.
+
+For maximum privacy, enable Tor with `sudo pai-privacy on` to route all outbound traffic through the Tor network.
