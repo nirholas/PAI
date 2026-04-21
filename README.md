@@ -63,7 +63,7 @@ Then reboot, select USB from your boot menu (F12/F2/DEL), and you're in.
 
 ---
 
-## What is PAI?
+## What is PAI? 
 
 PAI is a **bootable live USB operating system** built on Debian 12 that gives you a private, portable AI workstation. Plug it into any x86_64 PC, boot from USB, and you have:
 
