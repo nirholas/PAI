@@ -1,0 +1,89 @@
+---
+title: "Security Model"
+description: "PAI's threat model, privacy layers, and what it does and does not protect against."
+section: "Reference"
+order: 3
+editPath: "README.md"
+---
+
+## Security Model
+
+PAI implements defense-in-depth across four layers. The goal is not just privacy but **operational security** — making it difficult for an adversary to determine what you did, when, or where.
+
+### Layer 1: Amnesic by design
+
+Like Tails, PAI is **amnesic**. It runs entirely from RAM and the read-only squashfs on the USB drive.
+
+- **No hard disk access** — the host machine's drives are never mounted
+- **RAM-only operation** — all state exists only in volatile memory
+- **Clean shutdown** — powering off clears all RAM:
+  - Chat history and AI conversations
+  - Downloaded files and browser history
+  - Wi-Fi credentials and network logs
+  - Every keystroke and mouse movement
+
+There is no forensic residue. The machine returns to its pre-boot state.
+
+### Layer 2: Network anonymity
+
+| Feature | Implementation | Default |
+|---|---|---|
+| MAC spoofing | `macchanger` via `pai-mac-spoof.service` | ✅ Always on |
+| Firewall | UFW — deny incoming, allow outgoing | ✅ Always on |
+| Tor routing | Transparent proxy via `tor` + `iptables` | ⬡ Opt-in |
+| DNS privacy | Tor DNS resolution when enabled | ⬡ Opt-in |
+| Wi-Fi randomization | NetworkManager `cloned-mac-address=random` | ✅ Always on |
+
+MAC spoofing randomizes your hardware address on every boot. The access point, ISP, and any local observer sees a different device each time.
+
+The firewall denies all incoming connections. Ollama and PAI UI listen only on `localhost` — they are not reachable from the network, even on the local subnet.
+
+### Layer 3: Local-only AI
+
+The AI runs **entirely on-device** using Ollama. No tokens, no API keys, no cloud dependencies.
+
+- **Model execution**: CPU-only (GPU libs stripped to save space)
+- **Network**: Ollama binds to `127.0.0.1:11434` and never phones home
+- **Supported models**: Any GGUF-compatible model — Llama 3, Mistral, Phi, Gemma, Qwen, DeepSeek, and more
+
+### Layer 4: Hardened defaults
+
+```
+✓ MAC randomized on every boot
+✓ Firewall: deny incoming, localhost only
+✓ No SSH server enabled by default
+✓ GPG configured with SHA-512 + AES-256
+✓ Tor pre-configured (opt-in)
+✓ WireGuard available for VPN tunnels
+✓ LUKS available for encrypted volumes
+✓ No telemetry, no analytics, no phoning home — ever
+✓ Firefox ESR with hardened policies
+✓ Automatic memory wipe on shutdown
+```
+
+### Threat model
+
+**PAI protects against:**
+- Network surveillance (MAC spoofing + Tor + encrypted DNS)
+- Forensic analysis of the host machine (amnesic, no disk writes)
+- Cloud AI data harvesting (all inference is local)
+- Tracking across sessions (new MAC, clean browser, no cookies)
+- Local network attacks on AI services (firewall blocks all incoming)
+
+**PAI does NOT protect against:**
+- Physical keyloggers or hardware implants on the host machine
+- Compromised BIOS/UEFI firmware
+- Shoulder surfing or screen recording
+- Adversaries who control your ISP and the Tor exit node simultaneously
+- Cold boot attacks on RAM (mitigated by full shutdown, not sleep)
+- A compromised USB drive — always verify ISO checksums before flashing
+
+### Comparison with cloud AI
+
+| | Cloud AI | PAI |
+|---|---|---|
+| **Where prompts go** | Remote servers | Nowhere — stays on your hardware |
+| **Who can read them** | Provider, employees, subprocessors | Only you |
+| **Network required** | Always | Never (fully offline) |
+| **Traces left** | Server logs, training data | None — RAM wiped on shutdown |
+| **Cost** | $20–200/month | Free |
