@@ -1,0 +1,307 @@
+#!/usr/bin/env bash
+# ── PAI Privacy & System Status ──────────────────────────────────────
+# One-shot command that tells you, in a few seconds, whether PAI is
+# behaving the way a private-AI USB should:
+#   • Is Ollama up and which model is loaded?
+#   • How much RAM / VRAM is it using?
+#   • What's listening on the network?
+#   • Any outbound connections? (For a private OS, ideally zero.)
+#   • Firewall state? MAC spoofed? Persistence active?
+#
+# Intended to be the go-to "am I private right now?" answer. Waybar
+# applet and the future GTK dashboard will both render the same data
+# that this CLI prints.
+#
+# Usage:
+#   pai-status                 # human-readable (default)
+#   pai-status --json          # structured output (for applets/scripts)
+#   pai-status --brief         # one-line summary
+#   pai-status -h | --help
+# ──────────────────────────────────────────────────────────────────────
+set -euo pipefail
+
+FORMAT="human"
+
+usage() {
+    cat <<'EOF'
+pai-status — Private AI system status
+
+USAGE
+    pai-status [--json|--brief|-h|--help]
+
+OPTIONS
+    --json       Structured output (for Waybar, dashboards, scripts)
+    --brief      One-line summary suitable for a status bar
+    -h, --help   Show this help
+
+WHAT IT REPORTS
+    • Ollama daemon + loaded model
+    • RAM / VRAM usage
+    • Listening ports (what's serving from this machine)
+    • Outbound connections (ideally zero on a private OS)
+    • UFW firewall status + default policies
+    • MAC spoof status
+    • Persistence (encrypted? mounted?)
+    • Tor status (if running)
+
+EXIT CODES
+    0   Status printed; private mode healthy
+    1   Problem detected (service down, firewall open, etc.)
+    2   Usage error
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --json)    FORMAT="json";  shift ;;
+        --brief)   FORMAT="brief"; shift ;;
+        -h|--help) usage; exit 0 ;;
+        *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
+    esac
+done
+
+# ── Colors (only when tty) ────────────────────────────────────────────
+if [[ -t 1 && "$FORMAT" == "human" ]]; then
+    RED=$'\033[0;31m'; GREEN=$'\033[0;32m'; YELLOW=$'\033[1;33m'
+    CYAN=$'\033[0;36m'; BOLD=$'\033[1m'; NC=$'\033[0m'
+else
+    RED=""; GREEN=""; YELLOW=""; CYAN=""; BOLD=""; NC=""
+fi
+
+# ── Collectors ────────────────────────────────────────────────────────
+
+HEALTHY=true
+
+check_ollama() {
+    if systemctl is-active --quiet ollama >/dev/null 2>&1 2>/dev/null; then
+        OLLAMA_STATE="running"
+    elif pgrep -x ollama >/dev/null 2>&1; then
+        OLLAMA_STATE="running (no systemd unit)"
+    else
+        OLLAMA_STATE="stopped"
+    fi
+
+    OLLAMA_MODEL="none"
+    if [[ "$OLLAMA_STATE" == "running"* ]] && command -v ollama >/dev/null 2>&1; then
+        # `ollama ps` lists loaded (RAM-resident) models. Empty when none loaded.
+        loaded=$(ollama ps 2>/dev/null | awk 'NR>1 {print $1}' | head -1 || true)
+        if [[ -n "$loaded" ]]; then
+            OLLAMA_MODEL="$loaded"
+        else
+            OLLAMA_MODEL="idle"
+        fi
+    fi
+
+    # Default model from first-boot picker, if present
+    OLLAMA_DEFAULT="$(cat "${HOME:-/root}/.config/pai/default-model" 2>/dev/null || echo "unset")"
+}
+
+check_memory() {
+    read -r RAM_TOTAL_MB RAM_USED_MB _ < <(free -m | awk '/^Mem:/{print $2, $3, $7}')
+    RAM_USED_PCT=$(( RAM_USED_MB * 100 / RAM_TOTAL_MB ))
+
+    VRAM_TOTAL_MB=0
+    VRAM_USED_MB=0
+    GPU_NAME="none"
+    if command -v nvidia-smi >/dev/null 2>&1; then
+        if out=$(nvidia-smi --query-gpu=memory.total,memory.used,name --format=csv,noheader,nounits 2>/dev/null | head -1); then
+            VRAM_TOTAL_MB=$(awk -F', ' '{print $1}' <<<"$out" | tr -d ' ')
+            VRAM_USED_MB=$(awk -F', ' '{print $2}' <<<"$out" | tr -d ' ')
+            GPU_NAME=$(awk -F', ' '{print $3}' <<<"$out")
+        fi
+    fi
+}
+
+check_network() {
+    # Listening TCP sockets (IPv4 + IPv6), numeric, no header
+    LISTENING=$(ss -tlnH 2>/dev/null | awk '{print $4}' | sort -u | wc -l)
+
+    # Established outbound connections — excluding loopback.
+    # On a private OS in default state, this should be ~zero.
+    OUTBOUND=$(ss -tnH state established 2>/dev/null \
+        | awk '{print $4}' \
+        | grep -vE '^(127\.|\[::1\])' \
+        | wc -l || echo 0)
+    if [[ "$OUTBOUND" -gt 0 ]]; then
+        OUTBOUND_TOP=$(ss -tnH state established 2>/dev/null \
+            | awk '{print $5}' \
+            | grep -vE '^(127\.|\[::1\])' \
+            | sort | uniq -c | sort -rn | head -3 \
+            | awk '{print $2" ("$1")"}' | paste -sd ', ' -)
+    else
+        OUTBOUND_TOP=""
+    fi
+}
+
+check_firewall() {
+    UFW_STATE="unknown"
+    UFW_DEFAULT_IN="?"
+    UFW_DEFAULT_OUT="?"
+    if command -v ufw >/dev/null 2>&1; then
+        if out=$(ufw status verbose 2>/dev/null); then
+            if grep -q "^Status: active" <<<"$out"; then
+                UFW_STATE="active"
+            else
+                UFW_STATE="inactive"
+                HEALTHY=false
+            fi
+            UFW_DEFAULT_IN=$(awk -F'[(),]' '/^Default:/ {
+                for (i=1;i<=NF;i++) if ($i ~ /incoming/) print $(i-1)
+            }' <<<"$out" | xargs || echo "?")
+            UFW_DEFAULT_OUT=$(awk -F'[(),]' '/^Default:/ {
+                for (i=1;i<=NF;i++) if ($i ~ /outgoing/) print $(i-1)
+            }' <<<"$out" | xargs || echo "?")
+        fi
+    fi
+}
+
+check_mac_spoof() {
+    MAC_SPOOF="off"
+    if systemctl is-active --quiet pai-mac-spoof >/dev/null 2>&1 2>/dev/null; then
+        MAC_SPOOF="on"
+    elif [[ -f /var/lib/pai/mac-spoof.enabled ]]; then
+        MAC_SPOOF="on"
+    fi
+}
+
+check_persistence() {
+    PERSIST_STATE="off"
+    if [[ -d /lib/live/mount/persistence ]] || findmnt -t ext4 /var/lib/ollama >/dev/null 2>&1; then
+        PERSIST_STATE="active"
+    fi
+    # Is it LUKS-encrypted?
+    PERSIST_ENCRYPTED="unknown"
+    if command -v lsblk >/dev/null 2>&1; then
+        if lsblk -o NAME,FSTYPE 2>/dev/null | grep -q crypto_LUKS; then
+            PERSIST_ENCRYPTED="yes"
+        else
+            PERSIST_ENCRYPTED="no"
+        fi
+    fi
+}
+
+check_tor() {
+    TOR_STATE="off"
+    if systemctl is-active --quiet tor >/dev/null 2>&1 2>/dev/null; then
+        TOR_STATE="running"
+    fi
+}
+
+# ── Run all collectors (tolerant of individual failures)
+check_ollama     || true
+check_memory     || true
+check_network    || true
+check_firewall   || true
+check_mac_spoof  || true
+check_persistence || true
+check_tor        || true
+
+# ── Healthy-or-not summary (colored dot + one word)
+# Rules: unhealthy if firewall inactive, or unexpected outbound connections
+# and tor not running
+if [[ "$UFW_STATE" != "active" ]]; then
+    HEALTHY=false
+fi
+if [[ "$OUTBOUND" -gt 0 && "$TOR_STATE" != "running" ]]; then
+    # Outbound connections without Tor = leaking. Flag it.
+    HEALTHY=false
+fi
+
+if $HEALTHY; then
+    STATUS_DOT="${GREEN}●${NC}"
+    STATUS_WORD="${GREEN}private${NC}"
+else
+    STATUS_DOT="${RED}●${NC}"
+    STATUS_WORD="${RED}attention${NC}"
+fi
+
+# ── Output ────────────────────────────────────────────────────────────
+case "$FORMAT" in
+    brief)
+        # One line, safe for a status bar
+        printf "PAI %s · Ollama %s · out=%s · ufw=%s · persist=%s\n" \
+            "$($HEALTHY && echo OK || echo WARN)" \
+            "$OLLAMA_STATE" \
+            "$OUTBOUND" \
+            "$UFW_STATE" \
+            "$PERSIST_STATE"
+        ;;
+    json)
+        cat <<EOF
+{
+  "healthy": $($HEALTHY && echo true || echo false),
+  "ollama": {
+    "state": "${OLLAMA_STATE}",
+    "loaded_model": "${OLLAMA_MODEL}",
+    "default_model": "${OLLAMA_DEFAULT}"
+  },
+  "memory": {
+    "ram_total_mb": ${RAM_TOTAL_MB:-0},
+    "ram_used_mb": ${RAM_USED_MB:-0},
+    "ram_used_pct": ${RAM_USED_PCT:-0},
+    "vram_total_mb": ${VRAM_TOTAL_MB:-0},
+    "vram_used_mb": ${VRAM_USED_MB:-0},
+    "gpu": "${GPU_NAME}"
+  },
+  "network": {
+    "listening_sockets": ${LISTENING:-0},
+    "outbound_established": ${OUTBOUND:-0},
+    "outbound_top": "${OUTBOUND_TOP}"
+  },
+  "firewall": {
+    "ufw_state": "${UFW_STATE}",
+    "default_incoming": "${UFW_DEFAULT_IN}",
+    "default_outgoing": "${UFW_DEFAULT_OUT}"
+  },
+  "privacy": {
+    "mac_spoof": "${MAC_SPOOF}",
+    "tor": "${TOR_STATE}"
+  },
+  "persistence": {
+    "state": "${PERSIST_STATE}",
+    "encrypted": "${PERSIST_ENCRYPTED}"
+  }
+}
+EOF
+        ;;
+    human|*)
+        echo -e "${BOLD}PAI status${NC}   ${STATUS_DOT} ${STATUS_WORD}"
+        echo -e "────────────"
+        printf "  %-14s %s\n" "Ollama:"      "${OLLAMA_STATE}${OLLAMA_MODEL:+ ($OLLAMA_MODEL)}"
+        printf "  %-14s %s\n" "Default:"     "${OLLAMA_DEFAULT}"
+        printf "  %-14s %s MB / %s MB (%s%%)\n" "RAM:" \
+            "${RAM_USED_MB:-?}" "${RAM_TOTAL_MB:-?}" "${RAM_USED_PCT:-?}"
+        if [[ "${VRAM_TOTAL_MB:-0}" -gt 0 ]]; then
+            printf "  %-14s %s MB / %s MB (%s)\n" "VRAM:" \
+                "${VRAM_USED_MB}" "${VRAM_TOTAL_MB}" "${GPU_NAME}"
+        fi
+        echo
+        printf "  %-14s %s\n" "Listening:"    "${LISTENING:-0} sockets"
+        if [[ "${OUTBOUND:-0}" -gt 0 ]]; then
+            printf "  %-14s ${YELLOW}%s${NC} %s\n" "Outbound:" \
+                "${OUTBOUND} connection(s)" "${OUTBOUND_TOP:+→ $OUTBOUND_TOP}"
+        else
+            printf "  %-14s ${GREEN}%s${NC}\n" "Outbound:" "none"
+        fi
+        echo
+        if [[ "$UFW_STATE" == "active" ]]; then
+            printf "  %-14s ${GREEN}%s${NC} (in=%s out=%s)\n" "Firewall:" \
+                "$UFW_STATE" "$UFW_DEFAULT_IN" "$UFW_DEFAULT_OUT"
+        else
+            printf "  %-14s ${RED}%s${NC}\n" "Firewall:" "$UFW_STATE"
+        fi
+        printf "  %-14s %s\n" "MAC spoof:"   "${MAC_SPOOF}"
+        printf "  %-14s %s\n" "Tor:"         "${TOR_STATE}"
+        echo
+        printf "  %-14s %s (encrypted: %s)\n" "Persistence:" \
+            "${PERSIST_STATE}" "${PERSIST_ENCRYPTED}"
+        echo
+        if $HEALTHY; then
+            exit 0
+        else
+            echo -e "${YELLOW}Note:${NC} one or more privacy defaults are off or bypassed."
+            echo "      Run ${CYAN}pai-privacy${NC} to review, or ${CYAN}pai-status --json${NC} for details."
+            exit 1
+        fi
+        ;;
+esac
