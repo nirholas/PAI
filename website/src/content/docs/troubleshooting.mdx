@@ -1,0 +1,134 @@
+---
+title: "Troubleshooting"
+description: "Fix common issues with booting, AI inference, networking, and persistence."
+section: "Guides"
+order: 5
+editPath: "docs/troubleshooting.md"
+---
+
+## Troubleshooting
+
+### PAI won't boot
+
+**Symptom**: Machine boots into the host OS, ignores USB.
+
+1. Check your BIOS boot order — USB must be listed before the internal drive
+2. Try F12 (Dell/Lenovo), F9 (HP), Option (Mac Intel), or F8 (ASUS) at POST to get a one-time boot menu
+3. Verify the USB was flashed correctly — try re-flashing with `dd` or Rufus
+4. Disable Secure Boot in BIOS if enabled (UEFI → Security → Secure Boot: Disabled)
+
+**Symptom**: GRUB loads but kernel panics on boot.
+
+- Try the `nomodeset` boot option: at GRUB, press `e`, add `nomodeset` to the kernel line, press F10
+
+### Ollama won't start / no models available
+
+```bash
+# Check Ollama status
+systemctl status ollama
+
+# Restart Ollama
+sudo systemctl restart ollama
+
+# Pull a model manually
+ollama pull llama3.2
+
+# List available models
+ollama list
+```
+
+If Ollama fails to start, check available RAM:
+
+```bash
+free -h
+```
+
+Models need free RAM to run:
+- 3B models: ~2 GB RAM
+- 7B models: ~5 GB RAM  
+- 13B models: ~10 GB RAM
+
+### Chat interface not loading
+
+```bash
+# Check Open WebUI service
+systemctl status open-webui
+
+# Restart Open WebUI
+sudo systemctl restart open-webui
+
+# Check if port 8080 is listening
+ss -tlnp | grep 8080
+```
+
+If Firefox shows "Connection refused", wait 30 seconds after boot for services to start, then refresh.
+
+### Wi-Fi not connecting
+
+```bash
+# List available networks
+nmcli device wifi list
+
+# Connect to a network
+nmcli device wifi connect "NetworkName" password "password"
+
+# Check network manager status
+systemctl status NetworkManager
+```
+
+### Tor (privacy mode) issues
+
+```bash
+# Enable Tor
+sudo pai-privacy on
+
+# Disable Tor
+sudo pai-privacy off
+
+# Check Tor status
+systemctl status tor
+
+# Verify Tor is routing (should show Tor exit node IP)
+curl https://check.torproject.org/api/ip
+```
+
+### Persistence not working
+
+```bash
+# Check persistence status
+pai-persistence status
+
+# Manual unlock (if auto-unlock failed)
+sudo pai-persistence unlock
+
+# View persistence service logs
+journalctl -u pai-persistence
+```
+
+### Display issues / blank screen
+
+- Try a different output: most Sway configs use `*` to auto-detect
+- Check if Wayland is running: `echo $WAYLAND_DISPLAY`
+- For VM/software rendering issues, check environment variables:
+  ```bash
+  export WLR_RENDERER=pixman
+  export WLR_NO_HARDWARE_CURSORS=1
+  sway
+  ```
+
+### Performance is very slow
+
+CPU inference is slower than GPU inference. Expected speeds on 8 GB RAM laptop:
+- 3B model: 15–40 tokens/sec
+- 7B model: 5–15 tokens/sec
+- 13B model: 2–5 tokens/sec
+
+To improve performance:
+- Use a smaller/quantized model (e.g., `phi3:mini` instead of `llama3:8b`)
+- Close other applications to free RAM
+- Use a machine with AVX-512 CPU support
+
+### Getting help
+
+- [GitHub Issues](https://github.com/nirholas/pai/issues) — bug reports and feature requests
+- [README](https://github.com/nirholas/pai/blob/main/README.md) — full documentation
