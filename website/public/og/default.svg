@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#0a0a0a"/>
+  <!-- pixel grid subtle overlay -->
+  <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+    <rect width="20" height="20" fill="none" stroke="#ffffff" stroke-width="0.15" stroke-opacity="0.06"/>
+  </pattern>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <!-- accent line top -->
+  <rect x="0" y="0" width="1200" height="3" fill="#e63946"/>
+  <!-- PAI wordmark -->
+  <text x="80" y="120" font-family="monospace" font-size="72" font-weight="700" fill="#ffffff" letter-spacing="-2">PAI</text>
+  <text x="80" y="155" font-family="monospace" font-size="18" fill="#888888" letter-spacing="4">PAI</text>
+  <!-- divider -->
+  <rect x="80" y="185" width="120" height="2" fill="#e63946"/>
+  <!-- tagline -->
+  <text x="80" y="260" font-family="monospace" font-size="38" font-weight="600" fill="#ffffff">Private AI on a bootable</text>
+  <text x="80" y="310" font-family="monospace" font-size="38" font-weight="600" fill="#ffffff">USB drive.</text>
+  <!-- sub -->
+  <text x="80" y="380" font-family="monospace" font-size="22" fill="#aaaaaa">No cloud. No tracking. No installation.</text>
+  <!-- url -->
+  <text x="80" y="560" font-family="monospace" font-size="20" fill="#555555">pai.direct</text>
+</svg>
