@@ -1,0 +1,15 @@
+{
+  "id": "summarize-article",
+  "title": "Summarize this news article: [paste]",
+  "model": "mistral:7b",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Summarize this news article:\n\n---\nTech Giants Pledge AI Transparency Standards\n\nA coalition of major technology companies announced Monday that they will adopt a shared set of transparency standards for AI systems, including requirements to disclose training data sources, model limitations, and safety testing procedures.\n\nThe voluntary framework, developed over 18 months with input from academic researchers and civil society groups, would require companies to publish \"model cards\" — standardized documents describing what an AI system can and cannot do, what data it was trained on, and what tests were conducted before deployment.\n\nCritics argue the standards don't go far enough, noting that disclosure requirements are self-reported and there is no independent auditing mechanism. Supporters say it's a meaningful first step toward accountability in an industry that has moved faster than regulators.\n\nThe framework is expected to take effect for new model releases starting next quarter.\n---"
+    },
+    {
+      "role": "assistant",
+      "content": "Here's a concise summary:\n\n**Major tech companies agree on AI transparency standards**\n\nA coalition of tech firms announced a voluntary framework requiring them to publicly disclose key information about their AI systems, including:\n- **Training data sources**\n- **Model limitations**\n- **Pre-deployment safety testing**\n\nThis will be done via standardized \"model cards\" — public documents describing what each AI can and can't do.\n\n**The catch:** Compliance is self-reported with no independent auditing, which critics say undermines accountability. Supporters still see it as meaningful progress.\n\nThe standards apply to new model releases starting next quarter.\n\n---\n*Note: I processed this entirely on your local machine. The article text never left your device.*"
+    }
+  ]
+}
