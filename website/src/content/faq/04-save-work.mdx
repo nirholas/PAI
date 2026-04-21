@@ -1,0 +1,31 @@
+---
+question: "Can I save my work?"
+order: 4
+---
+
+Yes — with opt-in encrypted persistence.
+
+By default, PAI is amnesic: everything is wiped at shutdown. To save data across sessions, set up the encrypted persistence partition:
+
+```bash
+# First-time setup (creates LUKS partition on your USB)
+sudo pai-persistence setup
+
+# Save your data manually at any time
+pai-save
+
+# Data is also auto-saved on shutdown
+```
+
+What gets saved:
+
+- Your home directory (`~/`)
+- SSH keys (`~/.ssh/`)
+- GPG keyring (`~/.gnupg/`)
+- Electrum wallet (`~/.electrum/`)
+- Downloaded AI models (so you don't re-download each session)
+- PAI UI chat history and settings
+
+The persistence partition is encrypted with LUKS2 (AES-256). At boot, PAI asks for your passphrase on a secondary terminal (tty2). If you skip it, PAI boots normally in amnesic mode.
+
+**Your passphrase is the only key to your data. There is no recovery if you lose it.**
