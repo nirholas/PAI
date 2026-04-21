@@ -1,0 +1,42 @@
+#!/bin/bash
+# PAI Settings — mouse and touchpad tuning. Writes a sway config.d snippet.
+set -euo pipefail
+
+STYLE=/etc/pai/wofi-shutdown.css
+WOFI=(wofi --dmenu --cache-file=/dev/null)
+[ -r "$STYLE" ] && WOFI+=(--style "$STYLE")
+
+CFG_DIR="$HOME/.config/sway/config.d"
+CFG_FILE="$CFG_DIR/20-pointer.conf"
+mkdir -p "$CFG_DIR"
+
+tap=$(printf 'Enabled\nDisabled\n' | "${WOFI[@]}" --prompt "Tap to click" --lines 2 --width 300 --height 140 2>/dev/null)
+[ -z "$tap" ] && exit 0
+
+natural=$(printf 'Enabled\nDisabled\n' | "${WOFI[@]}" --prompt "Natural scroll" --lines 2 --width 300 --height 140 2>/dev/null)
+[ -z "$natural" ] && exit 0
+
+speed=$(printf '%s\n' -0.5 -0.25 0 0.25 0.5 | "${WOFI[@]}" --prompt "Pointer speed (-1.0 to 1.0)" --lines 5 --width 300 --height 240 2>/dev/null)
+[ -z "$speed" ] && exit 0
+
+tap_val="enabled"; [ "$tap" = "Disabled" ] && tap_val="disabled"
+nat_val="enabled"; [ "$natural" = "Disabled" ] && nat_val="disabled"
+
+cat > "$CFG_FILE" <<EOF
+# Written by pai-settings-pointer
+input "type:touchpad" {
+    tap $tap_val
+    natural_scroll $nat_val
+    pointer_accel $speed
+}
+input "type:pointer" {
+    pointer_accel $speed
+}
+EOF
+
+if command -v swaymsg >/dev/null 2>&1; then
+    swaymsg reload >/dev/null 2>&1 || true
+fi
+
+zenity --info --title="Pointer" \
+    --text="Tap: $tap\nNatural scroll: $natural\nSpeed: $speed" 2>/dev/null &
