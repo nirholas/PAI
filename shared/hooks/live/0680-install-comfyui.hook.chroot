@@ -1,0 +1,52 @@
+#!/bin/bash
+# ── Install ComfyUI (local Stable Diffusion) ───────────────────────────
+# Clones the upstream at a pinned commit into /opt/comfyui and builds
+# a Python venv. NO model weights are preinstalled — users opt in via
+# `pai-ai-model-picker` at runtime.
+set -euo pipefail
+
+COMFYUI_COMMIT="v0.3.10"   # pinned tag; bump deliberately
+echo "[pai] Installing ComfyUI @ ${COMFYUI_COMMIT}..."
+
+apt-get update
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    git python3-venv python3-pip
+
+install -d -m 0755 /opt/comfyui
+git clone --depth 1 --branch "${COMFYUI_COMMIT}" \
+    https://github.com/comfyanonymous/ComfyUI /opt/comfyui \
+    || { echo "[pai] ComfyUI clone failed — skipping."; exit 0; }
+
+python3 -m venv /opt/comfyui/venv
+# shellcheck disable=SC1091
+. /opt/comfyui/venv/bin/activate
+
+# Install CPU-only torch by default; GPU users install the matching
+# wheel themselves (documented in the GPU setup guide). This keeps the
+# ISO size from ballooning with a GPU-specific torch variant.
+pip install --no-cache-dir --upgrade pip wheel
+pip install --no-cache-dir \
+    torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu \
+    || echo "[pai] torch CPU wheel install failed — leaving venv partial."
+pip install --no-cache-dir -r /opt/comfyui/requirements.txt \
+    || echo "[pai] ComfyUI requirements install had issues — check at runtime."
+
+deactivate
+
+cat > /opt/comfyui/models/README.md <<'README'
+ComfyUI model weights live here. They are not shipped with PAI.
+
+Run `pai-ai-model-picker` (or Settings → AI → Image generation) to
+download a default set. Suggested starting point: SDXL-Turbo (CreativeML
+Open RAIL++-M).
+
+Checkpoint files drop in ./checkpoints/, VAEs in ./vae/, LoRAs in
+./loras/, and so on.
+README
+
+install -d -m 0755 /opt/comfyui/models/checkpoints /opt/comfyui/models/vae /opt/comfyui/models/loras
+
+apt-get clean
+rm -rf /var/lib/apt/lists/*
+
+echo "[pai] ComfyUI installed."
