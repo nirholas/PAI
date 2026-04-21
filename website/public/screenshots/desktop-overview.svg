@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" role="img" aria-label="PAI Sway desktop with taskbar, dock and open windows">
+  <defs>
+    <linearGradient id="wallpaper" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1a1a2e"/>
+      <stop offset="0.6" stop-color="#0f0f1a"/>
+      <stop offset="1" stop-color="#12121f"/>
+    </linearGradient>
+    <pattern id="dot" width="20" height="20" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="0.6" fill="#7aa2f7" fill-opacity="0.08"/>
+    </pattern>
+  </defs>
+  <rect width="960" height="600" fill="url(#wallpaper)"/>
+  <rect width="960" height="600" fill="url(#dot)"/>
+
+  <!-- Topbar / waybar -->
+  <rect x="0" y="0" width="960" height="28" fill="rgba(20,20,30,0.92)"/>
+  <rect x="8" y="9" width="14" height="10" rx="2" fill="#7aa2f7"/>
+  <text x="30" y="18" font-family="ui-monospace, monospace" font-size="10" fill="#e0e0e0">PAI Desktop</text>
+  <g transform="translate(430 8)">
+    <rect width="20" height="12" rx="2" fill="rgba(122,162,247,0.2)" stroke="#7aa2f7"/>
+    <text x="5" y="9" font-family="ui-monospace" font-size="9" fill="#e0e0e0">1</text>
+    <rect x="24" width="20" height="12" rx="2" fill="rgba(255,255,255,0.04)"/>
+    <text x="29" y="9" font-family="ui-monospace" font-size="9" fill="#888">2</text>
+    <rect x="48" width="20" height="12" rx="2" fill="rgba(255,255,255,0.04)"/>
+    <text x="53" y="9" font-family="ui-monospace" font-size="9" fill="#888">3</text>
+    <rect x="72" width="20" height="12" rx="2" fill="rgba(255,255,255,0.04)"/>
+    <text x="77" y="9" font-family="ui-monospace" font-size="9" fill="#888">4</text>
+  </g>
+  <text x="830" y="18" font-family="ui-monospace" font-size="10" fill="#888">CPU</text>
+  <text x="860" y="18" font-family="ui-monospace" font-size="10" fill="#4ade80">local</text>
+  <text x="900" y="18" font-family="ui-monospace" font-size="10" fill="#e0e0e0">22:14</text>
+
+  <!-- Window 1: Terminal -->
+  <g transform="translate(80 90)">
+    <rect width="420" height="280" rx="6" fill="#0f0f1a" stroke="#7aa2f7" stroke-opacity="0.4"/>
+    <rect width="420" height="24" rx="6" fill="#1a1a2e"/>
+    <rect y="18" width="420" height="6" fill="#1a1a2e"/>
+    <circle cx="14" cy="12" r="4" fill="#f87171"/>
+    <circle cx="28" cy="12" r="4" fill="#fbbf24"/>
+    <circle cx="42" cy="12" r="4" fill="#4ade80"/>
+    <text x="180" y="16" font-family="ui-monospace" font-size="10" fill="#888">user@pai — foot</text>
+    <g font-family="ui-monospace" font-size="11" fill="#e0e0e0">
+      <text x="14" y="50"><tspan fill="#4ade80">$</tspan> neofetch</text>
+      <text x="14" y="72" fill="#7aa2f7">OS:       PAI Live 0.1.0</text>
+      <text x="14" y="90" fill="#7aa2f7">Kernel:   Linux 6.1.0-pai</text>
+      <text x="14" y="108" fill="#7aa2f7">Shell:    bash 5.2</text>
+      <text x="14" y="126" fill="#7aa2f7">WM:       sway 1.8.1</text>
+      <text x="14" y="144" fill="#7aa2f7">AI:       ollama · llama3.2</text>
+      <text x="14" y="180"><tspan fill="#4ade80">$</tspan> <tspan fill="#fbbf24">_</tspan></text>
+    </g>
+  </g>
+
+  <!-- Window 2: Chat -->
+  <g transform="translate(520 140)">
+    <rect width="360" height="310" rx="6" fill="#0f0f1a" stroke="#9f7aea" stroke-opacity="0.4"/>
+    <rect width="360" height="24" rx="6" fill="#1a1a2e"/>
+    <rect y="18" width="360" height="6" fill="#1a1a2e"/>
+    <circle cx="14" cy="12" r="4" fill="#f87171"/>
+    <circle cx="28" cy="12" r="4" fill="#fbbf24"/>
+    <circle cx="42" cy="12" r="4" fill="#4ade80"/>
+    <text x="150" y="16" font-family="ui-monospace" font-size="10" fill="#888">Open WebUI</text>
+    <rect x="14" y="40" width="200" height="40" rx="10" fill="rgba(159,122,234,0.15)"/>
+    <text x="22" y="58" font-family="ui-monospace" font-size="10" fill="#e0e0e0">How does PAI stay private?</text>
+    <text x="22" y="72" font-family="ui-monospace" font-size="9" fill="#888">you · just now</text>
+    <rect x="60" y="100" width="286" height="130" rx="10" fill="rgba(122,162,247,0.1)"/>
+    <text x="68" y="120" font-family="ui-monospace" font-size="10" fill="#e0e0e0">PAI runs entirely offline.</text>
+    <text x="68" y="138" font-family="ui-monospace" font-size="10" fill="#e0e0e0">Ollama handles models locally,</text>
+    <text x="68" y="156" font-family="ui-monospace" font-size="10" fill="#e0e0e0">and nothing leaves the device</text>
+    <text x="68" y="174" font-family="ui-monospace" font-size="10" fill="#e0e0e0">unless you open Firefox or Tor.</text>
+    <text x="68" y="200" font-family="ui-monospace" font-size="9" fill="#9f7aea">llama3.2:3b · 0.6s</text>
+    <rect x="14" y="260" width="332" height="32" rx="6" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.08)"/>
+    <text x="22" y="280" font-family="ui-monospace" font-size="10" fill="#888">Send a message…</text>
+  </g>
+
+  <!-- Dock -->
+  <g transform="translate(260 540)">
+    <rect width="440" height="44" rx="22" fill="rgba(20,20,30,0.9)" stroke="rgba(255,255,255,0.06)"/>
+    <g>
+      <circle cx="30" cy="22" r="14" fill="#7aa2f7" fill-opacity="0.25"/>
+      <text x="25" y="27" font-family="ui-monospace" font-size="12" fill="#7aa2f7">A</text>
+    </g>
+    <g>
+      <circle cx="70" cy="22" r="14" fill="#4ade80" fill-opacity="0.25"/>
+      <text x="65" y="27" font-family="ui-monospace" font-size="12" fill="#4ade80">D</text>
+    </g>
+    <g>
+      <circle cx="110" cy="22" r="14" fill="#fbbf24" fill-opacity="0.25"/>
+      <text x="105" y="27" font-family="ui-monospace" font-size="12" fill="#fbbf24">F</text>
+    </g>
+    <g>
+      <circle cx="150" cy="22" r="14" fill="#888888" fill-opacity="0.25"/>
+      <text x="146" y="27" font-family="ui-monospace" font-size="12" fill="#e0e0e0">T</text>
+    </g>
+    <g>
+      <circle cx="190" cy="22" r="14" fill="#9f7aea" fill-opacity="0.25"/>
+      <text x="185" y="27" font-family="ui-monospace" font-size="12" fill="#9f7aea">C</text>
+    </g>
+    <g>
+      <circle cx="230" cy="22" r="14" fill="#f87171" fill-opacity="0.25"/>
+      <text x="225" y="27" font-family="ui-monospace" font-size="12" fill="#f87171">S</text>
+    </g>
+    <g>
+      <circle cx="270" cy="22" r="14" fill="#4ade80" fill-opacity="0.25"/>
+      <text x="265" y="27" font-family="ui-monospace" font-size="12" fill="#4ade80">V</text>
+    </g>
+    <g>
+      <circle cx="310" cy="22" r="14" fill="#f472b6" fill-opacity="0.25"/>
+      <text x="305" y="27" font-family="ui-monospace" font-size="12" fill="#f472b6">H</text>
+    </g>
+    <g>
+      <circle cx="350" cy="22" r="14" fill="#7aa2f7" fill-opacity="0.25"/>
+      <text x="345" y="27" font-family="ui-monospace" font-size="12" fill="#7aa2f7">P</text>
+    </g>
+    <g>
+      <circle cx="400" cy="22" r="14" fill="#fbbf24" fill-opacity="0.25"/>
+      <text x="395" y="27" font-family="ui-monospace" font-size="12" fill="#fbbf24">?</text>
+    </g>
+  </g>
+</svg>
