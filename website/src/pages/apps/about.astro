@@ -1,0 +1,450 @@
+---
+import ContentApp from '../../layouts/ContentApp.astro'
+---
+
+<ContentApp
+  title="About"
+  description="PAI is a bootable live-USB OS that gives you a private, offline AI workstation you can carry anywhere — Debian 12, Sway, Ollama, no telemetry."
+>
+  <nav slot="sidebar">
+    <p class="sb-brand">About</p>
+    <a href="#what-pai-is" class="sb-link">What PAI is</a>
+    <a href="#what-you-get" class="sb-link">What you get</a>
+    <a href="#who-its-for" class="sb-link">Who it's for</a>
+    <a href="#what-its-not" class="sb-link">What it's not</a>
+    <hr class="sb-divider" />
+    <a
+      href="https://github.com/nirholas/pai"
+      class="sb-link"
+      target="_blank"
+      rel="noopener noreferrer"
+      style="font-size:0.8125rem"
+    >
+      View on GitHub ↗
+    </a>
+    <a href="/apps/how-it-works" class="sb-link" style="font-size:0.8125rem">How PAI works →</a>
+    <a href="/apps/docs" class="sb-link" style="font-size:0.8125rem">Documentation →</a>
+    <a href="/apps/faq" class="sb-link" style="font-size:0.8125rem">FAQ →</a>
+  </nav>
+
+  <!-- Hero -->
+  <div class="hero">
+    <h1>PAI</h1>
+    <p class="hero-tagline">
+      Private AI on a bootable USB drive.<br />
+      Your secure, offline-first AI assistant — carry it anywhere, leave no trace.
+    </p>
+
+    <div class="hero-screenshot" aria-label="PAI desktop preview">
+      <div
+        class="hero-mock"
+        role="img"
+        aria-label="PAI desktop — windows, dock, and topbar"
+      >
+        <div class="hero-mock-topbar">
+          <span class="hero-mock-topbar-item hero-mock-topbar-brand">PAI</span>
+          <span class="hero-mock-topbar-item">Workspace 1</span>
+          <span class="hero-mock-topbar-spacer"></span>
+          <span class="hero-mock-topbar-item">12:34</span>
+        </div>
+        <div class="hero-mock-stage">
+          <div class="hero-mock-window hero-mock-window--a">
+            <div class="hero-mock-window-chrome">
+              <span class="hero-mock-dot"></span>
+              <span class="hero-mock-dot"></span>
+              <span class="hero-mock-dot"></span>
+            </div>
+            <div class="hero-mock-window-body">
+              <span class="hero-mock-line" style="width:80%"></span>
+              <span class="hero-mock-line" style="width:60%"></span>
+              <span class="hero-mock-line" style="width:72%"></span>
+              <span class="hero-mock-line" style="width:45%"></span>
+            </div>
+          </div>
+          <div class="hero-mock-window hero-mock-window--b">
+            <div class="hero-mock-window-chrome">
+              <span class="hero-mock-dot"></span>
+              <span class="hero-mock-dot"></span>
+              <span class="hero-mock-dot"></span>
+            </div>
+            <div class="hero-mock-window-body">
+              <span class="hero-mock-line" style="width:55%"></span>
+              <span class="hero-mock-line" style="width:78%"></span>
+              <span class="hero-mock-line" style="width:40%"></span>
+            </div>
+          </div>
+        </div>
+        <div class="hero-mock-dock">
+          <span class="hero-mock-dock-item"></span>
+          <span class="hero-mock-dock-item"></span>
+          <span class="hero-mock-dock-item"></span>
+          <span class="hero-mock-dock-item"></span>
+          <span class="hero-mock-dock-item"></span>
+        </div>
+      </div>
+      <p class="hero-screenshot-caption">PAI desktop (Sway + Waybar + PAI UI)</p>
+    </div>
+
+    <div class="cta-row">
+      <button class="btn btn--primary" data-open-app="Flash">Download PAI</button>
+      <button class="btn" data-open-app="Verify">Verify ISO</button>
+      <a
+        href="https://github.com/nirholas/pai"
+        class="btn"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        View on GitHub ↗
+      </a>
+    </div>
+  </div>
+
+  <!-- What PAI is -->
+  <section id="what-pai-is">
+    <h2>What PAI is</h2>
+    <p>
+      PAI is a <strong>bootable live USB operating system</strong> built on Debian 12
+      that gives you a private, portable AI workstation. Plug it into any x86-64 PC, boot from USB,
+      and you have a complete AI environment that leaves no trace behind.
+    </p>
+    <p>
+      Like <a href="https://tails.net" target="_blank" rel="noopener noreferrer">Tails</a> is to
+      privacy-focused browsing, PAI is to <strong>private AI</strong>. It combines the amnesic,
+      leave-no-trace philosophy of Tails with the power of local large language models running via{' '}
+      <a href="https://ollama.com" target="_blank" rel="noopener noreferrer">Ollama</a>.
+    </p>
+    <p>
+      Your conversations exist only in RAM while PAI is running. Shut down, and they're gone — no
+      logs, no history, no server-side copies. The machine doesn't even know PAI was there.
+    </p>
+  </section>
+
+  <!-- What you get -->
+  <section id="what-you-get">
+    <h2>What you get</h2>
+    <ul class="feature-list">
+      <li>
+        <span class="fi" aria-hidden="true">🤖</span>
+        <div>
+          <strong>Offline AI assistant</strong> — Ollama runs Llama, Mistral, Phi, Gemma, and 100+
+          models locally. No API keys, no cloud, no data leaving your machine.
+        </div>
+      </li>
+      <li>
+        <span class="fi" aria-hidden="true">🔒</span>
+        <div>
+          <strong>Privacy-hardened environment</strong> — MAC spoofing on every boot, UFW firewall
+          denying all inbound connections, optional Tor routing.
+        </div>
+      </li>
+      <li>
+        <span class="fi" aria-hidden="true">🖥️</span>
+        <div>
+          <strong>Complete desktop</strong> — Sway (Wayland tiling WM), Firefox ESR, terminal (foot),
+          file manager, text editor. Everything you need, nothing you don't.
+        </div>
+      </li>
+      <li>
+        <span class="fi" aria-hidden="true">💾</span>
+        <div>
+          <strong>Zero installation</strong> — boots entirely from USB into RAM. Nothing touches the
+          host machine's hard drive.
+        </div>
+      </li>
+      <li>
+        <span class="fi" aria-hidden="true">🔑</span>
+        <div>
+          <strong>Crypto wallets</strong> — Electrum (Bitcoin) and Monero wallet pre-configured with
+          sane privacy defaults.
+        </div>
+      </li>
+      <li>
+        <span class="fi" aria-hidden="true">🛡️</span>
+        <div>
+          <strong>Encrypted persistence (opt-in)</strong> — save AI models, SSH keys, and chat
+          history to a LUKS2-encrypted partition on the USB across sessions.
+        </div>
+      </li>
+    </ul>
+  </section>
+
+  <!-- Who it's for -->
+  <section id="who-its-for">
+    <h2>Who it's for</h2>
+    <ul>
+      <li>
+        <strong>Privacy-conscious users</strong> who want to use AI without sending prompts to
+        corporate servers.
+      </li>
+      <li>
+        <strong>Journalists and researchers</strong> who work with sensitive sources and documents.
+      </li>
+      <li>
+        <strong>Security professionals</strong> who need an isolated, trusted environment for
+        sensitive analysis.
+      </li>
+      <li>
+        <strong>Crypto users</strong> who want to manage wallets on a network-isolated machine.
+      </li>
+      <li>
+        <strong>Travelers</strong> who want to use AI on any computer without leaving traces.
+      </li>
+      <li>
+        <strong>Developers</strong> who want to experiment with local LLMs without cloud
+        dependencies or costs.
+      </li>
+    </ul>
+  </section>
+
+  <!-- What it's not -->
+  <section id="what-its-not">
+    <h2>What it's not</h2>
+    <p>PAI raises the cost of surveillance significantly, but informed expectations matter:</p>
+    <ul>
+      <li>
+        <strong>Not a GPU rig</strong> — CPU-only inference. Expect 5–20 tokens/sec for 7B models.
+        Fast enough for most tasks; use smaller models for speed.
+      </li>
+      <li>
+        <strong>Not Tails</strong> — Tails routes everything through Tor by default. PAI makes Tor
+        opt-in. PAI's focus is private AI, not anonymous browsing — though you can combine both.
+      </li>
+      <li>
+        <strong>Not a permanent install</strong> — PAI is a live system. It boots from USB. No
+        traditional hard drive installation.
+      </li>
+      <li>
+        <strong>Not protection against physical attacks</strong> — hardware keyloggers, compromised
+        BIOS/UEFI firmware, and cold boot attacks are out of scope.
+      </li>
+      <li>
+        <strong>Not cloud AI</strong> — you get what runs on your hardware. Local models are
+        powerful and improving rapidly, but they're not GPT-4.
+      </li>
+    </ul>
+  </section>
+
+  <!-- Bottom CTAs -->
+  <div class="cta-row cta-row--bottom">
+    <button class="btn btn--primary" data-open-app="Flash">Download PAI</button>
+    <button class="btn" data-open-app="Verify">Verify ISO</button>
+    <a href="https://github.com/nirholas/pai" class="btn" target="_blank" rel="noopener noreferrer"
+      >View on GitHub ↗</a
+    >
+  </div>
+</ContentApp>
+
+<style>
+  .hero {
+    margin-bottom: var(--s-8);
+  }
+
+  .hero-tagline {
+    font-size: 1.0625rem;
+    color: var(--fg-muted);
+    line-height: 1.55;
+    margin: 0 0 var(--s-5);
+    max-width: 56ch;
+  }
+
+  .hero-screenshot {
+    border-radius: var(--r-window);
+    border: 1px solid var(--border);
+    background: var(--bg-elev);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 16 / 9;
+    max-width: 560px;
+    margin-bottom: var(--s-5);
+    overflow: hidden;
+    gap: var(--s-3);
+  }
+
+  .hero-mock {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: #0f0f1a;
+    color: var(--fg-muted);
+    font-family: var(--font-mono);
+  }
+
+  .hero-mock-topbar {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+    padding: 6px 10px;
+    background: #181826;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.6875rem;
+  }
+
+  .hero-mock-topbar-spacer {
+    flex: 1;
+  }
+
+  .hero-mock-topbar-brand {
+    color: var(--pai-blue);
+    font-weight: 600;
+  }
+
+  .hero-mock-stage {
+    flex: 1;
+    position: relative;
+    padding: var(--s-4);
+  }
+
+  .hero-mock-window {
+    position: absolute;
+    background: #1c1c2a;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hero-mock-window--a {
+    top: 10%;
+    left: 6%;
+    width: 52%;
+    height: 70%;
+  }
+
+  .hero-mock-window--b {
+    top: 28%;
+    right: 6%;
+    width: 46%;
+    height: 60%;
+  }
+
+  .hero-mock-window-chrome {
+    display: flex;
+    gap: 6px;
+    padding: 6px 8px;
+    background: #232333;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero-mock-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #3a3a4d;
+  }
+
+  .hero-mock-window-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px;
+  }
+
+  .hero-mock-line {
+    height: 6px;
+    border-radius: 3px;
+    background: #2a2a3d;
+  }
+
+  .hero-mock-dock {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px;
+    background: #181826;
+    border-top: 1px solid var(--border);
+  }
+
+  .hero-mock-dock-item {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    background: #2a2a3d;
+  }
+
+  .hero-screenshot-caption {
+    font-size: 0.75rem;
+    color: var(--fg-muted);
+    margin: 0;
+    font-family: var(--font-mono);
+  }
+
+  .cta-row {
+    display: flex;
+    gap: var(--s-3);
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .cta-row--bottom {
+    margin-top: var(--s-7);
+    padding-top: var(--s-5);
+    border-top: 1px solid var(--border);
+  }
+
+  .btn {
+    padding: 7px var(--s-5);
+    border-radius: var(--r-icon);
+    border: 1px solid var(--border);
+    background: var(--bg-elev);
+    color: var(--fg);
+    cursor: pointer;
+    font-size: 0.9375rem;
+    font-family: var(--font-ui);
+    text-decoration: none;
+    transition:
+      background 0.1s,
+      color 0.1s,
+      border-color 0.1s;
+    display: inline-block;
+    white-space: nowrap;
+  }
+
+  .btn:hover {
+    background: var(--border);
+    color: var(--fg);
+  }
+
+  .btn--primary {
+    background: var(--pai-blue);
+    color: #0f0f1a;
+    border-color: transparent;
+    font-weight: 600;
+  }
+
+  .btn--primary:hover {
+    background: var(--pai-yellow);
+    border-color: transparent;
+    color: #0f0f1a;
+  }
+
+  .feature-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 var(--s-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-3);
+    max-width: 72ch;
+  }
+
+  .feature-list li {
+    display: flex;
+    gap: var(--s-3);
+    align-items: flex-start;
+    margin: 0;
+    line-height: 1.55;
+  }
+
+  .fi {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+    width: 1.5rem;
+  }
+</style>
