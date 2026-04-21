@@ -1,0 +1,143 @@
+---
+---
+
+<div id="boot-splash" class="boot-splash">
+  <img
+    id="boot-logo"
+    src="/logo/pai-logo.png"
+    alt="PAI"
+    class="boot-logo"
+    width="256"
+    height="256"
+  />
+  <div id="boot-spinner" class="boot-spinner" aria-hidden="true">
+    <span></span><span></span><span></span>
+  </div>
+  <div id="boot-init" class="boot-init" role="log" aria-live="polite"></div>
+  <p class="boot-skip-hint">Press any key or click to skip</p>
+</div>
+
+<!-- Global classes applied by boot.ts to elements outside this component -->
+<style is:global>
+  .shell--boot-top {
+    transform: translateY(-100%);
+  }
+  .shell--boot-bottom {
+    transform: translateY(100%);
+  }
+  .shell__topbar,
+  .shell__dock {
+    transition: transform 0.3s ease;
+  }
+
+  /* Classes added by boot.ts to elements inside this component */
+  .boot-splash--hidden {
+    opacity: 0 !important;
+    pointer-events: none;
+  }
+  .boot-logo--in {
+    opacity: 1 !important;
+  }
+  .boot-spinner--in {
+    opacity: 1 !important;
+  }
+  .boot-init--in {
+    opacity: 1 !important;
+  }
+  .boot-init p {
+    margin: 0;
+  }
+
+  /* Shutdown animation (triggered by lockscreen.js) */
+  .shell--shutdown {
+    filter: grayscale(1);
+    transition: filter 0.5s ease;
+  }
+  .shell--shutdown > * {
+    transform: scale(0);
+    transition: transform 0.5s ease;
+  }
+  .shell--shutdown-fade {
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+</style>
+
+<style>
+  .boot-splash {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    transition: opacity 0.4s ease;
+  }
+
+  .boot-logo {
+    width: 256px;
+    height: 256px;
+    object-fit: contain;
+    image-rendering: pixelated;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .boot-spinner {
+    display: flex;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .boot-spinner span {
+    display: block;
+    width: 6px;
+    height: 6px;
+    background: var(--fg-muted, #888);
+    animation: dot-pulse 0.9s infinite;
+  }
+
+  .boot-spinner span:nth-child(2) {
+    animation-delay: 0.3s;
+  }
+
+  .boot-spinner span:nth-child(3) {
+    animation-delay: 0.6s;
+  }
+
+  @keyframes dot-pulse {
+    0%,
+    100% {
+      opacity: 0.2;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  .boot-init {
+    font-family: var(--font-mono, monospace);
+    font-size: 12px;
+    line-height: 1.8;
+    color: var(--fg-muted, #888);
+    width: min(480px, 90vw);
+    min-height: 110px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .boot-skip-hint {
+    position: fixed;
+    bottom: 24px;
+    font-family: var(--font-mono, monospace);
+    font-size: 11px;
+    color: var(--fg-muted, #888);
+    opacity: 0.4;
+    pointer-events: none;
+    margin: 0;
+  }
+</style>
