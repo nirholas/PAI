@@ -1,0 +1,9 @@
+#!/bin/bash
+# Set PAI as the default Plymouth boot splash theme and rebuild initramfs.
+# Theme files are installed via config/includes.chroot_after_packages/
+# at /usr/share/plymouth/themes/pai/.
+set -euo pipefail
+
+echo "[pai] Setting PAI as default Plymouth theme..."
+plymouth-set-default-theme -R pai
+echo "[pai] Plymouth default theme set to 'pai'."
