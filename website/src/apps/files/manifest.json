@@ -1,0 +1,66 @@
+[
+  {
+    "id": "desktop-overview",
+    "category": "Screenshots",
+    "src": "/screenshots/desktop-overview.svg",
+    "thumb": "/screenshots/desktop-overview.svg",
+    "caption": "PAI desktop overview — Sway + Waybar",
+    "alt": "PAI Sway desktop showing the taskbar, wallpaper, and open application windows"
+  },
+  {
+    "id": "open-webui-chat",
+    "category": "Screenshots",
+    "src": "/screenshots/open-webui-chat.svg",
+    "thumb": "/screenshots/open-webui-chat.svg",
+    "caption": "Open WebUI running locally on PAI",
+    "alt": "Open WebUI chat interface with a Llama model responding to a user message"
+  },
+  {
+    "id": "terminal-neofetch",
+    "category": "Screenshots",
+    "src": "/screenshots/terminal-neofetch.svg",
+    "thumb": "/screenshots/terminal-neofetch.svg",
+    "caption": "Terminal with neofetch — PAI system info",
+    "alt": "Terminal window showing neofetch output with PAI system information and logo"
+  },
+  {
+    "id": "waybar-workspaces",
+    "category": "Screenshots",
+    "src": "/screenshots/waybar-workspaces.svg",
+    "thumb": "/screenshots/waybar-workspaces.svg",
+    "caption": "Waybar + Sway workspaces",
+    "alt": "Waybar top panel showing workspace indicators, system tray, and clock"
+  },
+  {
+    "id": "flashing-usb",
+    "category": "Screenshots",
+    "src": "/screenshots/flashing-usb.svg",
+    "thumb": "/screenshots/flashing-usb.svg",
+    "caption": "Flashing PAI to a USB drive",
+    "alt": "Terminal output showing dd or Etcher writing PAI ISO to USB drive"
+  },
+  {
+    "id": "boot-screen",
+    "category": "Screenshots",
+    "src": "/screenshots/boot-screen.svg",
+    "thumb": "/screenshots/boot-screen.svg",
+    "caption": "PAI boot screen",
+    "alt": "GRUB or systemd-boot boot screen showing PAI entry"
+  },
+  {
+    "id": "lockscreen",
+    "category": "Screenshots",
+    "src": "/screenshots/lockscreen.svg",
+    "thumb": "/screenshots/lockscreen.svg",
+    "caption": "PAI lockscreen",
+    "alt": "swaylock lockscreen with PAI branding and clock overlay"
+  },
+  {
+    "id": "ollama-model-list",
+    "category": "Screenshots",
+    "src": "/screenshots/ollama-model-list.svg",
+    "thumb": "/screenshots/ollama-model-list.svg",
+    "caption": "Ollama model list",
+    "alt": "Terminal showing 'ollama list' output with locally installed AI models"
+  }
+]
