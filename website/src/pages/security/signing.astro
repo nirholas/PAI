@@ -1,0 +1,92 @@
+---
+import SitePage from '../../layouts/SitePage.astro'
+import signingData from '../../data/signing.json'
+---
+
+<SitePage
+  title="Code Signing — PAI"
+  description="Authenticode signing transparency for PAI's PowerShell flashers."
+>
+  <section class="signing">
+    <h1>Code Signing Transparency</h1>
+
+    <p class="banner">
+      <strong>Status: not yet signed.</strong> PAI's PowerShell flashers
+      (<code>flash.ps1</code>) are <em>not</em> Authenticode-signed in v0.1.0.
+      This page documents our commitment to signing and will be populated with
+      live certificate data and per-release signatures once our
+      <a href="https://signpath.io" rel="noopener noreferrer">SignPath</a>
+      application is approved. Target: v0.2.
+    </p>
+
+    <p>
+      The public one-liner <code>irm https://pai.direct/flash.ps1 | iex</code>
+      works today because piped input bypasses Windows' ExecutionPolicy. Users
+      who save the script to disk and run it under <code>AllSigned</code> or
+      <code>RemoteSigned</code> will currently see a signature failure — sign
+      your own copy locally, or use the one-liner, until signing ships.
+    </p>
+
+    <h2>Planned signing certificate</h2>
+
+    <table>
+      <tbody>
+        <tr>
+          <th>Publisher</th>
+          <td>{signingData.publisher || '(pending — SignPath application in review)'}</td>
+        </tr>
+        <tr>
+          <th>Thumbprint</th>
+          <td><code>{signingData.thumbprint || '(not yet issued)'}</code></td>
+        </tr>
+        <tr>
+          <th>Audit log</th>
+          <td><a href={signingData.auditLogUrl} rel="noopener noreferrer">SignPath audit log</a></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Verify before running (once signing ships)</h2>
+
+    <pre><code>$sig = Get-AuthenticodeSignature .\flash.ps1
+$sig.Status                    # Must be: Valid
+$sig.SignerCertificate.Subject  # Must contain: PAI</code></pre>
+
+    <h2>Signed releases</h2>
+
+    {signingData.releases.length === 0 ? (
+      <p><em>No signed releases yet — signing is targeted for v0.2. The first signed release will appear here automatically once the SignPath application is approved and a release is cut.</em></p>
+    ) : (
+      <table>
+        <thead>
+          <tr>
+            <th>Tag</th>
+            <th>Timestamp</th>
+            <th>Artifact</th>
+            <th>SHA256</th>
+          </tr>
+        </thead>
+        <tbody>
+          {signingData.releases.map((release) =>
+            release.artifacts.map((artifact) => (
+              <tr>
+                <td>{release.tag}</td>
+                <td>{new Date(release.timestamp).toISOString().slice(0, 19) + 'Z'}</td>
+                <td><code>{artifact.name}</code></td>
+                <td><code>{artifact.sha256.slice(0, 16)}…</code></td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    )}
+
+    <h2>What if verification fails?</h2>
+
+    <p>
+      If <code>Get-AuthenticodeSignature</code> returns anything other than
+      <code>Valid</code>, <strong>do not run the script</strong>. Report the issue
+      at <a href="https://github.com/nirholas/pai/security/advisories">our security advisories page</a>.
+    </p>
+  </section>
+</SitePage>
