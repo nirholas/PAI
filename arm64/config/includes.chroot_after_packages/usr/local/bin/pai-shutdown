@@ -1,0 +1,40 @@
+#!/bin/bash
+# PAI Shutdown Menu — shown instead of immediate shutdown
+# Uses wofi (Wayland-native) for the selection dialog
+
+CHOICE=$(printf "  Shutdown\n  Shutdown + Wipe Memory\n  Reboot\n  Cancel" \
+    | wofi \
+        --dmenu \
+        --prompt "Power" \
+        --lines 4 \
+        --width 280 \
+        --height 180 \
+        --style /etc/pai/wofi-shutdown.css \
+    2>/dev/null)
+
+case "$CHOICE" in
+    *"Shutdown + Wipe Memory"*)
+        # Show a notice in a terminal, wipe, then shutdown
+        foot --title "PAI — Wiping Memory" -- bash -c '
+            echo ""
+            echo "  PAI — Secure Memory Wipe"
+            echo "  ─────────────────────────"
+            echo ""
+            echo "  Wiping RAM before shutdown..."
+            echo "  This takes 20–60 seconds depending on your RAM."
+            echo ""
+            sudo /usr/local/bin/pai-memory-wipe
+        ' &
+        # Give the terminal a moment to appear, then wipe happens,
+        # the wipe script itself calls poweroff at the end
+        ;;
+    *"Reboot"*)
+        systemctl reboot
+        ;;
+    *"Shutdown"*)
+        systemctl poweroff
+        ;;
+    *)
+        # Cancel — do nothing
+        ;;
+esac
