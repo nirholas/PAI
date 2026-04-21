@@ -1,0 +1,163 @@
+---
+import AppStandalone from '../../layouts/AppStandalone.astro'
+import Head from '../../components/Head.astro'
+import { APPS } from '../../shell/apps.js'
+import '../../styles/global.css'
+import '../../shell/apps.css'
+
+export function getStaticPaths() {
+  // Discover sibling static pages so the dynamic route only generates slugs
+  // that don't already have a dedicated page; otherwise Astro logs a
+  // "higher-priority route" warning for every collision. getStaticPaths runs
+  // in its own isolated scope, so the glob and filter must live here.
+  const siblings = import.meta.glob('./*.astro')
+  const staticSlugs = new Set(
+    Object.keys(siblings)
+      .map((p) => p.match(/\.\/(.+)\.astro$/)?.[1])
+      .filter((slug) => slug && slug !== '[app]'),
+  )
+  return Object.values(APPS)
+    .filter((app) => !staticSlugs.has(app.id))
+    .map((app) => ({
+      params: { app: app.id },
+      props: { appDef: app },
+    }))
+}
+
+interface Props {
+  appDef: (typeof APPS)[keyof typeof APPS]
+}
+
+const { appDef } = Astro.props
+
+// Apps that require JS to be functional (show noscript message)
+const JS_REQUIRED = new Set(['terminal', 'chat', 'files', 'flash', 'verify', 'notepad'])
+const requiresJS = JS_REQUIRED.has(appDef.id)
+
+const SITE_URL = 'https://pai.direct'
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'PAI', item: `${SITE_URL}/` },
+    { '@type': 'ListItem', position: 2, name: appDef.title, item: `${SITE_URL}/apps/${appDef.id}/` },
+  ],
+}
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <Head
+      title={`${appDef.title} — PAI`}
+      description={appDef.description ?? `${appDef.title} on PAI — the private AI workstation on a bootable USB drive.`}
+      ogImage={`/og/${appDef.id}.png`}
+      structuredData={structuredData}
+    />
+    <!-- Apply reduced-motion preference before first paint -->
+    <script is:inline>
+      try {
+        if (localStorage.getItem('pai-reduced-motion') === 'true') {
+          document.documentElement.setAttribute('data-reduced-motion', '')
+        }
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <!-- Skip link for keyboard/screen-reader users -->
+    <a href="#app-content" class="skip-link">Skip to app content</a>
+
+    <!-- No-JS: interactive apps are non-functional; content apps degrade gracefully -->
+    {
+      requiresJS && (
+        <noscript>
+          <div class="noscript-app" role="note">
+            <strong>{appDef.title}</strong> requires JavaScript to run.{' '}
+            <a href="/">Return to PAI home →</a>
+          </div>
+        </noscript>
+      )
+    }
+
+    <AppStandalone appId={appDef.id} />
+
+    <main id="app-content" class="app-content" data-app-id={appDef.id}>
+      <slot />
+    </main>
+  </body>
+</html>
+
+<script>
+  import { bridge } from '../../apps/_bridge.js'
+  bridge.ready()
+
+  // Dynamically mount app class if one exists for this app ID
+  const appId = (document.getElementById('app-content') as HTMLElement).dataset.appId
+  // Note: chat is handled by the explicit chat.astro page (which replays
+  // curated conversations), so it's not in this dynamic-route loader map.
+  const loaders: Record<string, () => Promise<unknown>> = {
+    files: () => import('../../apps/files.ts'),
+    about: () => import('../../apps/about.ts'),
+    terminal: () => import('../../apps/terminal.ts'),
+    notepad: () => import('../../apps/notepad.ts'),
+  }
+  const loader = appId ? loaders[appId] : undefined
+  if (loader) {
+    loader().then((mod) => {
+      const AppClass = Object.values(mod as Record<string, unknown>)[0] as new (
+        el: HTMLElement,
+      ) => unknown
+      const container = document.getElementById('app-content')!
+      new AppClass(container)
+    })
+  }
+</script>
+
+<style>
+  /* Skip link */
+  .skip-link {
+    position: absolute;
+    top: -100%;
+    left: var(--s-2);
+    background: var(--pai-blue);
+    color: #0f0f1a;
+    padding: var(--s-1) var(--s-3);
+    border-radius: var(--r-icon);
+    font-weight: 600;
+    font-size: 0.875rem;
+    z-index: 9999;
+    text-decoration: none;
+  }
+
+  .skip-link:focus {
+    top: var(--s-2);
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    /* No overflow:hidden here — allows mobile scrolling for content apps.
+       Interactive apps (terminal, files) handle their own overflow internally. */
+  }
+
+  .noscript-app {
+    background: color-mix(in srgb, var(--pai-yellow) 12%, var(--bg-elev));
+    border-bottom: 1px solid color-mix(in srgb, var(--pai-yellow) 30%, var(--border));
+    color: var(--fg);
+    font-size: 0.875rem;
+    text-align: center;
+    padding: var(--s-3) var(--s-5);
+  }
+
+  .noscript-app a {
+    color: var(--pai-blue);
+  }
+
+  .app-content {
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+  }
+</style>
