@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+# PAI first-boot model picker — suggests and pulls the best Ollama model
+# for available hardware. Delegates sizing to pai-recommend-model.
+set -euo pipefail
+
+SENTINEL="$HOME/.config/pai/.model-picked"
+CONFIG_DIR="$HOME/.config/pai"
+MODEL_FILE="$CONFIG_DIR/default-model"
+FALLBACK="llama3.2:1b"
+
+[ -f "$SENTINEL" ] && exit 0
+
+mkdir -p "$CONFIG_DIR"
+
+# Delegate hardware detection + tier selection to the shared recommender.
+# Populates PAI_MODEL, PAI_TIER, PAI_PULL_NEEDED, PAI_SIZE_NOTE, PAI_RAM_GB, ...
+if ! eval "$(pai-recommend-model --shell 2>/dev/null)"; then
+    echo "$FALLBACK" > "$MODEL_FILE"
+    touch "$SENTINEL"
+    exit 0
+fi
+
+SUGGESTED="$PAI_MODEL"
+MODEL_SIZE="$PAI_SIZE_NOTE"
+RAM_GB="$PAI_RAM_GB"
+
+if [ "$PAI_PULL_NEEDED" != "true" ]; then
+    echo "$SUGGESTED" > "$MODEL_FILE"
+    touch "$SENTINEL"
+    exit 0
+fi
+
+if ! zenity --question \
+    --title="PAI Model Setup" \
+    --width=420 \
+    --text="<big><b>Set up your AI model</b></big>
+
+Your system has <b>${RAM_GB} GB</b> of RAM.
+
+Recommended model: <b>${SUGGESTED}</b>
+<small>${MODEL_SIZE}</small>
+
+Download and set as your default? You can skip and use the built-in <b>llama3.2:1b</b> instead." \
+    --ok-label="Download ${SUGGESTED}" \
+    --cancel-label="Skip (use llama3.2:1b)" 2>/dev/null; then
+    echo "$FALLBACK" > "$MODEL_FILE"
+    touch "$SENTINEL"
+    zenity --info \
+        --title="PAI Model Setup" \
+        --width=380 \
+        --text="Using <b>llama3.2:1b</b> (already installed).
+
+Run <b>pai-models</b> in a terminal anytime to upgrade to a larger model." \
+        --ok-label="OK" 2>/dev/null
+    exit 0
+fi
+
+ollama pull "$SUGGESTED" &
+PULL_PID=$!
+
+zenity --progress \
+    --title="Downloading model" \
+    --text="Pulling <b>${SUGGESTED}</b> (${MODEL_SIZE})…
+
+This may take several minutes." \
+    --pulsate \
+    --no-cancel \
+    --width=420 &
+DIALOG_PID=$!
+
+PULL_STATUS=0
+wait "$PULL_PID" || PULL_STATUS=$?
+
+kill "$DIALOG_PID" 2>/dev/null || true
+wait "$DIALOG_PID" 2>/dev/null || true
+
+if [ "$PULL_STATUS" -eq 0 ]; then
+    echo "$SUGGESTED" > "$MODEL_FILE"
+    touch "$SENTINEL"
+    zenity --info \
+        --title="PAI Model Setup" \
+        --width=380 \
+        --text="<b>${SUGGESTED}</b> is ready!
+
+It has been set as your default model." \
+        --ok-label="Start Chatting" 2>/dev/null
+else
+    echo "$FALLBACK" > "$MODEL_FILE"
+    touch "$SENTINEL"
+    zenity --warning \
+        --title="PAI Model Setup" \
+        --width=420 \
+        --text="Could not download <b>${SUGGESTED}</b>.
+
+Using <b>llama3.2:1b</b> instead (already installed).
+
+Connect to the internet and run <b>pai-models</b> in a terminal to upgrade." \
+        --ok-label="OK" 2>/dev/null
+fi
