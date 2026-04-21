@@ -1,0 +1,132 @@
+---
+import SitePage from '../layouts/SitePage.astro'
+
+// 5×7 pixel digits, separated by a 1px gap. Full canvas: 17 × 7 pixels.
+const rows = [
+  '#...#..###..#...#',
+  '#...#.#...#.#...#',
+  '#...#.#...#.#...#',
+  '#####.#...#.#####',
+  '....#.#...#.....#',
+  '....#.#...#.....#',
+  '....#..###......#',
+]
+
+const px = 16 // each "pixel" renders as 16×16 CSS px
+const width = rows[0].length * px
+const height = rows.length * px
+
+const rects = rows.flatMap((row, y) =>
+  [...row].map((ch, x) =>
+    ch === '#'
+      ? `<rect x="${x * px}" y="${y * px}" width="${px}" height="${px}"/>`
+      : '',
+  ),
+).join('')
+---
+
+<SitePage
+  title="Page not found — PAI"
+  description="That page doesn't exist on the PAI site."
+>
+  <section class="notfound">
+    <div
+      class="glyph"
+      aria-label="404"
+      set:html={`<svg viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" fill="currentColor" style="image-rendering:pixelated;shape-rendering:crispEdges">${rects}</svg>`}
+    />
+
+    <h1>This page doesn't exist.</h1>
+    <p class="hint">
+      The link may be broken, or the page may have moved.
+    </p>
+
+    <div class="actions">
+      <a class="btn btn--primary" href="/">Go home</a>
+      <a class="btn" href="/apps/docs">Open docs</a>
+    </div>
+  </section>
+</SitePage>
+
+<style>
+  .notfound {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 24px;
+    padding: 64px 16px 32px;
+    color: #e0e0e0;
+    font-family: 'PixelOperator', ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  .glyph {
+    color: #7aa2f7;
+    line-height: 0;
+    filter: drop-shadow(0 0 24px rgba(122, 162, 247, 0.25));
+  }
+  .glyph :global(svg) {
+    max-width: 100%;
+    height: auto;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 0.01em;
+  }
+
+  .hint {
+    margin: 0;
+    color: #9a9ab0;
+    font-size: 1rem;
+    max-width: 44ch;
+  }
+
+  .actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 8px;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: #14141f;
+    color: #e0e0e0;
+    text-decoration: none;
+    font-size: 0.9375rem;
+    font-family: inherit;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .btn:hover {
+    background: #1c1c2b;
+    border-color: rgba(255, 255, 255, 0.24);
+    color: #fff;
+  }
+  .btn--primary {
+    background: #7aa2f7;
+    color: #0a0a0f;
+    border-color: transparent;
+    font-weight: 600;
+  }
+  .btn--primary:hover {
+    background: #9ab8ff;
+    color: #0a0a0f;
+  }
+
+  @media (max-width: 560px) {
+    .glyph :global(svg) {
+      width: 220px;
+    }
+    h1 {
+      font-size: 1.375rem;
+    }
+  }
+</style>
