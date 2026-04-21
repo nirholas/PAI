@@ -1,0 +1,39 @@
+#!/bin/bash
+# Launch ComfyUI on 127.0.0.1:8188 and open the UI in Firefox.
+set -euo pipefail
+
+COMFY_DIR=/opt/comfyui
+PORT=8188
+LOG=${XDG_CACHE_HOME:-$HOME/.cache}/pai-comfyui.log
+
+if [ ! -d "$COMFY_DIR/venv" ]; then
+    zenity --error --title="ComfyUI" \
+        --text="ComfyUI is not installed at $COMFY_DIR." 2>/dev/null
+    exit 1
+fi
+
+mkdir -p "$(dirname "$LOG")"
+
+if curl -sf "http://127.0.0.1:${PORT}" >/dev/null 2>&1; then
+    xdg-open "http://127.0.0.1:${PORT}" &
+    exit 0
+fi
+
+(
+    cd "$COMFY_DIR"
+    # shellcheck disable=SC1091
+    . venv/bin/activate
+    exec python main.py --listen 127.0.0.1 --port "$PORT"
+) >"$LOG" 2>&1 &
+
+for _ in $(seq 1 60); do
+    sleep 1
+    if curl -sf "http://127.0.0.1:${PORT}" >/dev/null 2>&1; then
+        xdg-open "http://127.0.0.1:${PORT}" &
+        exit 0
+    fi
+done
+
+zenity --error --title="ComfyUI" \
+    --text="ComfyUI did not start within 60s. See $LOG" 2>/dev/null
+exit 1
