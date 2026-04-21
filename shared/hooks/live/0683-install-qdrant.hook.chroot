@@ -1,0 +1,46 @@
+#!/bin/bash
+# ── Install Qdrant (local vector DB for RAG) ───────────────────────────
+# Downloads the pinned static binary per arch to /opt/qdrant/.
+# Started on demand via `pai-rag` (or the user systemd unit).
+set -euo pipefail
+
+QDRANT_VERSION="v1.11.3"
+ARCH=$(dpkg --print-architecture)
+case "$ARCH" in
+    amd64) QDRANT_TAR="qdrant-x86_64-unknown-linux-gnu.tar.gz" ;;
+    arm64) QDRANT_TAR="qdrant-aarch64-unknown-linux-gnu.tar.gz" ;;
+    *) echo "[pai] Qdrant: unsupported arch $ARCH"; exit 0 ;;
+esac
+
+echo "[pai] Installing Qdrant ${QDRANT_VERSION} (${ARCH})..."
+
+# NOTE: Qdrant does not publish SHA256 sidecar files with their GitHub releases
+# (as of v1.11.3). The tarball is downloaded over HTTPS from a pinned version tag.
+# Bump the version deliberately and re-verify when updating.
+install -d -m 0755 /opt/qdrant
+curl -fsSL -o /tmp/qdrant.tgz \
+    "https://github.com/qdrant/qdrant/releases/download/${QDRANT_VERSION}/${QDRANT_TAR}" \
+    || { echo "[pai] Qdrant download failed — skipping."; exit 0; }
+
+tar -xzf /tmp/qdrant.tgz -C /opt/qdrant/
+rm -f /tmp/qdrant.tgz
+chmod +x /opt/qdrant/qdrant || true
+
+# Minimal config — bind localhost only.
+install -d -m 0755 /opt/qdrant/config
+install -d -m 0755 /var/lib/qdrant/storage
+install -d -m 0755 /var/lib/qdrant/snapshots
+cat > /opt/qdrant/config/production.yaml <<'YAML'
+service:
+  host: 127.0.0.1
+  http_port: 6333
+  grpc_port: 6334
+telemetry_disabled: true
+storage:
+  storage_path: /var/lib/qdrant/storage
+  snapshots_path: /var/lib/qdrant/snapshots
+YAML
+
+ln -sf /opt/qdrant/qdrant /usr/local/bin/qdrant
+
+echo "[pai] Qdrant installed."
