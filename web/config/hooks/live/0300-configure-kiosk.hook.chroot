@@ -1,0 +1,68 @@
+#!/bin/bash
+set -euo pipefail
+
+# ── Configure Kiosk Desktop (Web Edition) ─────────────────────────────
+# Runs inside the chroot during ISO build.
+# Sets up Firefox in kiosk mode pointing at the CTRL web desktop.
+# No Sway/Waybar — uses Cage (single-app Wayland compositor) for kiosk.
+# ──────────────────────────────────────────────────────────────────────
+
+echo "[pai-web] Configuring kiosk desktop..."
+
+# ── 1. Install cage (lightweight kiosk Wayland compositor)
+# cage is in Debian repos — a single-window Wayland compositor
+# perfect for running a single fullscreen app
+apt-get install -y --no-install-recommends cage || {
+    echo "[pai-web] cage not available, falling back to sway kiosk mode"
+    USE_SWAY_KIOSK=1
+}
+
+if [ "${USE_SWAY_KIOSK:-0}" = "1" ]; then
+    # Fallback: use sway in kiosk-like mode
+    mkdir -p /etc/skel/.config/sway
+    cat > /etc/skel/.config/sway/config <<'SWAYCFG'
+# PAI Web Edition — Sway kiosk mode
+set $mod Mod1
+
+# No gaps, no borders — full kiosk
+gaps inner 0
+gaps outer 0
+default_border none
+font pango:monospace 0
+
+# Hide bar
+bar {
+    mode invisible
+}
+
+# Background
+output * bg #0f0f1a solid_color
+
+# Emergency exit
+bindsym $mod+F4 kill
+bindsym $mod+Shift+e exec swaymsg exit
+
+# Terminal escape hatch
+bindsym $mod+Return exec foot
+
+# Launch Firefox fullscreen pointing at CTRL
+exec firefox-esr --kiosk http://127.0.0.1:8080
+SWAYCFG
+else
+    # Preferred: use cage for true kiosk
+    # Create a startup script for cage
+    cat > /usr/local/bin/pai-kiosk <<'EOF'
+#!/bin/bash
+# Wait for CTRL server to be ready
+for i in $(seq 1 30); do
+    if curl -sf http://127.0.0.1:8080 >/dev/null 2>&1; then
+        break
+    fi
+    sleep 1
+done
+exec firefox-esr --kiosk http://127.0.0.1:8080
+EOF
+    chmod +x /usr/local/bin/pai-kiosk
+fi
+
+echo "[pai-web] Kiosk desktop configured"
