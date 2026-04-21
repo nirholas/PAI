@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" shape-rendering="crispEdges">
+  <rect width="64" height="64" fill="#9f7aea"/>
+  <rect x="4" y="4" width="56" height="2" fill="rgba(255,255,255,0.25)"/>
+  <rect x="4" y="4" width="2" height="56" fill="rgba(255,255,255,0.25)"/>
+  <rect x="4" y="58" width="56" height="2" fill="rgba(0,0,0,0.3)"/>
+  <rect x="58" y="4" width="2" height="56" fill="rgba(0,0,0,0.3)"/>
+  <text x="32" y="44" text-anchor="middle" font-family="'Courier New',Courier,monospace" font-size="30" font-weight="700" fill="#ffffff">?</text>
+</svg>
