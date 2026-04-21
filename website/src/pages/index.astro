@@ -1,0 +1,112 @@
+---
+import Shell from '../layouts/Shell.astro'
+import Desktop from '../components/Desktop.astro'
+import BootSplash from '../components/BootSplash.astro'
+import Lockscreen from '../components/Lockscreen.astro'
+import Hero from '../components/mobile/Hero.astro'
+import FeatureTiles from '../components/mobile/FeatureTiles.astro'
+import FlashInstructions from '../components/mobile/FlashInstructions.astro'
+import ScreenshotsCarousel from '../components/mobile/ScreenshotsCarousel.astro'
+import FAQAccordion from '../components/mobile/FAQAccordion.astro'
+import ProofBlock from '../components/mobile/ProofBlock.astro'
+import MobileFooter from '../components/mobile/MobileFooter.astro'
+
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'PAI',
+  applicationCategory: 'OperatingSystem',
+  operatingSystem: 'Live USB, runs on x86_64 and ARM64',
+  description:
+    'Boot from USB on any PC and run local AI models with zero cloud, zero accounts, and zero telemetry. PAI is an open-source Linux OS built for private, offline AI.',
+  license: 'https://www.gnu.org/licenses/gpl-3.0.html',
+  url: 'https://pai.direct',
+  downloadUrl: 'https://pai.direct/apps/flash',
+  offers: { '@type': 'Offer', price: '0' },
+}
+---
+
+<Shell
+  title="PAI — AI that runs on your machine. Not theirs."
+  description="Boot from USB on any PC and run local AI models with zero cloud, zero accounts, and zero telemetry. PAI is an open-source Linux OS built for private, offline AI."
+  ogImage="/og/home.png"
+  structuredData={structuredData}
+>
+  <!--
+    Desktop slot: wallpaper + icons.
+    Only visible when html[data-desktop] is set (shell is active).
+  -->
+  <Desktop slot="desktop" />
+
+  <!--
+    Default slot — rendered outside the .shell wrapper:
+    1. BootSplash: position:fixed desktop-only overlay (hidden on mobile via CSS in Shell.astro)
+    2. Lockscreen: position:fixed desktop-only overlay (hidden on mobile via CSS in Shell.astro)
+    3. Mobile landing: the linear layout shown on mobile + no-JS desktop
+  -->
+  <BootSplash />
+  <Lockscreen />
+
+  <!--
+    Mobile landing layout.
+    - Default: visible (serves crawlers, no-JS, mobile users)
+    - When html[data-desktop] is set by Shell.astro's JS: hidden
+    - CSS safety net: always visible at ≤767px or coarse pointer (enforced in Shell.astro styles)
+  -->
+  <div id="pai-mobile">
+    <div class="mobile-desktop-banner" role="note" aria-label="Desktop notice">
+      Best experienced on a desktop — visit on a PC to run the live OS →
+    </div>
+
+    <main id="mobile-main" class="mobile-main">
+      <Hero />
+      <FeatureTiles />
+      <FlashInstructions />
+      <ScreenshotsCarousel />
+      <FAQAccordion />
+      <ProofBlock />
+      <MobileFooter />
+    </main>
+  </div>
+</Shell>
+
+<style>
+  /* "Visit on desktop" banner — only shown on mobile/coarse-pointer viewports */
+  .mobile-desktop-banner {
+    display: none;
+    background: var(--bg-elev);
+    border-bottom: 1px solid var(--border);
+    color: var(--fg-muted);
+    font-size: 0.8125rem;
+    text-align: center;
+    padding: var(--s-2) var(--s-5);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  @media (max-width: 767px) {
+    .mobile-desktop-banner {
+      display: block;
+    }
+  }
+
+  @media (any-pointer: coarse) {
+    .mobile-desktop-banner {
+      display: block;
+    }
+  }
+
+  /* Mobile content layout */
+  .mobile-main {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 0 var(--s-5);
+  }
+
+  @media (max-width: 600px) {
+    .mobile-main {
+      padding: 0 var(--s-4);
+    }
+  }
+</style>
