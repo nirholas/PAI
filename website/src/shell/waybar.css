@@ -1,0 +1,110 @@
+#waybar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 30px;
+  background-color: var(--bg-chrome);
+  border: 1px solid var(--border);
+  border-radius: var(--r-dock);
+  margin: 8px;
+  padding: 0 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  z-index: var(--z-dock);
+  font-size: 13px;
+  color: var(--fg);
+}
+
+.waybar-section {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  height: 100%;
+}
+
+.waybar-left {
+  flex: 0 0 auto;
+}
+
+.waybar-center {
+  flex: 1;
+}
+
+.waybar-right {
+  flex: 0 0 auto;
+  gap: 12px;
+}
+
+.waybar-module {
+  padding: 2px 8px;
+  border-radius: var(--r-icon);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  user-select: none;
+  font-size: 13px;
+}
+
+.waybar-module:hover {
+  background-color: var(--border);
+}
+
+.custom-logo {
+  font-weight: bold;
+  color: var(--pai-blue);
+  padding: 2px 12px;
+}
+
+.custom-browser,
+.custom-terminal,
+.custom-files,
+.custom-editor {
+  font-size: 14px;
+}
+
+.custom-ollama {
+  font-size: 12px;
+}
+
+.custom-ollama.active {
+  color: var(--pai-green);
+}
+
+.custom-ollama.idle {
+  color: var(--pai-yellow);
+}
+
+.custom-ollama.loading {
+  color: var(--fg-muted);
+}
+
+.custom-crypto {
+  font-weight: bold;
+  font-size: 12px;
+}
+
+.custom-crypto.up {
+  color: var(--pai-green);
+}
+
+.custom-crypto.down {
+  color: var(--pai-red);
+}
+
+#waybar-clock {
+  font-family: var(--font-mono);
+  min-width: 40px;
+  text-align: right;
+}
+
+#cpu-status,
+#memory-status {
+  font-size: 12px;
+  color: var(--pai-blue);
+}
+
+.custom-settings {
+  font-size: 14px;
+}
