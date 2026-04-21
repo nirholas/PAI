@@ -1,0 +1,34 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "[pai] Configuring firewall..."
+
+# Reset to defaults
+ufw --force reset
+
+# Default policies
+ufw default deny incoming
+ufw default allow outgoing
+
+# Allow loopback (needed for Ollama ↔ chat UI communication)
+ufw allow in on lo
+
+# Block non-loopback access to our services
+# (Ollama and chat UI should only be accessible locally)
+# No explicit rules needed — default deny handles this
+
+# Allow SSH only if user explicitly enables it later
+# ufw allow ssh  ← intentionally commented out
+
+# Activate UFW on boot. Write ENABLED=yes directly rather than running
+# `ufw enable`, which would apply kernel-level iptables rules during the
+# chroot stage and could interfere with the build host's networking.
+sed -i 's/^ENABLED=.*/ENABLED=yes/' /etc/ufw/ufw.conf
+systemctl enable ufw 2>/dev/null || true
+
+# Mask SSH by default — privacy-first live USB should not expose a remote
+# login surface. Users who want SSH can unmask it explicitly at runtime.
+systemctl mask ssh.service 2>/dev/null || true
+systemctl mask ssh.socket 2>/dev/null || true
+
+echo "[pai] Firewall configured: deny incoming, allow outgoing, localhost only. SSH masked."
