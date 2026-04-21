@@ -1,0 +1,12 @@
+# shellcheck shell=bash
+# bash completion for pai-recommend-model
+_pai_recommend_model() {
+    local cur opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    opts="--name --json --shell --explain -h --help"
+    if [[ ${cur} == -* ]]; then
+        mapfile -t COMPREPLY < <(compgen -W "${opts}" -- "${cur}")
+    fi
+}
+complete -F _pai_recommend_model pai-recommend-model
