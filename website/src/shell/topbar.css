@@ -1,0 +1,479 @@
+/* Topbar — Waybar-style status bar */
+
+/* The topbar lives inside .shell__topbar (header, flex-shrink:0).
+   windows.css sets .shell__topbar { height: 28px }. */
+
+#topbar {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  background: var(--bg-chrome);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  user-select: none;
+  overflow: hidden;
+}
+
+/* ─── Left ───────────────────────────────────────────────────────────────────── */
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  flex-shrink: 0;
+  min-width: 180px;
+}
+
+.tb-logo {
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tb-logo:hover {
+  background: rgba(122, 162, 247, 0.15);
+}
+
+.tb-logo:focus-visible {
+  outline: 2px solid var(--pai-blue);
+  outline-offset: 1px;
+}
+
+.tb-app-title {
+  font-size: 12px;
+  color: var(--fg-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+/* ─── Center — workspace pills ───────────────────────────────────────────────── */
+
+.topbar-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.tb-ws {
+  width: 22px;
+  height: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--fg-muted);
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.12s,
+    color 0.12s;
+  font-family: var(--font-mono);
+}
+
+.tb-ws:hover {
+  background: rgba(122, 162, 247, 0.12);
+  color: var(--fg);
+}
+
+.tb-ws--active {
+  background: var(--pai-blue);
+  border-color: var(--pai-blue);
+  color: #0f0f1a;
+  font-weight: 700;
+}
+
+.tb-ws--cold {
+  border-style: dashed;
+  opacity: 0.55;
+}
+
+.tb-ws--cold:hover {
+  opacity: 1;
+}
+
+.tb-ws:focus-visible {
+  outline: 2px solid var(--pai-blue);
+  outline-offset: 1px;
+}
+
+/* ─── Right — status cluster ─────────────────────────────────────────────────── */
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.tb-cluster {
+  display: flex;
+  align-items: center;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  margin-right: 4px;
+}
+
+.tb-widget {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  height: 28px;
+  font-size: 11px;
+  color: var(--fg-muted);
+  white-space: nowrap;
+  border: none;
+  background: transparent;
+  cursor: default;
+  font-family: var(--font-ui);
+}
+
+.tb-widget.tb-tor,
+.tb-widget.tb-sound,
+.tb-widget.tb-cpu,
+.tb-widget.tb-ram,
+.tb-widget.tb-net {
+  cursor: pointer;
+}
+
+.tb-widget:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+button.tb-widget:focus-visible,
+.tb-clock:focus-visible,
+.tb-power:focus-visible {
+  outline: 2px solid var(--pai-blue);
+  outline-offset: -2px;
+}
+
+.tb-widget-icon {
+  font-size: 12px;
+}
+.tb-widget-label {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.tb-sparkline {
+  display: block;
+}
+.tb-tor-icon {
+  font-size: 13px;
+  color: var(--fg-muted);
+}
+
+/* ─── Clock ──────────────────────────────────────────────────────────────────── */
+
+.tb-clock {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  border: none;
+  background: transparent;
+  color: var(--fg);
+  font-size: 12px;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tb-clock:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ─── Calendar popover ───────────────────────────────────────────────────────── */
+
+.tb-cal-popover {
+  position: fixed;
+  top: 32px;
+  right: 36px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--r-window);
+  padding: 12px;
+  z-index: calc(var(--z-topbar) + 1);
+  min-width: 196px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.tb-cal-clock {
+  text-align: center;
+  padding: 6px 4px 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 10px;
+}
+
+.tb-cal-time {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--fg);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.tb-cal-date {
+  font-size: 11px;
+  color: var(--fg-muted);
+  font-family: var(--font-ui);
+  margin-top: 2px;
+}
+
+.tb-cal-nav {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.tb-cal-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg);
+  font-family: var(--font-ui);
+  background: transparent;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.tb-cal-title:hover {
+  background: rgba(122, 162, 247, 0.12);
+}
+
+.tb-cal-navbtn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--fg-muted);
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 16px;
+  line-height: 1;
+  font-family: var(--font-ui);
+}
+
+.tb-cal-navbtn:hover {
+  background: rgba(122, 162, 247, 0.12);
+  color: var(--fg);
+}
+
+.tb-cal-title:focus-visible,
+.tb-cal-navbtn:focus-visible {
+  outline: 2px solid var(--pai-blue);
+  outline-offset: 1px;
+}
+
+.tb-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+
+.tb-cal-grid span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
+  border-radius: 4px;
+  color: var(--fg-muted);
+}
+
+.tb-cal-dh {
+  color: var(--fg-muted) !important;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--font-ui);
+}
+
+.tb-cal-today {
+  background: var(--pai-blue) !important;
+  color: #0f0f1a !important;
+  font-weight: 700;
+  border-radius: 50% !important;
+}
+
+/* ─── System monitor popover ─────────────────────────────────────────────────── */
+
+.tb-sys-popover {
+  position: fixed;
+  top: 32px;
+  right: 36px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--r-window);
+  padding: 12px;
+  z-index: calc(var(--z-topbar) + 1);
+  min-width: 248px;
+  max-width: calc(100vw - 16px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.tb-sys-head {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg);
+  font-family: var(--font-ui);
+  margin-bottom: 8px;
+}
+
+.tb-sys-spark {
+  display: block;
+  width: 100%;
+  height: 48px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.tb-sys-scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  margin: 4px 2px 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.tb-sys-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tb-sys-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 11px;
+  font-family: var(--font-ui);
+  color: var(--fg-muted);
+}
+
+.tb-sys-row b {
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.tb-sys-sep {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+.tb-sys-foot {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: 10px;
+  color: var(--fg-muted);
+  font-family: var(--font-ui);
+  font-style: italic;
+}
+
+/* Smaller mono font for long GPU renderer strings so the popover doesn't overflow. */
+.tb-sys-row b.tb-sys-b-sm {
+  font-size: 10px;
+  text-align: right;
+  max-width: 180px;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.3;
+}
+
+.tb-sys-ok {
+  color: var(--pai-green, #4ade80) !important;
+}
+
+.tb-sys-warn {
+  color: var(--pai-yellow, #fbbf24) !important;
+}
+
+/* ─── Power button ───────────────────────────────────────────────────────────── */
+
+.tb-power {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--fg-muted);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.tb-power:hover {
+  background: rgba(248, 113, 113, 0.15);
+  color: var(--pai-red);
+}
+
+/* ─── Power menu ─────────────────────────────────────────────────────────────── */
+
+.tb-power-menu {
+  position: fixed;
+  top: 32px;
+  right: 2px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--r-window);
+  padding: 4px;
+  z-index: calc(var(--z-topbar) + 1);
+  min-width: 144px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.tb-power-menu button {
+  display: block;
+  width: 100%;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: var(--fg);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 4px;
+  font-family: var(--font-ui);
+}
+
+.tb-power-menu button:hover {
+  background: rgba(122, 162, 247, 0.12);
+}
+.tb-power-menu button:last-child:hover {
+  background: rgba(248, 113, 113, 0.15);
+  color: var(--pai-red);
+}
+
+.tb-power-menu button:focus-visible {
+  outline: 2px solid var(--pai-blue);
+  outline-offset: -2px;
+}
