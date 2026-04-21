@@ -1,0 +1,51 @@
+name: Update AUR packages
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag
+        required: true
+
+jobs:
+  update-aur:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        pkg: [pai-cli, pai-cli-git]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute new pkgver and sha256 (stable pkg only)
+        id: meta
+        if: matrix.pkg == 'pai-cli'
+        run: |
+          TAG="${{ github.event.release.tag_name || github.event.inputs.tag }}"
+          VERSION="${TAG#v}"
+          URL="https://github.com/nirholas/pai/archive/refs/tags/${TAG}.tar.gz"
+          SHA=$(curl -fsSL "$URL" | sha256sum | cut -d' ' -f1)
+          echo "version=$VERSION"  >> "$GITHUB_OUTPUT"
+          echo "sha=$SHA"           >> "$GITHUB_OUTPUT"
+
+      - name: Patch PKGBUILD (stable)
+        if: matrix.pkg == 'pai-cli'
+        run: |
+          cp "aur-templates/${{ matrix.pkg }}/PKGBUILD" PKGBUILD
+          sed -i "s/^pkgver=.*/pkgver=${{ steps.meta.outputs.version }}/" PKGBUILD
+          sed -i "s/^sha256sums=.*/sha256sums=('${{ steps.meta.outputs.sha }}')/" PKGBUILD
+
+      - name: Copy PKGBUILD (git)
+        if: matrix.pkg == 'pai-cli-git'
+        run: cp "aur-templates/${{ matrix.pkg }}/PKGBUILD" PKGBUILD
+
+      - name: Publish to AUR
+        uses: KSXGitHub/github-actions-deploy-aur@v2.7.2
+        with:
+          pkgname: ${{ matrix.pkg }}
+          pkgbuild: PKGBUILD
+          commit_username: 'pai-release-bot'
+          commit_email: 'bot@pai.direct'
+          ssh_private_key: ${{ secrets.AUR_SSH_KEY }}
+          commit_message: "Update to ${{ github.event.release.tag_name || github.event.inputs.tag }}"
+          ssh_keyscan_types: rsa,ecdsa,ed25519
