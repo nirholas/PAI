@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Bitcoin Wallet
+Comment=Electrum Bitcoin Wallet
+Exec=electrum
+Icon=electrum
+Type=Application
+Categories=Finance;
+Keywords=bitcoin;btc;wallet;crypto;
