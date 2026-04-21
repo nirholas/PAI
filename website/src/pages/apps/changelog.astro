@@ -1,0 +1,277 @@
+---
+import { getCollection, render } from 'astro:content'
+import ContentApp from '../../layouts/ContentApp.astro'
+
+const allEntries = await getCollection('changelog')
+const sorted = allEntries.sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+
+const rendered = await Promise.all(
+  sorted.map(async (entry) => {
+    const { Content } = await render(entry)
+    return { entry, Content }
+  })
+)
+
+const stable = rendered.filter((r) => r.entry.data.stable !== false)
+const prereleases = rendered.filter((r) => r.entry.data.stable === false)
+
+function formatDate(d: Date) {
+  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+}
+---
+
+<ContentApp
+  title="Changelog"
+  description="PAI release history — new features, fixes, and security updates."
+>
+  <nav slot="sidebar">
+    <p class="sb-brand">Changelog</p>
+    {
+      stable.length > 0 && (
+        <>
+          <p class="sb-section">Stable</p>
+          {stable.map(({ entry }) => (
+            <a href={`#${entry.id}`} class="sb-link">
+              {entry.data.title}
+              <span class="version-date">
+                {entry.data.date.toLocaleDateString('en-US', {
+                  month: 'short',
+                  year: 'numeric',
+                })}
+              </span>
+            </a>
+          ))}
+        </>
+      )
+    }
+    {
+      prereleases.length > 0 && (
+        <>
+          <p class="sb-section">Pre-release</p>
+          {prereleases.map(({ entry }) => (
+            <a href={`#${entry.id}`} class="sb-link">
+              {entry.data.title}
+            </a>
+          ))}
+        </>
+      )
+    }
+    <hr class="sb-divider" />
+    <a
+      href="/changelog.xml"
+      class="sb-link"
+      style="font-size:0.8125rem;color:var(--pai-yellow)"
+    >
+      Subscribe (RSS)
+    </a>
+    <a
+      href="https://github.com/nirholas/pai/releases"
+      class="sb-link"
+      target="_blank"
+      rel="noopener noreferrer"
+      style="font-size:0.8125rem"
+    >
+      All releases on GitHub ↗
+    </a>
+  </nav>
+
+  <h1>Changelog</h1>
+  <p>
+    Release history for PAI. Pulled from
+    <a href="https://github.com/nirholas/pai/releases" target="_blank" rel="noopener noreferrer"
+      >GitHub Releases</a
+    > at build time.
+  </p>
+
+  {
+    rendered.length === 0 && (
+      <div class="empty-state">
+        <p>
+          No releases yet. Run <code>node scripts/build-content.mjs</code> to pull releases from
+          GitHub, or check{' '}
+          <a href="https://github.com/nirholas/pai/releases" target="_blank" rel="noopener noreferrer">
+            GitHub Releases ↗
+          </a>
+          .
+        </p>
+      </div>
+    )
+  }
+
+  <div class="changelog-list">
+    {
+      rendered.map(({ entry, Content }) => (
+        <article class="release" id={entry.id}>
+          <div class="release-header">
+            <div class="release-meta">
+              <h2 class="release-version">{entry.data.title}</h2>
+              <time class="release-date" datetime={entry.data.date.toISOString()}>
+                {formatDate(entry.data.date)}
+              </time>
+            </div>
+            <div class="release-badges">
+              {entry.data.stable !== false ? (
+                <span class="badge badge--stable">Stable</span>
+              ) : (
+                <span class="badge badge--pre">Pre-release</span>
+              )}
+              {entry.data.githubUrl && (
+                <a
+                  href={entry.data.githubUrl}
+                  class="badge badge--link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  View on GitHub ↗
+                </a>
+              )}
+            </div>
+          </div>
+          {entry.data.description && (
+            <p class="release-description">{entry.data.description}</p>
+          )}
+          <div class="release-body">
+            <Content />
+          </div>
+        </article>
+      ))
+    }
+  </div>
+</ContentApp>
+
+<style>
+  .version-date {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--fg-muted);
+    margin-top: 1px;
+    font-weight: 400;
+  }
+
+  .empty-state {
+    max-width: 72ch;
+    padding: var(--s-5);
+    border: 1px dashed var(--border);
+    border-radius: var(--r-window);
+    color: var(--fg-muted);
+    font-size: 0.9375rem;
+    margin-bottom: var(--s-5);
+  }
+
+  .empty-state p {
+    margin: 0;
+  }
+
+  .changelog-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-6);
+    margin-top: var(--s-5);
+    max-width: 72ch;
+  }
+
+  .release {
+    border: 1px solid var(--border);
+    border-radius: var(--r-window);
+    background: var(--bg-elev);
+    overflow: hidden;
+    scroll-margin-top: var(--s-4);
+  }
+
+  .release-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--s-4);
+    padding: var(--s-4) var(--s-5);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .release-meta {
+    display: flex;
+    align-items: baseline;
+    gap: var(--s-3);
+    flex-wrap: wrap;
+  }
+
+  .release-version {
+    font-family: var(--font-mono);
+    font-size: 1.125rem;
+    color: var(--pai-blue);
+    margin: 0;
+    font-weight: 700;
+  }
+
+  .release-date {
+    font-size: 0.875rem;
+    color: var(--fg-muted);
+  }
+
+  .release-description {
+    padding: var(--s-2) var(--s-5) 0;
+    color: var(--fg-muted);
+    font-size: 0.875rem;
+    margin: 0;
+    max-width: none;
+  }
+
+  .release-badges {
+    display: flex;
+    gap: var(--s-2);
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .badge {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-decoration: none;
+  }
+
+  .badge--stable {
+    background: rgba(74, 222, 128, 0.15);
+    color: var(--pai-green);
+    border: 1px solid rgba(74, 222, 128, 0.3);
+  }
+
+  .badge--pre {
+    background: rgba(251, 191, 36, 0.15);
+    color: var(--pai-yellow);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+  }
+
+  .badge--link {
+    background: rgba(122, 162, 247, 0.1);
+    color: var(--pai-blue);
+    border: 1px solid rgba(122, 162, 247, 0.25);
+    transition: background 0.1s;
+  }
+
+  .badge--link:hover {
+    background: rgba(122, 162, 247, 0.2);
+  }
+
+  .release-body {
+    padding: var(--s-4) var(--s-5);
+  }
+
+  .release-body :global(p) {
+    max-width: none;
+  }
+
+  .release-body :global(ul),
+  .release-body :global(ol) {
+    max-width: none;
+  }
+
+  .release-body :global(h3) {
+    font-size: 0.9375rem;
+    color: var(--fg-muted);
+    margin: var(--s-4) 0 var(--s-2);
+  }
+</style>
