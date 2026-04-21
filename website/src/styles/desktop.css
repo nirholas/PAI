@@ -1,0 +1,82 @@
+#workspace-container {
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+.workspace {
+  display: none;
+}
+
+.workspace.active {
+  display: block;
+}
+
+.window {
+  user-select: none;
+  background: var(--bg-chrome, rgba(20, 20, 30, 0.95));
+  border: 2px solid rgba(122, 162, 247, 0.3);
+  border-radius: var(--r-window, 8px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  transition: box-shadow 0.2s ease;
+}
+
+.window:focus-within {
+  box-shadow: 0 0 20px rgba(122, 162, 247, 0.3), 0 8px 32px rgba(0, 0, 0, 0.4);
+  border-color: rgba(122, 162, 247, 0.5);
+}
+
+.window-titlebar {
+  flex-shrink: 0;
+  background: var(--bg, rgba(15, 15, 26, 0.8));
+  border-bottom: 1px solid rgba(122, 162, 247, 0.15);
+  padding: 0 var(--s-2, 8px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: move;
+  user-select: none;
+  height: 28px;
+}
+
+.window-title-text {
+  font-size: 12px;
+  color: var(--pai-blue, #7aa2f7);
+}
+
+.window-controls {
+  display: flex;
+  gap: var(--s-1, 4px);
+}
+
+.window-btn {
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border: none;
+  color: var(--fg, #e0e0e0);
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+}
+
+.window-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-close:hover {
+  background: rgba(248, 113, 113, 0.3);
+  color: var(--pai-red, #f87171);
+}
+
+.window-content {
+  flex: 1;
+  overflow: auto;
+  background: var(--bg-elev, rgba(30, 30, 40, 0.9));
+}
