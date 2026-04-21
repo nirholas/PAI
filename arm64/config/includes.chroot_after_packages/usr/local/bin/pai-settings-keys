@@ -1,0 +1,73 @@
+#!/bin/bash
+# PAI Settings — unified key management submenu.
+# Covers: passwords (KeePassXC), pass store (gopass), SSH keys, age keys,
+# GPG keys (Kleopatra).
+set -euo pipefail
+
+STYLE=/etc/pai/wofi-shutdown.css
+WOFI=(wofi --dmenu --cache-file=/dev/null)
+[ -r "$STYLE" ] && WOFI+=(--style "$STYLE")
+
+choice=$(printf '%s\n' \
+    "🔑  Passwords (KeePassXC)" \
+    "🗝️  Pass store (gopass)" \
+    "🔐  Generate SSH key (ed25519)" \
+    "🧓  Generate age key" \
+    "🖊️  Manage GPG keys (Kleopatra)" \
+    | "${WOFI[@]}" --prompt "Keys" --lines 5 --width 360 --height 280 2>/dev/null)
+
+run_terminal() {
+    if command -v foot >/dev/null 2>&1; then
+        foot -e bash -lc "$*"
+    else
+        xterm -e bash -lc "$*"
+    fi
+}
+
+case "$choice" in
+    *KeePassXC*)
+        if command -v keepassxc >/dev/null 2>&1; then
+            keepassxc &
+        else
+            zenity --error --text="KeePassXC is not installed."
+        fi
+        ;;
+    *gopass*)
+        if ! command -v gopass >/dev/null 2>&1; then
+            zenity --error --text="gopass is not installed. apt install gopass."
+            exit 0
+        fi
+        if [ ! -d "${HOME}/.local/share/gopass/stores/root" ]; then
+            run_terminal 'echo "No gopass store found. Running: gopass setup"; gopass setup; read -rp "Press Enter..."'
+        else
+            run_terminal 'gopass ls; echo; echo "Run gopass <command>. Common: gopass show site, gopass insert site, gopass generate site 20"; exec bash'
+        fi
+        ;;
+    *SSH*)
+        name=$(zenity --entry --title="SSH key" --text="Key file name:" --entry-text="id_ed25519")
+        [ -z "$name" ] && exit 0
+        comment=$(zenity --entry --title="SSH key comment" --text="Key comment / email:" --entry-text="pai@$(hostname)")
+        run_terminal "ssh-keygen -t ed25519 -a 100 -f \"\$HOME/.ssh/$name\" -C \"$comment\"; echo; echo 'Public key:'; cat \"\$HOME/.ssh/$name.pub\"; read -rp 'Press Enter...'"
+        ;;
+    *age*)
+        if ! command -v age-keygen >/dev/null 2>&1; then
+            zenity --error --text="age is not installed."
+            exit 0
+        fi
+        out="$HOME/.config/age/key.txt"
+        mkdir -p "$(dirname "$out")"
+        if [ -f "$out" ] && ! zenity --question --text="$out exists. Overwrite?"; then
+            exit 0
+        fi
+        age-keygen -o "$out" 2>&1 | zenity --text-info --title="age key" --width=480 --height=240
+        ;;
+    *GPG*)
+        if command -v kleopatra >/dev/null 2>&1; then
+            kleopatra &
+        elif command -v seahorse >/dev/null 2>&1; then
+            seahorse &
+        else
+            run_terminal 'gpg --full-generate-key; read -rp "Press Enter..."'
+        fi
+        ;;
+esac
