@@ -1,0 +1,141 @@
+---
+import { getCollection, render } from 'astro:content'
+import ContentApp from '../../layouts/ContentApp.astro'
+
+const entries = await getCollection('faq')
+entries.sort((a, b) => a.data.order - b.data.order)
+
+const rendered = await Promise.all(
+  entries.map(async (entry) => {
+    const { Content } = await render(entry)
+    return { entry, Content }
+  }),
+)
+
+// Strip markdown link syntax and backticks for plain-text JSON-LD answers.
+function toPlainText(md: string): string {
+  return md
+    .replace(/\r\n/g, '\n')
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/_([^_]+)_/g, '$1')
+    .replace(/^\s*[-*]\s+/gm, '')
+    .replace(/\n{2,}/g, ' ')
+    .replace(/\n/g, ' ')
+    .trim()
+}
+
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: entries.map((entry) => ({
+    '@type': 'Question',
+    name: entry.data.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: toPlainText(entry.body ?? ''),
+    },
+  })),
+}
+
+function slugify(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+}
+---
+
+<ContentApp
+  title="FAQ"
+  description="Frequently asked questions about PAI — privacy, compatibility, supported models, hardware requirements, and how the live USB works."
+  structuredData={structuredData}
+>
+  <nav slot="sidebar">
+    <p class="sb-brand">FAQ</p>
+    {entries.map((entry) => (
+      <a href={`#${slugify(entry.data.question)}`} class="sb-link">
+        {entry.data.question}
+      </a>
+    ))}
+    <hr class="sb-divider" />
+    <a href="https://docs.pai.direct/reference/faq/" class="sb-link" style="font-size:0.8125rem" target="_blank" rel="noopener noreferrer">
+      Full reference FAQ ↗
+    </a>
+    <a href="/apps/docs" class="sb-link" style="font-size:0.8125rem">Documentation →</a>
+    <a href="/apps/about" class="sb-link" style="font-size:0.8125rem">About PAI →</a>
+  </nav>
+
+  <header class="faq-header">
+    <h1>Frequently asked questions</h1>
+    <p class="lede">
+      Common questions about PAI — privacy, hardware, supported models, and how
+      the bootable USB approach actually works in practice.
+    </p>
+  </header>
+
+  <section class="faq-list">
+    {rendered.map(({ entry, Content }) => (
+      <article class="faq-item" id={slugify(entry.data.question)}>
+        <h2>{entry.data.question}</h2>
+        <div class="faq-answer">
+          <Content />
+        </div>
+      </article>
+    ))}
+  </section>
+
+  <footer class="faq-footer">
+    <p>
+      Still have a question? Check the{' '}
+      <a href="https://docs.pai.direct/reference/faq/" target="_blank" rel="noopener noreferrer">
+        full reference FAQ ↗
+      </a>{' '}
+      or open a{' '}
+      <a href="https://github.com/nirholas/pai/discussions" target="_blank" rel="noopener noreferrer">
+        GitHub discussion ↗
+      </a>.
+    </p>
+  </footer>
+</ContentApp>
+
+<style>
+  .faq-header {
+    margin-bottom: var(--s-6);
+  }
+
+  .faq-header .lede {
+    color: var(--fg-muted);
+    font-size: 1rem;
+    max-width: 72ch;
+  }
+
+  .faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-6);
+  }
+
+  .faq-item {
+    scroll-margin-top: var(--s-4);
+  }
+
+  .faq-item h2 {
+    /* Use the blue H2 style already defined by ContentApp prose */
+  }
+
+  .faq-answer {
+    max-width: 72ch;
+  }
+
+  .faq-footer {
+    margin-top: var(--s-7);
+    padding-top: var(--s-4);
+    border-top: 1px solid var(--border);
+    color: var(--fg-muted);
+    font-size: 0.9375rem;
+  }
+</style>
