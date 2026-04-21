@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Solana Wallet
+Comment=Offline Solana wallet toolkit
+Exec=firefox file:///opt/pai-wallets/solana-wallet.html
+Icon=wallet
+Type=Application
+Categories=Finance;
+Keywords=solana;sol;wallet;crypto;
