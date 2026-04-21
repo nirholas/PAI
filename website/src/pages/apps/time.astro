@@ -1,0 +1,103 @@
+---
+import AppStandalone from '../../layouts/AppStandalone.astro'
+import Head from '../../components/Head.astro'
+import '../../shell/tokens.css'
+import '../../apps/time/time.css'
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <Head
+      title="Time — PAI"
+      description="Clock, timer, stopwatch, and alarms — with world time zones."
+      ogImage="/og/time.png"
+    />
+    <link rel="icon" type="image/svg+xml" href="/icons/time.svg" />
+  </head>
+  <body>
+    <AppStandalone appId="time" />
+    <main class="time-root" id="time-root">
+      <div class="time-tabs" role="tablist">
+        <button class="time-tab" role="tab" aria-selected="true" data-tab="clock">Clock</button>
+        <button class="time-tab" role="tab" aria-selected="false" data-tab="timer">Timer</button>
+        <button class="time-tab" role="tab" aria-selected="false" data-tab="stopwatch">Stopwatch</button>
+        <button class="time-tab" role="tab" aria-selected="false" data-tab="alarms">Alarms</button>
+      </div>
+
+      <section class="time-panel active" data-panel="clock" role="tabpanel">
+        <div class="clock-main">
+          <svg class="clock-analog" viewBox="0 0 200 200" aria-hidden="true">
+            <circle cx="100" cy="100" r="94" fill="var(--bg-elev)" stroke="var(--pai-blue)" stroke-width="2"/>
+            <g stroke="var(--fg)" stroke-width="2" stroke-linecap="round">
+              <line x1="100" y1="12" x2="100" y2="22"/>
+              <line x1="100" y1="178" x2="100" y2="188"/>
+              <line x1="12" y1="100" x2="22" y2="100"/>
+              <line x1="178" y1="100" x2="188" y2="100"/>
+            </g>
+            <line id="hour-hand" x1="100" y1="100" x2="100" y2="50" stroke="var(--fg)" stroke-width="4" stroke-linecap="round"/>
+            <line id="min-hand" x1="100" y1="100" x2="100" y2="30" stroke="var(--fg)" stroke-width="3" stroke-linecap="round"/>
+            <line id="sec-hand" x1="100" y1="100" x2="100" y2="20" stroke="var(--pai-yellow)" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="100" cy="100" r="4" fill="var(--pai-yellow)"/>
+          </svg>
+          <div class="clock-digital"></div>
+          <div class="clock-date"></div>
+        </div>
+        <h3 style="color:var(--fg-muted);font-size:0.85rem;margin-bottom:var(--s-2);text-transform:uppercase;letter-spacing:0.1em;">World clocks</h3>
+        <div class="clock-zones"></div>
+        <div class="zone-add">
+          <select class="zone-select" aria-label="Time zone">
+            <option value="">Select a zone…</option>
+          </select>
+          <button class="btn zone-add-btn">Add zone</button>
+        </div>
+      </section>
+
+      <section class="time-panel" data-panel="timer" role="tabpanel">
+        <div class="bigtime timer-display">00:00:00</div>
+        <div class="timer-set">
+          <input class="timer-h" type="number" min="0" max="23" value="0" aria-label="Hours" />
+          <label>h</label>
+          <input class="timer-m" type="number" min="0" max="59" value="5" aria-label="Minutes" />
+          <label>m</label>
+          <input class="timer-s" type="number" min="0" max="59" value="0" aria-label="Seconds" />
+          <label>s</label>
+        </div>
+        <div class="ctrl-row">
+          <button class="btn primary timer-start">Start</button>
+          <button class="btn timer-pause">Pause</button>
+          <button class="btn danger timer-reset">Reset</button>
+        </div>
+      </section>
+
+      <section class="time-panel" data-panel="stopwatch" role="tabpanel">
+        <div class="bigtime sw-display">00:00.00</div>
+        <div class="ctrl-row">
+          <button class="btn primary sw-start">Start</button>
+          <button class="btn sw-lap">Lap</button>
+          <button class="btn danger sw-reset">Reset</button>
+        </div>
+        <div class="laps sw-laps"></div>
+      </section>
+
+      <section class="time-panel" data-panel="alarms" role="tabpanel">
+        <div class="alarm-add">
+          <input class="alarm-time-input" type="time" aria-label="Alarm time" />
+          <input class="alarm-label-input" type="text" placeholder="Label (optional)" aria-label="Alarm label" />
+          <button class="btn primary alarm-add-btn">Add</button>
+        </div>
+        <div class="alarm-list"></div>
+        <p style="color:var(--fg-muted);font-size:0.8rem;margin-top:var(--s-4);">
+          Alarms ring only while this window is open.
+        </p>
+      </section>
+    </main>
+
+    <script>
+      import { bridge } from '../../apps/_bridge.js'
+      import { mountTime } from '../../apps/time/time.ts'
+      bridge.ready()
+      mountTime(document.getElementById('time-root')!)
+    </script>
+  </body>
+</html>
