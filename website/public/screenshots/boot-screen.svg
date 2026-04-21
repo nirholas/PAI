@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" role="img" aria-label="PAI boot menu with GRUB entries, showing the default Live entry selected">
+  <rect width="960" height="600" fill="#000000"/>
+
+  <!-- Subtle top/bottom info bars to mimic a BIOS/UEFI frame -->
+  <rect x="0" y="0" width="960" height="28" fill="#0b0b15"/>
+  <text x="20" y="18" font-family="ui-monospace" font-size="11" fill="#4ade80">GNU GRUB  version 2.06</text>
+  <text x="800" y="18" font-family="ui-monospace" font-size="11" fill="#888">UEFI · x86_64</text>
+  <rect x="0" y="572" width="960" height="28" fill="#0b0b15"/>
+  <text x="20" y="590" font-family="ui-monospace" font-size="11" fill="#888">↑↓ select · Enter boot · e edit · c command-line · F10 firmware</text>
+
+  <!-- PAI logo block -->
+  <g transform="translate(400 70)">
+    <rect width="160" height="60" rx="6" fill="transparent" stroke="rgba(122,162,247,0.4)"/>
+    <text x="20" y="42" font-family="ui-monospace" font-size="28" font-weight="800" fill="#7aa2f7">P<tspan fill="#fbbf24">A</tspan><tspan fill="#f87171">I</tspan></text>
+  </g>
+  <text x="380" y="156" font-family="ui-monospace" font-size="12" fill="#888">private AI — live USB · v0.1.0</text>
+
+  <!-- Menu frame -->
+  <g transform="translate(180 200)">
+    <rect width="600" height="280" fill="transparent" stroke="#7aa2f7" stroke-opacity="0.3"/>
+    <text x="14" y="-10" font-family="ui-monospace" font-size="12" fill="#888">[ boot selection ]</text>
+
+    <!-- Selected entry -->
+    <rect x="10" y="14" width="580" height="28" fill="#7aa2f7"/>
+    <text x="24" y="33" font-family="ui-monospace" font-size="14" font-weight="700" fill="#0f0f1a">▸ PAI Live (Wayland · Sway)</text>
+    <text x="320" y="33" font-family="ui-monospace" font-size="11" fill="#0f0f1a">default · boots in 3s</text>
+
+    <!-- Entries -->
+    <g font-family="ui-monospace" font-size="14" fill="#e0e0e0">
+      <text x="24" y="66">  PAI Live (safe graphics)</text>
+      <text x="24" y="96">  PAI Live (persistence — /persistence.conf)</text>
+      <text x="24" y="126">  PAI Live (text console only)</text>
+      <text x="24" y="156">  Memtest86+</text>
+      <text x="24" y="186">  Boot from next device</text>
+      <text x="24" y="216">  UEFI Firmware Settings</text>
+    </g>
+
+    <!-- Description pane -->
+    <rect x="10" y="240" width="580" height="32" fill="rgba(122,162,247,0.08)"/>
+    <text x="22" y="260" font-family="ui-monospace" font-size="11" fill="#888">Use this entry for a normal private session. No writes to the host disk.</text>
+  </g>
+</svg>
