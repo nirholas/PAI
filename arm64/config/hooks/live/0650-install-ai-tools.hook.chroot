@@ -1,0 +1,55 @@
+#!/bin/bash
+set -uo pipefail
+
+echo "[pai] Installing AI tools..."
+
+# ── whisper.cpp (speech-to-text) ──────────────────────────────────────
+echo "[pai] Building whisper.cpp..."
+
+# Install build deps temporarily
+apt-get update
+apt-get install -y --no-install-recommends build-essential
+
+cd /tmp
+if ! curl -fSL -o whisper.tar.gz "https://github.com/ggerganov/whisper.cpp/archive/refs/tags/v1.7.4.tar.gz"; then
+    echo "[pai] WARNING: Failed to download whisper.cpp. Skipping."
+    apt-get remove -y build-essential 2>/dev/null || true
+    apt-mark manual make pkg-config libssl-dev 2>/dev/null || true
+    apt-get autoremove -y 2>/dev/null || true
+    exit 0
+fi
+tar xzf whisper.tar.gz
+cd whisper.cpp-1.7.4
+make -j$(nproc) || true
+
+# Binary may be named 'main', 'whisper-cli', or 'whisper'
+if [ -f main ]; then
+    cp main /usr/local/bin/whisper-cpp
+elif [ -f whisper-cli ]; then
+    cp whisper-cli /usr/local/bin/whisper-cpp
+elif [ -f build/bin/whisper-cli ]; then
+    cp build/bin/whisper-cli /usr/local/bin/whisper-cpp
+else
+    echo "[pai] WARNING: whisper.cpp binary not found, skipping"
+fi
+cd /tmp
+rm -rf whisper.cpp-1.7.4 whisper.tar.gz
+
+# Download tiny whisper model (~75MB)
+mkdir -p /usr/share/whisper-models
+if curl -fSL -o /usr/share/whisper-models/ggml-tiny.en.bin \
+    "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.en.bin"; then
+    echo "[pai] whisper.cpp installed with tiny.en model."
+else
+    echo "[pai] WARNING: Failed to download whisper model. whisper-cpp installed without model."
+fi
+
+# Clean up build deps — protect packages from the package list
+apt-mark manual make pkg-config libssl-dev 2>/dev/null || true
+apt-get remove -y build-essential 2>/dev/null || true
+apt-get autoremove -y 2>/dev/null || true
+
+# ── jq (JSON processor — useful for API work) ────────────────────────
+apt-get install -y jq 2>/dev/null || true
+
+echo "[pai] AI tools installed."
