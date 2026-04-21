@@ -1,0 +1,116 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "[pai] Configuring utility tools..."
+
+# ── FFmpeg convenience scripts ───────────────────────────────────
+cat > /usr/local/bin/pai-convert <<'SCRIPT'
+#!/bin/bash
+# PAI Media Converter — Quick FFmpeg wrapper
+# Usage: pai-convert <input> <output>
+#        pai-convert video.mp4 video.webm
+#        pai-convert audio.wav audio.mp3
+#        pai-convert image.png image.jpg
+
+if [[ $# -lt 2 ]]; then
+    echo ""
+    echo "  PAI Media Converter"
+    echo "  ==================="
+    echo ""
+    echo "  Quick media format conversion powered by FFmpeg."
+    echo ""
+    echo "  Usage: pai-convert <input> <output>"
+    echo ""
+    echo "  Examples:"
+    echo "    pai-convert video.mp4 video.webm"
+    echo "    pai-convert song.flac song.mp3"
+    echo "    pai-convert photo.png photo.jpg"
+    echo "    pai-convert clip.mp4 clip.gif"
+    echo ""
+    echo "  Advanced (use ffmpeg directly):"
+    echo "    ffmpeg -i input.mp4 -crf 23 output.mp4"
+    echo "    ffmpeg -i input.wav -b:a 320k output.mp3"
+    echo ""
+    exit 0
+fi
+
+INPUT="$1"
+OUTPUT="$2"
+
+if [[ ! -f "$INPUT" ]]; then
+    echo "Error: File not found: $INPUT"
+    exit 1
+fi
+
+echo "Converting: $INPUT → $OUTPUT"
+ffmpeg -i "$INPUT" "$OUTPUT" -y -hide_banner -loglevel warning && \
+    echo "✓ Done: $OUTPUT" || \
+    echo "✗ Conversion failed"
+SCRIPT
+
+chmod +x /usr/local/bin/pai-convert
+
+# ── PDF tools convenience script ─────────────────────────────────
+cat > /usr/local/bin/pai-pdf <<'SCRIPT'
+#!/bin/bash
+# PAI PDF Tools
+# Usage: pai-pdf <command> [args...]
+
+case "${1:-}" in
+    merge)
+        shift
+        if [[ $# -lt 2 ]]; then
+            echo "Usage: pai-pdf merge output.pdf input1.pdf input2.pdf ..."
+            exit 1
+        fi
+        OUTPUT="$1"
+        shift
+        pdfunite "$@" "$OUTPUT"
+        echo "✓ Merged into: $OUTPUT"
+        ;;
+    split)
+        if [[ $# -lt 2 ]]; then
+            echo "Usage: pai-pdf split input.pdf"
+            echo "  Splits each page into a separate PDF"
+            exit 1
+        fi
+        INPUT="$2"
+        BASENAME="${INPUT%.pdf}"
+        pdfseparate "$INPUT" "${BASENAME}-page%d.pdf"
+        echo "✓ Pages extracted from: $INPUT"
+        ;;
+    text)
+        if [[ $# -lt 2 ]]; then
+            echo "Usage: pai-pdf text input.pdf [output.txt]"
+            exit 1
+        fi
+        INPUT="$2"
+        OUTPUT="${3:-/dev/stdout}"
+        pdftotext "$INPUT" "$OUTPUT"
+        [[ "$OUTPUT" != "/dev/stdout" ]] && echo "✓ Text saved to: $OUTPUT"
+        ;;
+    info)
+        if [[ $# -lt 2 ]]; then
+            echo "Usage: pai-pdf info input.pdf"
+            exit 1
+        fi
+        pdfinfo "$2"
+        ;;
+    *)
+        echo ""
+        echo "  PAI PDF Tools"
+        echo "  ============="
+        echo ""
+        echo "  Commands:"
+        echo "    pai-pdf merge output.pdf file1.pdf file2.pdf   Merge PDFs"
+        echo "    pai-pdf split input.pdf                        Split into pages"
+        echo "    pai-pdf text input.pdf [output.txt]            Extract text"
+        echo "    pai-pdf info input.pdf                         Show PDF info"
+        echo ""
+        ;;
+esac
+SCRIPT
+
+chmod +x /usr/local/bin/pai-pdf
+
+echo "[pai] Utility tools configured."
