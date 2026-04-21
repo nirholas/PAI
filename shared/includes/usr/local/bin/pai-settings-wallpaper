@@ -1,0 +1,39 @@
+#!/bin/bash
+# PAI Settings — wallpaper chooser.
+set -euo pipefail
+
+STYLE=/etc/pai/wofi-shutdown.css
+WOFI=(wofi --dmenu --cache-file=/dev/null)
+[ -r "$STYLE" ] && WOFI+=(--style "$STYLE")
+
+CFG_DIR="$HOME/.config/sway/config.d"
+CFG_FILE="$CFG_DIR/30-wallpaper.conf"
+mkdir -p "$CFG_DIR"
+
+options=()
+while IFS= read -r f; do
+    options+=("$f")
+done < <(find /usr/share/backgrounds -maxdepth 2 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.svg' -o -iname '*.webp' \) 2>/dev/null | sort)
+
+options+=("Choose file…")
+
+choice=$(printf '%s\n' "${options[@]}" | "${WOFI[@]}" --prompt "Wallpaper" --lines 10 --width 500 --height 420 2>/dev/null)
+[ -z "$choice" ] && exit 0
+
+if [ "$choice" = "Choose file…" ]; then
+    choice=$(zenity --file-selection --title="Pick a wallpaper" \
+        --file-filter='Images | *.jpg *.jpeg *.png *.svg *.webp' 2>/dev/null) || exit 0
+fi
+
+[ -r "$choice" ] || exit 0
+
+cat > "$CFG_FILE" <<EOF
+# Written by pai-settings-wallpaper
+output * bg "$choice" fill #0f0f1a
+EOF
+
+if command -v swaymsg >/dev/null 2>&1; then
+    swaymsg reload >/dev/null 2>&1 || true
+fi
+
+zenity --info --title="Wallpaper" --text="Set: $choice" 2>/dev/null &
