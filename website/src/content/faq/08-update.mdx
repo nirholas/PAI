@@ -1,0 +1,33 @@
+---
+question: "How do I update PAI?"
+order: 8
+---
+
+Re-flash your USB with the latest ISO.
+
+PAI doesn't have an in-place upgrade mechanism — because it runs from a read-only squashfs, updates mean replacing the ISO on the USB drive.
+
+**Update process:**
+
+```bash
+# Download the latest ISO
+curl -LO https://get.pai.direct/pai-amd64.iso
+
+# Verify checksum
+curl -LO https://get.pai.direct/pai-amd64.iso.sha256
+sha256sum -c pai.iso.sha256
+
+# Re-flash (from a different machine while PAI USB is unplugged)
+sudo dd if=pai.iso of=/dev/sdX bs=4M status=progress && sync
+```
+
+**With persistence:** re-flashing replaces the ISO partition but leaves your encrypted persistence partition intact. Your saved models, keys, and data survive the update.
+
+**Without persistence:** since PAI is amnesic, there's nothing to migrate — just boot the new version.
+
+**Staying informed:**
+- Watch [GitHub Releases](https://github.com/nirholas/pai/releases) for new versions
+- The Changelog app shows release notes
+- Critical security releases will be announced prominently
+
+**Frequency:** PAI is under active development. Major releases happen every few months; security patches are released as needed.
