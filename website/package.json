@@ -1,0 +1,38 @@
+{
+  "name": "website",
+  "type": "module",
+  "version": "0.1.0",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev --port 4321",
+    "prebuild": "node scripts/build-content.mjs && node scripts/sync-flashers.mjs && node ../scripts/gen-imager-manifest.mjs --local && node ../scripts/validate-imager-manifest.mjs --no-network",
+    "predev": "node scripts/build-content.mjs && node scripts/sync-flashers.mjs && node ../scripts/gen-imager-manifest.mjs --local && node ../scripts/validate-imager-manifest.mjs --no-network",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "lint": "eslint . && prettier --check .",
+    "imager:gen": "node ../scripts/gen-imager-manifest.mjs --local",
+    "imager:validate": "node ../scripts/validate-imager-manifest.mjs --no-network",
+    "imager:icon": "../scripts/build-imager-icon.sh",
+    "imager:test": "node ../scripts/test-imager-manifest.mjs"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^5.0.3",
+    "@astrojs/rss": "^4.0.18",
+    "@astrojs/sitemap": "^3.7.2",
+    "@tailwindcss/vite": "^4.2.2",
+    "@vercel/og": "^0.11.1",
+    "astro": "^6.1.7",
+    "tailwindcss": "^4.2.2"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.58.2",
+    "@typescript-eslint/parser": "^8.58.2",
+    "eslint": "^10.2.0",
+    "eslint-plugin-astro": "^1.7.0",
+    "prettier": "^3.8.3",
+    "prettier-plugin-astro": "^0.14.1"
+  }
+}
