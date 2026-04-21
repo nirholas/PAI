@@ -1,0 +1,39 @@
+---
+question: "Will it work on my laptop?"
+order: 7
+---
+
+PAI works on most x86_64 computers made in the last 15 years.
+
+**Confirmed to work:**
+- Any Intel or AMD 64-bit laptop or desktop
+- Intel Macs (boot via Option key at startup)
+- Most hardware from 2010 onwards
+
+**Not supported:**
+- Apple Silicon (M1/M2/M3/M4) — ARM64 build is on the roadmap
+- 32-bit x86 processors
+- Machines without USB boot capability (very old BIOS)
+
+**Minimum requirements:**
+- CPU: x86_64 (any speed — Ollama runs on slow CPUs, just slower)
+- RAM: 2 GB (4 GB+ strongly recommended for AI inference)
+- USB: ability to boot from USB (almost all modern machines support this)
+
+**BIOS/UEFI:**
+- Legacy BIOS: works
+- UEFI: works (PAI uses a hybrid ISO that supports both)
+- Secure Boot: must be disabled in UEFI settings
+
+**Common boot menu keys:**
+| Manufacturer | Key |
+|---|---|
+| Dell | F12 |
+| HP | F9 |
+| Lenovo/ThinkPad | F12 |
+| ASUS | F8 or Esc |
+| Acer | F12 |
+| Apple (Intel) | Option (⌥) |
+| Generic UEFI | F11 or Del |
+
+If PAI boots but the screen is blank, try adding `nomodeset` to the GRUB kernel line.
