@@ -14,7 +14,7 @@ Release process is documented in [docs/src/RELEASE.md](docs/src/RELEASE.md).
 
 ## [Unreleased]
 
-## [0.1.0] — 2026-04-20
+## [0.1.0] — 2026-04-21
 
 First public release of PAI — a bootable USB Linux distribution for private,
 offline AI. Flash the ISO to a USB stick, boot any recent amd64 or arm64

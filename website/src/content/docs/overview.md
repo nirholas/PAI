@@ -6,78 +6,38 @@ order: 10
 editPath: "README.md"
 ---
 
-# 🔒 PAI 
+# 🔒 PAI — PAI
 
 ![header](/branding/readme-header.svg)
 
 
 
 
----
 
-## Try it in 30 seconds
 
-```bash
-# Linux / macOS
-curl -fsSL https://pai.direct/try | bash
-```
-
-```powershell
-# Windows
-irm https://pai.direct/try.ps1 | iex
-```
-
-Launches PAI in a local VM. No USB, no reboot, no changes to your system.
 
 ---
 
 ## Quick Start
-
-**Recommended — the auto-flasher detects removable drives and asks you to confirm before writing:**
 
 ```bash
 # One-command download and flash (Linux/macOS):
 curl -fsSL https://raw.githubusercontent.com/nirholas/pai/main/scripts/flash.sh | sudo bash
 ```
 
-<details>
-<summary>Or flash manually with <code>dd</code> (advanced)</summary>
-
-> ⚠️ **`dd` writes raw bytes to whatever device you point it at — including your system disk — with no confirmation and no undo.** On most Linux systems `/dev/sda` is your internal drive, *not* your USB. If you are not 100% sure which device is your USB, use the auto-flasher above.
+Or manually:
 
 ```bash
 # Download the ISO
-curl -LO https://get.pai.direct/pai-amd64.iso
+curl -LO https://github.com/nirholas/pai/releases/latest/download/pai.iso
 
-# 1. Identify your USB device — do not skip this step
-lsblk -d -o NAME,SIZE,MODEL,TRAN          # Linux: look for TRAN=usb
-# diskutil list                           # macOS: look for "external, physical"
-
-# 2. Flash — replace /dev/sdX with the USB device you just identified
+# Flash to USB (replace /dev/sdX with your USB device)
 sudo dd if=pai.iso of=/dev/sdX bs=4M status=progress && sync
 ```
 
-</details>
-
 Then reboot, select USB from your boot menu (F12/F2/DEL), and you're in.
 
-> **Windows?** Open PowerShell as Administrator and run:
->
-> ```powershell
-> irm https://pai.direct/flash.ps1 | iex
-> ```
->
-> The script downloads the latest ISO, verifies its SHA256, lets you pick your USB drive, and writes it raw — no Rufus, no extra tools. See [Flash to USB — Windows](#windows) below for a graphical alternative.
->
-> **Want to try it in a VM first?** Download the ISO + [UTM](https://mac.getutm.app/) (macOS) or any QEMU/VirtualBox/VMware host. Create a new VM, attach the ISO as a CD/DVD, give it 4 GB+ RAM, and boot — no USB flashing required.
-
-### Homebrew (macOS / Linux)
-
-```bash
-brew install nirholas/tap/pai
-```
-
-See [docs.pai.direct/advanced/homebrew](https://docs.pai.direct/advanced/homebrew).
+> **Windows?** Download the ISO + [Rufus](https://rufus.ie/), select your USB, click Start.
 
 ---
 
@@ -91,6 +51,16 @@ PAI is a **bootable live USB operating system** built on Debian 12 that gives yo
 - **Zero installation** — nothing touches the host machine's hard drive
 
 Like [Tails](https://tails.net/) is to privacy-focused browsing, **PAI is to private AI**. It combines the amnesic, leave-no-trace philosophy of Tails with the power of local large language models.
+
+### A computer you can carry anywhere
+
+Take a second to sit with what this is: **a full desktop operating system that fits on a USB stick**. Not a recovery disk. Not a rescue tool. Not a stripped-down appliance. A real, working computer — desktop, browser, terminal, files, local AI — on a piece of plastic you can slip into a pocket or a wallet.
+
+- **Forgot your laptop?** Plug PAI into any x86_64 machine — a library PC, a hotel business-center terminal, a friend's desktop, an airport kiosk — and you're home. Same desktop, same AI, same environment. Pull the stick when you leave; the host remembers nothing.
+- **Travel lighter than light.** A 16 GB USB drive weighs a few grams and holds the entire OS, the AI, and every tool you need to get work done.
+- **Your environment goes where you go.** Boot, work, shut down, take the drive with you. No syncing, no accounts, no cloud.
+
+This is the headline feature, and it bears repeating: PAI is a legit computer on your USB drive. Lean enough to fit, powerful enough to run local LLMs, portable enough to forget you're carrying it.
 
 ### The Problem
 
@@ -122,46 +92,15 @@ Your conversations exist only in RAM while PAI is running. Shut down, and they'r
 
 ## How It Works
 
-```
-┌──────────────────────────────────────────────────────────┐
-│                      YOUR COMPUTER                       │
-│                                                          │
-│  ┌──────────────────────────────────────────────────┐    │
-│  │                   PAI (Live USB)                 │    │
-│  │                                                  │    │
-│  │  ┌─────────┐  ┌──────────┐  ┌─────────────────┐  │    │
-│  │  │  Sway   │  │ Firefox  │  │   Terminal      │  │    │
-│  │  │(desktop)│  │   ESR    │  │   (foot)        │  │    │
-│  │  └────┬────┘  └─────┬────┘  └────────┬────────┘  │    │
-│  │       │             │                │           │    │
-│  │       │      ┌──────▼──────┐         │           │    │
-│  │       │      │  Chat UI    │         │           │    │
-│  │       │      │ :8080       │         │           │    │
-│  │       │      └──────┬──────┘         │           │    │
-│  │       │             │                │           │    │
-│  │       │      ┌──────▼──────┐         │           │    │
-│  │       │      │   Ollama    │         │           │    │
-│  │       │      │  (LLM API)  │         │           │    │
-│  │       │      │  :11434     │         │           │    │
-│  │       │      └─────────────┘         │           │    │
-│  │       │                              │           │    │
-│  │  ┌────▼──────────────────────────────▼────────┐  │    │
-│  │  │          Linux Kernel (Debian 12)          │  │    │
-│  │  │  UFW ─ Tor ─ WireGuard ─ MAC Spoofing      │  │    │
-│  │  └────────────────────────────────────────────┘  │    │
-│  └──────────────────────────────────────────────────┘    │
-│                                                          │
-│  ┌──────────────────────────────────────────────────┐    │
-│  │         Host OS (untouched — not mounted)        │    │
-│  └──────────────────────────────────────────────────┘    │
-└──────────────────────────────────────────────────────────┘
-```
 
 PAI boots entirely into RAM from the USB drive. The host machine's hard drive is **never mounted, read, or written to**. When you shut down, all memory is cleared. The host operating system resumes as if nothing happened.
 
 ---
 
 ## Architecture
+
+> The system architecture, threat model, and significant design choices
+> are documented under [docs/](docs/).
 
 ### Boot Sequence
 
@@ -358,6 +297,42 @@ This is not a silver bullet. PAI raises the cost of surveillance significantly, 
 
 ---
 
+## Try in a VM
+
+Want to kick the tires before flashing a USB? PAI boots fine in a virtual machine — handy for testing, demos, or development.
+
+### UTM (macOS, Apple Silicon + Intel)
+
+[UTM](https://mac.getutm.app/) is a free QEMU-based VM app for macOS.
+
+1. Download the [PAI ISO](https://github.com/nirholas/pai/releases/latest/download/pai.iso)
+2. Open UTM → **Create a New Virtual Machine** → **Emulate** → **Other**
+3. Select **Boot from ISO** and pick the PAI ISO
+4. Recommended resources: **4 GB RAM**, **2+ CPU cores**
+5. Architecture: **x86_64** (works on both Apple Silicon via emulation and Intel Macs)
+6. Start the VM — PAI boots straight into Sway + the Chat UI
+
+> On Apple Silicon, x86_64 emulation is slower than native — fine for testing the UI, but AI inference will crawl. For faster inference on M-series, wait for the ARM64 build (on the [roadmap](#roadmap)).
+
+### QEMU (Linux / macOS / Windows)
+
+```bash
+qemu-system-x86_64 \
+  -cdrom pai.iso \
+  -m 4096 \
+  -smp 2 \
+  -enable-kvm    # Linux only; omit on macOS/Windows
+```
+
+### VM caveats
+
+- **No MAC spoofing benefit** — the VM's virtual NIC is already isolated from your host
+- **Performance** — CPU-only inference is slow under emulation; expect 1–5 tokens/sec for 7B models
+- **Secure Boot** — disable it in the VM firmware if prompted
+- **Graphics** — Sway is configured to fall back to software rendering automatically if the VM has no GPU
+
+---
+
 ## Flash to USB
 
 ### Requirements
@@ -404,86 +379,19 @@ sudo dd if=pai.iso of=/dev/rdiskN bs=4m && sync   # rdisk = raw (10-20x faster)
 diskutil eject /dev/diskN              # Safe to remove
 ```
 
-### Windows
+### Method 4: Rufus (Windows)
 
-Open **PowerShell as Administrator** and run:
-
-```powershell
-irm https://pai.direct/flash.ps1 | iex
-```
-
-The `flash.ps1` script downloads the latest ISO, verifies its SHA256, lets you pick your USB drive, and writes it raw. Requires Windows 10 (build 17763) or later and PowerShell 5.1+.
-
-<details>
-<summary>Prefer Winget?</summary>
-
-```powershell
-winget install PAI.PAI
-pai flash
-```
-
-Ships with Windows 10/11. Gives you the `pai` command with `flash`, `try`, `verify`, and more.
-
-</details>
-
-<details>
-<summary>Prefer Scoop?</summary>
-
-```powershell
-scoop bucket add pai https://github.com/nirholas/scoop-pai
-scoop install pai
-pai flash
-```
-
-</details>
-
-<details>
-<summary>Prefer a graphical tool? Use Rufus (alternative)</summary>
-
-1. Download the [PAI ISO](https://get.pai.direct/pai-amd64.iso)
-2. Download the [Rufus graphical tool](https://rufus.ie/) (free, open-source, portable — no install needed)
-3. Open the Rufus graphical tool → select your USB → select the ISO → click **START**. When prompted, choose **Write in DD Image mode**.
+1. Download the [PAI ISO](https://github.com/nirholas/pai/releases/latest/download/pai.iso)
+2. Download [Rufus](https://rufus.ie/) (free, open-source, portable — no install needed)
+3. Open Rufus → select your USB → select the ISO → click **START**
 4. Reboot, select USB from boot menu (F12/F2/DEL)
-
-</details>
-
-<details>
-<summary>Verify the flasher before running (advanced)</summary>
-
-```powershell
-$url = 'https://pai.direct/flash.ps1'
-irm "$url.sha256" -OutFile flash.ps1.sha256
-irm $url -OutFile flash.ps1
-Get-FileHash flash.ps1 -Algorithm SHA256
-# Compare the printed hash against flash.ps1.sha256, then:
-powershell -ExecutionPolicy Bypass -File .\flash.ps1
-```
-
-</details>
-
-### Raspberry Pi
-
-> **⚠️ ARM64 image pending.** The Raspberry Pi Imager manifest is published
-> but the first ARM64 `.img.xz` is still in testing for v0.1.0. Once it
-> ships, the steps below will work end-to-end. Track progress at
-> <https://github.com/nirholas/pai/issues?q=raspberry+pi+image>.
-
-1. Install [Raspberry Pi Imager](https://www.raspberrypi.com/software/).
-2. Open Imager, press Ctrl+Shift+X, enable "Use custom repository", paste `https://pai.direct/imager.json`, click OK.
-3. Select **PAI — Private AI** from the OS list and flash.
-
-Planned support: Pi 5, Pi 4, Pi 400, Pi Zero 2 W. See [docs](https://docs.pai.direct/first-steps/using-raspberry-pi-imager) for details.
-
-### Ventoy (no-wipe alternative)
-
-Prefer to keep files on your USB drive? Install [Ventoy](https://www.ventoy.net) once, then drag `pai-*-amd64.iso` onto the drive. Full guide: [docs.pai.direct/first-steps/using-ventoy](https://docs.pai.direct/first-steps/using-ventoy).
 
 ### Method 5: Stream from Cloud (No Download)
 
 Flash directly without saving the ISO to disk:
 
 ```bash
-curl -L https://get.pai.direct/pai-amd64.iso \
+curl -L https://github.com/nirholas/pai/releases/latest/download/pai.iso \
   | sudo dd of=/dev/sdX bs=4M status=progress && sync
 ```
 
@@ -492,19 +400,6 @@ curl -L https://get.pai.direct/pai-amd64.iso \
 > ⚠️ **`dd` writes raw bytes to a device. Writing to the wrong device will erase it permanently.**
 >
 > Always verify your USB device with `lsblk` (Linux) or `diskutil list` (macOS) before flashing. Look for the correct size and `usb` transport type.
-
-### Package Managers
-
-<details>
-<summary>Arch Linux (AUR)</summary>
-
-```bash
-yay -S pai-cli
-# or bleeding-edge:
-yay -S pai-cli-git
-```
-
-</details>
 
 ---
 
@@ -553,6 +448,41 @@ build.sh (runs inside container)
 ├── Cleanup (strip GPU libs, docs, locales, caches)
 └── lb binary (squashfs → ISO)
 ```
+
+### Build in the Cloud (Google Cloud — $300 free credits)
+
+Building the full ISO on a laptop can take 30–60 minutes and eats ~30 GB of disk. If you want to iterate on a **custom flavor** (extra packages, different desktop, pre-bundled models) without melting your machine, spin up a high-powered VM on Google Cloud — [new accounts get $300 in free credits](https://cloud.google.com/free), which is more than enough to build PAI dozens of times.
+
+```bash
+# 1. Create a beefy build VM (32 vCPU, 128 GB RAM, 200 GB SSD) in us-central1
+gcloud compute instances create pai-builder \
+  --machine-type=n2-standard-32 \
+  --image-family=debian-12 --image-project=debian-cloud \
+  --boot-disk-size=200GB --boot-disk-type=pd-ssd \
+  --zone=us-central1-a
+
+# 2. SSH in
+gcloud compute ssh pai-builder --zone=us-central1-a
+
+# 3. Install Docker, clone, build
+sudo apt update && sudo apt install -y docker.io git
+sudo usermod -aG docker $USER && newgrp docker
+git clone https://github.com/nirholas/pai.git && cd pai
+docker build -f Dockerfile.build -t pai-builder .
+docker run --privileged --rm -v "$PWD/output:/output" pai-builder
+
+# 4. Copy the ISO back to your machine
+exit
+gcloud compute scp pai-builder:~/pai/output/live-image-amd64.hybrid.iso . \
+  --zone=us-central1-a
+
+# 5. IMPORTANT — delete the VM so you stop burning credits
+gcloud compute instances delete pai-builder --zone=us-central1-a
+```
+
+On an `n2-standard-32` the minimal build finishes in **~3–4 minutes** instead of 15–30 on a laptop. Full builds land in 8–12 minutes. At ~$1.55/hour, a build run costs roughly **$0.10**.
+
+See [docs/build-in-cloud.md](docs/build-in-cloud.md) for AWS/Azure equivalents, cost tuning, and tips for iterating on custom flavors.
 
 ### Customizing the Build
 
@@ -665,20 +595,15 @@ ollama run llama3.1 "Explain quantum computing in simple terms"
 
 ## Roadmap
 
-PAI's public roadmap lives in [ROADMAP.md](ROADMAP.md) — a four-phase plan
-from polished live USB (v0.2) to installable OS to developer platform.
-
-**Landing in v0.2:**
-
-- First-boot model picker that detects RAM + GPU and suggests the best fit
-- Opt-in encrypted persistence (LUKS2 + Argon2id) with a first-boot wizard
-- `pai-status` — a privacy/health CLI plus Waybar applet (Ollama, firewall,
-  MAC spoof, Tor, outbound connections, persistence state)
-- `shellcheck` + `yamllint` + website-build validation in CI
-- ARM64 build path alongside amd64
-
-See also: [ETHICS.md](ETHICS.md) — the project's position on dual-use,
-scope, and maintainer commitments.
+- [ ] **Persistent encrypted storage** — opt-in LUKS partition on USB for saving models and chat history across sessions
+- [ ] **GPU passthrough** — detect and use discrete GPU for faster inference when available
+- [ ] **Model pre-bundling** — include a small model (e.g., Phi-3 Mini) in the ISO for instant offline use
+- [x] **Landing page** — `pai.direct` with OS detection and one-click flash instructions
+- [ ] **GitHub Actions CI** — automated ISO builds on every tagged release
+- [ ] **Secure Boot support** — signed bootloader for machines with Secure Boot enabled
+- [ ] **ARM64 build** — Raspberry Pi and Apple Silicon support
+- [ ] **i2p integration** — alternative anonymity network alongside Tor
+- [ ] **Voice input** — whisper.cpp for local speech-to-text
 
 ---
 
@@ -714,29 +639,21 @@ pai/
 
 PAI is open source under the [GNU General Public License v3](LICENSE).
 
-Before contributing, please read:
+Read the full contribution guide before opening a PR:
 
-- [CONTRIBUTING.md](CONTRIBUTING.md) — branch, commit, and PR conventions
-- [ETHICS.md](ETHICS.md) — what the project will and won't build, and why
-- [ROADMAP.md](ROADMAP.md) — where the project is heading
-- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — community standards
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** — dev setup, branching, commit style, PR checklist
+- **[GOVERNANCE.md](GOVERNANCE.md)** — decision-making, maintainership, funding
+- **[MAINTAINERS.md](MAINTAINERS.md)** — who maintains PAI
 
-### How to Contribute
-
-1. **Report bugs**: Open an [issue](https://github.com/nirholas/pai/issues)
-2. **Add a tool**: Create a new hook in `config/hooks/live/` — use the existing hooks as templates
-3. **Improve privacy**: Submit hardening improvements or new privacy features
-4. **Test on hardware**: Boot PAI on different machines and report compatibility
-5. **Improve documentation**: Fix errors, add guides, translate
-
-### Development Workflow
+### Quick start
 
 ```bash
 # Fork and clone
 git clone https://github.com/YOUR-USERNAME/pai.git
 cd pai
 
-# Make changes to hooks, package lists, or configs
+# Create a branch
+git checkout -b feat/my-change
 
 # Build and test
 docker build -f Dockerfile.build -t pai-builder .
@@ -745,8 +662,8 @@ docker run --privileged --rm -v "$PWD/output:/output" pai-builder
 # Test the ISO in QEMU
 qemu-system-x86_64 -cdrom output/live-image-amd64.hybrid.iso -m 4096 -enable-kvm
 
-# Submit a PR
-git add -A && git commit -m "Add feature X" && git push origin main
+# Submit a PR against main
+git push origin feat/my-change
 ```
 
 ---
@@ -805,6 +722,16 @@ A: Not currently. PAI is designed as a live system. Persistent installation may 
 
 **Q: How is this different from just installing Linux + Ollama?**
 A: Portability and amnesia. PAI leaves no trace on the machine, requires no installation, and works on any x86_64 PC you can boot from USB. It's the difference between a tent and a house — one you carry with you.
+
+---
+
+## Trust & Safety
+
+PAI's promises around security, privacy, and intended use live in three documents:
+
+- [SECURITY.md](SECURITY.md) — supported versions, vulnerability reporting, known weaknesses.
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — community standards.
+- [CONTRIBUTING.md](CONTRIBUTING.md) — how to contribute code, docs, and translations.
 
 ---
 

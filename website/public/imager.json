@@ -1,5 +1,5 @@
 {
-  "latest_version": "0.1.0-rc1",
+  "latest_version": "0.1.0",
   "note": "PAI arm64 images for Raspberry Pi are pending — see https://github.com/nirholas/pai/issues?q=raspberry+pi+image",
   "os_list": []
 }

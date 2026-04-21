@@ -13,7 +13,7 @@ bolted on — it is the reason the project exists. This document describes
 how security updates flow, how to report vulnerabilities, what is in and
 out of scope, and — honestly — where PAI's defenses end.
 
-See also: [docs/src/PRIVACY.md](docs/src/PRIVACY.md) · [ETHICS.md](ETHICS.md) · [Verifying flasher signatures](docs/src/security/verifying-flashers.md)
+See also: [PRIVACY.md](PRIVACY.md) · [ETHICS.md](ETHICS.md)
 
 ---
 
@@ -35,8 +35,8 @@ Check your running version with `cat /etc/pai-release`.
 
 **Do not open a public GitHub issue for security vulnerabilities.**
 
-- **Email:** `contact@pai.direct` (monitored by the maintainers)
-- **PGP fingerprint:** a signed `security.txt` will be published alongside the next release.
+- **Email:** `security@pai-os.org` (monitored by the maintainers)
+- **PGP fingerprint:** published at <https://pai-os.org/.well-known/security.txt> once the domain is live; until then, contact `nichxbt@gmail.com` directly.
 - **Acknowledgement window:** within **72 hours**
 - **Coordinated disclosure window:** **90 days** from acknowledgement,
   extendable by mutual agreement if a fix requires more time
@@ -90,9 +90,8 @@ Thanks to researchers who have responsibly disclosed issues in PAI:
 
 ## Threat model summary
 
-The full system architecture, including the privacy layer and
-defense surface, is documented in [docs/src/architecture/overview.md](docs/src/architecture/overview.md).
-Brief recap:
+The full threat model lives in `docs/src/architecture.md` *(TODO: file
+pending)*. Brief recap:
 
 **PAI is designed to defend against:**
 
@@ -103,7 +102,7 @@ Brief recap:
 - **Casual anti-virus and EDR on borrowed hardware** — PAI runs entirely
   from RAM / USB and does not touch the internal OS.
 - **Upstream telemetry** — no distro analytics, no model-usage pings,
-  no crash reporters. See [docs/src/PRIVACY.md](docs/src/PRIVACY.md).
+  no crash reporters. See [PRIVACY.md](PRIVACY.md).
 
 **PAI is NOT designed to defend against:**
 
