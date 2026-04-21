@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" role="img" aria-label="Terminal output of ollama list showing three locally installed language models with IDs, sizes and timestamps">
+  <rect width="960" height="600" fill="#0f0f1a"/>
+
+  <g transform="translate(60 60)">
+    <rect width="840" height="480" rx="8" fill="#0b0b15" stroke="rgba(74,222,128,0.35)"/>
+    <rect width="840" height="28" rx="8" fill="#1a1a2e"/>
+    <rect y="20" width="840" height="8" fill="#1a1a2e"/>
+    <circle cx="16" cy="14" r="5" fill="#f87171"/>
+    <circle cx="34" cy="14" r="5" fill="#fbbf24"/>
+    <circle cx="52" cy="14" r="5" fill="#4ade80"/>
+    <text x="380" y="18" font-family="ui-monospace" font-size="11" fill="#888">ollama · local model inventory</text>
+
+    <g font-family="ui-monospace" font-size="12">
+      <text x="20" y="58"><tspan fill="#4ade80">user@pai-live</tspan><tspan fill="#888">:</tspan><tspan fill="#7aa2f7">~</tspan><tspan fill="#888">$</tspan> <tspan fill="#e0e0e0">ollama list</tspan></text>
+
+      <!-- Header -->
+      <text x="20" y="96" fill="#888">NAME</text>
+      <text x="220" y="96" fill="#888">ID</text>
+      <text x="380" y="96" fill="#888">SIZE</text>
+      <text x="480" y="96" fill="#888">MODIFIED</text>
+      <text x="640" y="96" fill="#888">ROLE</text>
+      <line x1="20" y1="104" x2="820" y2="104" stroke="rgba(255,255,255,0.08)"/>
+
+      <!-- Rows -->
+      <g>
+        <text x="20" y="128" fill="#4ade80">llama3.2:3b</text>
+        <text x="220" y="128" fill="#888">365c0bd3c000</text>
+        <text x="380" y="128" fill="#fbbf24">2.0 GB</text>
+        <text x="480" y="128" fill="#e0e0e0">2 days ago</text>
+        <rect x="640" y="116" width="72" height="16" rx="8" fill="rgba(74,222,128,0.15)" stroke="#4ade80"/>
+        <text x="650" y="128" fill="#4ade80">general</text>
+      </g>
+      <g>
+        <text x="20" y="152" fill="#4ade80">phi3:mini</text>
+        <text x="220" y="152" fill="#888">a2c89ceaed85</text>
+        <text x="380" y="152" fill="#fbbf24">2.2 GB</text>
+        <text x="480" y="152" fill="#e0e0e0">5 days ago</text>
+        <rect x="640" y="140" width="64" height="16" rx="8" fill="rgba(122,162,247,0.15)" stroke="#7aa2f7"/>
+        <text x="650" y="152" fill="#7aa2f7">small</text>
+      </g>
+      <g>
+        <text x="20" y="176" fill="#4ade80">mistral:7b-q4</text>
+        <text x="220" y="176" fill="#888">f974a74358d6</text>
+        <text x="380" y="176" fill="#fbbf24">4.1 GB</text>
+        <text x="480" y="176" fill="#e0e0e0">1 week ago</text>
+        <rect x="640" y="164" width="80" height="16" rx="8" fill="rgba(159,122,234,0.15)" stroke="#9f7aea"/>
+        <text x="650" y="176" fill="#9f7aea">reasoning</text>
+      </g>
+
+      <!-- ps -->
+      <text x="20" y="230"><tspan fill="#4ade80">user@pai-live</tspan><tspan fill="#888">:</tspan><tspan fill="#7aa2f7">~</tspan><tspan fill="#888">$</tspan> <tspan fill="#e0e0e0">ollama ps</tspan></text>
+      <text x="20" y="254" fill="#888">NAME          ID           SIZE    PROCESSOR   UNTIL</text>
+      <text x="20" y="272">
+        <tspan fill="#4ade80">llama3.2:3b</tspan>   <tspan fill="#888">365c0bd3c000</tspan>  <tspan fill="#fbbf24">2.0 GB</tspan>  <tspan fill="#7aa2f7">100% GPU</tspan>    <tspan fill="#e0e0e0">forever</tspan>
+      </text>
+
+      <!-- pull progress -->
+      <text x="20" y="316"><tspan fill="#4ade80">user@pai-live</tspan><tspan fill="#888">:</tspan><tspan fill="#7aa2f7">~</tspan><tspan fill="#888">$</tspan> <tspan fill="#e0e0e0">ollama pull qwen2.5:3b</tspan></text>
+      <text x="20" y="340" fill="#888">pulling manifest…</text>
+      <text x="20" y="358" fill="#888">pulling 1a2b3c4d5e6f…  88% ▕████████████░░▏ 1.8 GiB</text>
+      <rect x="20" y="368" width="780" height="8" rx="4" fill="rgba(255,255,255,0.06)"/>
+      <rect x="20" y="368" width="686" height="8" rx="4" fill="#4ade80"/>
+      <text x="20" y="396" fill="#888">pulling <tspan fill="#4ade80">✓</tspan> manifest   <tspan fill="#4ade80">✓</tspan> config   <tspan fill="#fbbf24">◌</tspan> layer 1/3</text>
+
+      <text x="20" y="440"><tspan fill="#4ade80">user@pai-live</tspan><tspan fill="#888">:</tspan><tspan fill="#7aa2f7">~</tspan><tspan fill="#888">$</tspan> <tspan fill="#fbbf24">█</tspan></text>
+    </g>
+  </g>
+</svg>
