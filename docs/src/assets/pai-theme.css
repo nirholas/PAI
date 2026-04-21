@@ -1,0 +1,78 @@
+:root,
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color:        #2a375b;
+  --md-primary-fg-color--light:  #3a4a78;
+  --md-primary-fg-color--dark:   #1e2944;
+  --md-accent-fg-color:          #2a375b;
+  --md-accent-fg-color--transparent: rgba(42, 55, 91, 0.15);
+
+  --md-default-bg-color:  #000000;
+  --md-default-fg-color:  #ffffff;
+  --md-code-bg-color:     #0a0a0a;
+  --md-code-fg-color:     #ffffff;
+
+  --md-typeset-a-color:   #2a375b;
+}
+
+[data-md-color-scheme="slate"] .md-header,
+[data-md-color-scheme="slate"] .md-tabs {
+  background-color: #000000;
+  border-bottom: 1px solid #2a375b;
+}
+
+.md-header__title .md-header__topic:first-child {
+  display: none;
+}
+
+.md-header__button.md-logo img,
+.md-header__button.md-logo svg {
+  height: 1.6rem;
+  width: auto;
+}
+
+[data-md-color-scheme="slate"] .md-footer {
+  background-color: #000000;
+  border-top: 1px solid #2a375b;
+}
+
+[data-md-color-scheme="slate"] .md-typeset a {
+  color: #8a9dd4;
+}
+
+[data-md-color-scheme="slate"] .md-typeset a:hover {
+  color: #ffffff;
+}
+
+/* Inline status badges (converted from Starlight <Badge> components) */
+.md-typeset .badge {
+  display: inline-block;
+  padding: 0.1em 0.55em;
+  font-size: 0.75em;
+  font-weight: 600;
+  line-height: 1.4;
+  border-radius: 999px;
+  white-space: nowrap;
+  vertical-align: middle;
+  border: 1px solid transparent;
+}
+.md-typeset .badge-success {
+  background-color: rgba(46, 160, 67, 0.18);
+  color: #7ee2a0;
+  border-color: rgba(46, 160, 67, 0.45);
+}
+.md-typeset .badge-caution {
+  background-color: rgba(212, 153, 24, 0.18);
+  color: #f5c563;
+  border-color: rgba(212, 153, 24, 0.45);
+}
+.md-typeset .badge-danger {
+  background-color: rgba(218, 54, 51, 0.18);
+  color: #ff8b87;
+  border-color: rgba(218, 54, 51, 0.45);
+}
+.md-typeset .badge-note,
+.md-typeset .badge-tip {
+  background-color: rgba(56, 139, 253, 0.18);
+  color: #8cb6f5;
+  border-color: rgba(56, 139, 253, 0.45);
+}
