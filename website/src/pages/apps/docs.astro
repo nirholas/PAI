@@ -1,0 +1,93 @@
+---
+import Head from '../../components/Head.astro'
+const DOCS_URL = 'https://docs.pai.direct'
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <Head
+      title="Docs — PAI"
+      description="PAI documentation — install, boot, run local AI, harden privacy, build from source, and troubleshoot."
+      canonical={DOCS_URL}
+    />
+  </head>
+  <body>
+    <iframe
+      src={DOCS_URL}
+      title="PAI documentation"
+      referrerpolicy="no-referrer-when-downgrade"
+      sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-popups-to-escape-sandbox"
+    ></iframe>
+
+    <div id="loader" class="loader">
+      <div class="loader__spinner"></div>
+      <p class="loader__text">Loading docs…</p>
+    </div>
+
+    <style is:global>
+      html, body { margin: 0; padding: 0; height: 100%; background: #0b0b0f; }
+      iframe { display: block; width: 100vw; height: 100vh; border: 0; }
+      .loader {
+        position: fixed;
+        inset: 0;
+        background: #0b0b0f;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        z-index: 10;
+      }
+      .loader__spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(122, 162, 247, 0.2);
+        border-top-color: #7aa2f7;
+        border-radius: 50%;
+        animation: loader-spin 0.9s linear infinite;
+      }
+      .loader__text {
+        color: #8b8b93;
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 0.95rem;
+        margin: 0;
+      }
+      .loader__fallback {
+        text-align: center;
+        color: #c9c9d1;
+        font-family: system-ui, -apple-system, sans-serif;
+        max-width: 28rem;
+        padding: 0 1.5rem;
+      }
+      .loader__fallback a {
+        display: inline-block;
+        margin-top: 0.75rem;
+        color: #7aa2f7;
+        text-decoration: none;
+      }
+      .loader__fallback a:hover { text-decoration: underline; }
+      @keyframes loader-spin { to { transform: rotate(360deg); } }
+    </style>
+
+    <script is:inline>
+      (function () {
+        var loader = document.getElementById('loader')
+        var iframe = document.querySelector('iframe')
+        var loaded = false
+        iframe.addEventListener('load', function () {
+          loaded = true
+          loader.style.display = 'none'
+        })
+        setTimeout(function () {
+          if (loaded) return
+          loader.innerHTML =
+            '<div class="loader__fallback">' +
+            '<p>Could not reach docs.pai.direct.</p>' +
+            '<a href="https://docs.pai.direct" target="_blank" rel="noopener noreferrer">Open in new tab ↗</a>' +
+            '</div>'
+        }, 10000)
+      })()
+    </script>
+  </body>
+</html>
