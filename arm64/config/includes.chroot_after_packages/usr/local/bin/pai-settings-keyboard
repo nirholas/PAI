@@ -1,0 +1,45 @@
+#!/bin/bash
+# PAI Settings — keyboard layout picker. Writes a sway config.d snippet and
+# reloads sway so the change takes effect immediately.
+set -euo pipefail
+
+STYLE=/etc/pai/wofi-shutdown.css
+WOFI=(wofi --dmenu --cache-file=/dev/null)
+[ -r "$STYLE" ] && WOFI+=(--style "$STYLE")
+
+CFG_DIR="$HOME/.config/sway/config.d"
+CFG_FILE="$CFG_DIR/10-keyboard.conf"
+mkdir -p "$CFG_DIR"
+
+layout=$(printf '%s\n' \
+    "us    — English (US)" \
+    "gb    — English (UK)" \
+    "de    — German" \
+    "fr    — French" \
+    "es    — Spanish" \
+    "it    — Italian" \
+    "pt    — Portuguese" \
+    "ru    — Russian" \
+    "jp    — Japanese" \
+    "us,dvorak — Dvorak" \
+    "us,colemak — Colemak" \
+    | "${WOFI[@]}" --prompt "Keyboard layout" --lines 11 --width 360 --height 460 2>/dev/null)
+
+[ -z "$layout" ] && exit 0
+
+code=$(printf '%s' "$layout" | awk '{print $1}')
+
+cat > "$CFG_FILE" <<EOF
+# Written by pai-settings-keyboard
+input "type:keyboard" {
+    xkb_layout $code
+    repeat_delay 300
+    repeat_rate 30
+}
+EOF
+
+if command -v swaymsg >/dev/null 2>&1; then
+    swaymsg reload >/dev/null 2>&1 || true
+fi
+
+zenity --info --title="Keyboard" --text="Layout set to: $code" 2>/dev/null &
