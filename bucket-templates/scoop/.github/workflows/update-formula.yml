@@ -1,0 +1,57 @@
+name: Update PAI manifest
+
+on:
+  repository_dispatch:
+    types: [pai-release]
+
+jobs:
+  update:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update pai.json
+        shell: pwsh
+        run: |
+          $version = '${{ github.event.client_payload.version }}'
+          $sha256  = '${{ github.event.client_payload.sha256 }}'
+          $url     = "https://github.com/nirholas/pai/archive/refs/tags/v${version}.tar.gz"
+
+          $manifest = Get-Content pai.json -Raw | ConvertFrom-Json
+          $manifest.version     = $version
+          $manifest.url         = $url
+          $manifest.hash        = $sha256
+          $manifest.extract_dir = "pai-$version"
+          $manifest | ConvertTo-Json -Depth 10 | Set-Content pai.json -Encoding UTF8
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          title: "Update PAI to ${{ github.event.client_payload.version }}"
+          body: |
+            Automated update triggered by PAI release.
+            Version: ${{ github.event.client_payload.version }}
+            SHA256: ${{ github.event.client_payload.sha256 }}
+          branch: "update/v${{ github.event.client_payload.version }}"
+          commit-message: "Update PAI to ${{ github.event.client_payload.version }}"
+
+  smoke-test:
+    needs: update
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: "update/v${{ github.event.client_payload.version }}"
+
+      - name: Install Scoop
+        shell: pwsh
+        run: |
+          Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
+          Invoke-RestMethod get.scoop.sh | Invoke-Expression
+
+      - name: Add local bucket and install
+        shell: pwsh
+        run: |
+          scoop bucket add pai $PWD
+          scoop install pai
+          pai help
