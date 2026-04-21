@@ -1,0 +1,33 @@
+---
+question: "What models does it ship with?"
+order: 6
+---
+
+PAI ships without any pre-bundled models to keep the ISO small (~912 MB). You download models on first use.
+
+Any model supported by Ollama works — that's hundreds of models:
+
+| Model | Size | Best for |
+|---|---|---|
+| `phi3:mini` | ~2 GB | Fast, low RAM, capable |
+| `llama3.2:3b` | ~2 GB | Fast, good quality |
+| `llama3.1:8b` | ~5 GB | High quality, balanced |
+| `mistral:7b` | ~4 GB | Fast, strong reasoning |
+| `gemma2:9b` | ~5 GB | Google's model, great quality |
+| `codellama:7b` | ~4 GB | Code-focused tasks |
+| `deepseek-coder-v2` | ~9 GB | Advanced coding |
+
+To pull a model:
+
+```bash
+ollama pull llama3.2
+```
+
+Or through the PAI chat interface at `localhost:8080`.
+
+**Hardware guidance:**
+- 4 GB RAM: use `phi3:mini` or `llama3.2:3b`
+- 8 GB RAM: use `llama3.1:8b` or `mistral:7b`  
+- 16 GB+ RAM: use larger 13B+ models
+
+**Pre-bundling roadmap:** a future release will include a small model (e.g., Phi-3 Mini) baked into the ISO for instant offline use without any downloads.
