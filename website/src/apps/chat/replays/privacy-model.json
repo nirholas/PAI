@@ -1,0 +1,15 @@
+{
+  "id": "privacy-model",
+  "title": "What's your privacy model?",
+  "model": "llama3.2:3b",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What's your privacy model? Like, when I talk to you, where does my data go?"
+    },
+    {
+      "role": "assistant",
+      "content": "Great question — and the answer is the whole reason PAI exists.\n\n**Your data goes nowhere.** Here's exactly what happens when you send me a message:\n\n1. You type a message → it goes to **Ollama**, running locally on your machine\n2. Ollama runs the model (me) entirely in your RAM and CPU\n3. My response is generated locally and displayed in this chat window\n4. **Nothing is sent over the network.** Not to Anthropic, not to any server, not anywhere.\n\n---\n\n**The threat model PAI is designed around:**\n\n| Threat | Protection |\n|--------|------------|\n| Cloud AI snooping | No network calls — inference is 100% local |\n| Logs on your hard drive | PAI is amnesic — runs in RAM, wipes on shutdown |\n| Network surveillance | Optional Tor routing for all traffic |\n| Device fingerprinting | MAC address spoofing on every boot |\n| Malware persistence | Read-only root filesystem |\n\n**What PAI can't protect you from:**\n- Someone watching your screen\n- Hardware keyloggers\n- A compromised BIOS/UEFI (rare, but real)\n\n---\n\nBottom line: when PAI shuts down, this conversation is gone. No logs, no history, no server-side copies. Your prompts are yours."
+    }
+  ]
+}
