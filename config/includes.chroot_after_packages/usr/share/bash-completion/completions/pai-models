@@ -1,0 +1,14 @@
+# shellcheck shell=bash
+# bash completion for pai-models
+# Completes installed Ollama model names when available on this host,
+# so `pai-models <TAB>` surfaces what's already pulled.
+_pai_models() {
+    local cur models
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    if command -v ollama >/dev/null 2>&1; then
+        models=$(ollama list 2>/dev/null | tail -n +2 | awk '{print $1}')
+        mapfile -t COMPREPLY < <(compgen -W "${models}" -- "${cur}")
+    fi
+}
+complete -F _pai_models pai-models
