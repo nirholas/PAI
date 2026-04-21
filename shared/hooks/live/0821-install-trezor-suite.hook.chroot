@@ -1,0 +1,56 @@
+#!/bin/bash
+# ── Install Trezor Suite (AppImage; amd64 + arm64 builds checked) ──────
+set -euo pipefail
+
+TREZOR_VERSION="24.10.2"
+ARCH=$(dpkg --print-architecture)
+case "$ARCH" in
+    amd64) TREZOR_APP="Trezor-Suite-${TREZOR_VERSION}-linux-x86_64.AppImage" ;;
+    arm64) echo "[pai] Trezor Suite does not publish arm64 AppImages — skipping."; exit 0 ;;
+    *) echo "[pai] Trezor Suite: unsupported arch $ARCH"; exit 0 ;;
+esac
+
+echo "[pai] Installing Trezor Suite ${TREZOR_VERSION}..."
+
+# GPG verification — SatoshiLabs 2021 Signing Key
+# Fingerprint: EB48 3B26 B078 A4AA 1B6F 425E E21B 6950 A2EC B65C
+# Source: https://trezor.io/guides/trezor-suite/download-verify-trezor-suite
+gpg --keyserver hkps://keys.openpgp.org --recv-keys EB483B26B078A4AA1B6F425EE21B6950A2ECB65C \
+    || gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys EB483B26B078A4AA1B6F425EE21B6950A2ECB65C \
+    || { echo "[pai] WARNING: Could not fetch Trezor signing key — skipping install."; exit 0; }
+
+install -d -m 0755 /opt/trezor-suite
+cd /tmp
+curl -fsSL -o Trezor-Suite.AppImage \
+    "https://github.com/trezor/trezor-suite/releases/download/v${TREZOR_VERSION}/${TREZOR_APP}" \
+    || { echo "[pai] Trezor Suite download failed — skipping."; exit 0; }
+curl -fsSL -o Trezor-Suite.AppImage.asc \
+    "https://github.com/trezor/trezor-suite/releases/download/v${TREZOR_VERSION}/${TREZOR_APP}.asc" \
+    || { echo "[pai] Trezor Suite signature download failed — skipping install."; rm -f Trezor-Suite.AppImage; exit 0; }
+if ! gpg --verify Trezor-Suite.AppImage.asc Trezor-Suite.AppImage; then
+    echo "[pai] ERROR: Trezor Suite GPG verification failed — refusing to install."
+    rm -f Trezor-Suite.AppImage Trezor-Suite.AppImage.asc
+    exit 1
+fi
+rm -f Trezor-Suite.AppImage.asc
+mv Trezor-Suite.AppImage /opt/trezor-suite/Trezor-Suite.AppImage
+chmod +x /opt/trezor-suite/Trezor-Suite.AppImage
+
+cat > /usr/local/bin/trezor-suite <<'WRAP'
+#!/bin/bash
+exec /opt/trezor-suite/Trezor-Suite.AppImage --no-sandbox "$@"
+WRAP
+chmod +x /usr/local/bin/trezor-suite
+
+cat > /usr/share/applications/trezor-suite.desktop <<'DESKTOP'
+[Desktop Entry]
+Type=Application
+Name=Trezor Suite
+Comment=Manage Trezor hardware wallets
+Exec=trezor-suite
+Icon=trezor-suite
+Terminal=false
+Categories=Finance;Office;
+DESKTOP
+
+echo "[pai] Trezor Suite installed."
