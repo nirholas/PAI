@@ -1,0 +1,139 @@
+{
+  "policies": {
+    "Homepage": {
+      "URL": "http://localhost:8080",
+      "Locked": true,
+      "StartPage": "homepage"
+    },
+    "OverrideFirstRunPage": "",
+    "OverridePostUpdatePage": "",
+    "NewTabPage": false,
+    "DisableTelemetry": true,
+    "DisableFirefoxStudies": true,
+    "DisablePocket": true,
+    "DisableFirefoxAccounts": true,
+    "DisableFormHistory": true,
+    "DisablePasswordReveal": true,
+    "DontCheckDefaultBrowser": true,
+    "NoDefaultBookmarks": true,
+    "OfferToSaveLogins": false,
+    "PasswordManagerEnabled": false,
+    "SearchSuggestEnabled": false,
+    "ShowHomeButton": false,
+    "NetworkPrediction": false,
+    "UserMessaging": {
+      "WhatsNew": false,
+      "ExtensionRecommendations": false,
+      "FeatureRecommendations": false,
+      "UrlbarInterventions": false,
+      "SkipOnboarding": true,
+      "MoreFromMozilla": false
+    },
+    "Preferences": {
+      "browser.aboutConfig.showWarning": false,
+      "browser.newtabpage.activity-stream.showSponsored": false,
+      "browser.newtabpage.activity-stream.showSponsoredTopSites": false,
+      "browser.tabs.warnOnClose": false,
+      "browser.shell.checkDefaultBrowser": false,
+      "datareporting.policy.dataSubmissionEnabled": false,
+      "toolkit.telemetry.reportingpolicy.firstRun": false
+    },
+    "ExtensionSettings": {
+      "webextension@metamask.io": {
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/ether-metamask/latest.xpi",
+        "installation_mode": "normal_installed"
+      },
+      "{aecec67f-0d10-4fa7-b7c7-609a2db280cf}": {
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/violentmonkey/latest.xpi",
+        "installation_mode": "normal_installed"
+      },
+      "uBlock0@raymondhill.net": {
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi",
+        "installation_mode": "normal_installed"
+      }
+    },
+    "HttpsOnlyMode": "force_enabled",
+    "DNSOverHTTPS": {
+      "Enabled": false,
+      "Locked": true
+    },
+    "Bookmarks": [
+      {
+        "Title": "PAI Chat",
+        "URL": "http://localhost:8080",
+        "Favicon": "http://localhost:8080/favicon.ico",
+        "Placement": "toolbar"
+      },
+      {
+        "Title": "Ollama API",
+        "URL": "http://localhost:11434",
+        "Placement": "toolbar"
+      },
+      {
+        "Title": "Wallet Setup",
+        "URL": "http://localhost:8080/setup.html",
+        "Placement": "toolbar"
+      },
+      {
+        "Title": "CoinGecko",
+        "URL": "https://www.coingecko.com",
+        "Placement": "toolbar",
+        "Folder": "Crypto"
+      },
+      {
+        "Title": "Mempool (BTC Explorer)",
+        "URL": "https://mempool.space",
+        "Placement": "toolbar",
+        "Folder": "Crypto"
+      },
+      {
+        "Title": "Etherscan",
+        "URL": "https://etherscan.io",
+        "Placement": "toolbar",
+        "Folder": "Crypto"
+      },
+      {
+        "Title": "Uniswap",
+        "URL": "https://app.uniswap.org",
+        "Placement": "toolbar",
+        "Folder": "Crypto"
+      },
+      {
+        "Title": "Jupiter (Solana DEX)",
+        "URL": "https://jup.ag",
+        "Placement": "toolbar",
+        "Folder": "Crypto"
+      },
+      {
+        "Title": "DeFi Llama",
+        "URL": "https://defillama.com",
+        "Placement": "toolbar",
+        "Folder": "Crypto"
+      },
+      {
+        "Title": "Dune Analytics",
+        "URL": "https://dune.com",
+        "Placement": "toolbar",
+        "Folder": "Crypto"
+      },
+      {
+        "Title": "Ollama Models",
+        "URL": "https://ollama.com/library",
+        "Placement": "toolbar",
+        "Folder": "AI"
+      },
+      {
+        "Title": "Hugging Face",
+        "URL": "https://huggingface.co",
+        "Placement": "toolbar",
+        "Folder": "AI"
+      },
+      {
+        "Title": "AI News (The Batch)",
+        "URL": "https://www.deeplearning.ai/the-batch/",
+        "Placement": "toolbar",
+        "Folder": "AI"
+      }
+    ]
+  }
+}
