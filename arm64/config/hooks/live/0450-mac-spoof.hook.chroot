@@ -1,0 +1,20 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "[pai] Enabling MAC address spoofing..."
+
+chmod +x /usr/local/bin/pai-mac-spoof
+systemctl enable pai-mac-spoof.service 2>/dev/null || true
+
+# Also configure NetworkManager to use random MACs
+mkdir -p /etc/NetworkManager/conf.d/
+cat > /etc/NetworkManager/conf.d/30-mac-randomization.conf <<'EOF'
+[device]
+wifi.scan-rand-mac-address=yes
+
+[connection]
+wifi.cloned-mac-address=random
+ethernet.cloned-mac-address=random
+EOF
+
+echo "[pai] MAC spoofing configured."
