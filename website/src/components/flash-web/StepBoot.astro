@@ -1,0 +1,123 @@
+---
+/**
+ * Step 5 — Boot
+ * Post-flash next steps: eject, reboot, BIOS boot menu, Secure Boot.
+ */
+---
+
+<section
+  class="step-panel"
+  id="step-panel-5"
+  role="tabpanel"
+  aria-labelledby="step-tab-5"
+>
+  <h2>You're Ready to Boot!</h2>
+  <p class="step-desc">PAI has been written to your USB drive. Follow these steps to start using it.</p>
+
+  <ol class="boot-steps">
+    <li>
+      <strong>Safely eject the USB drive</strong>
+      <p>Use your OS's "Eject" option before unplugging to ensure all data is written.</p>
+    </li>
+    <li>
+      <strong>Plug the USB into your target machine</strong>
+      <p>This can be the same computer or a different one.</p>
+    </li>
+    <li>
+      <strong>Enter the boot menu</strong>
+      <p>
+        Restart and press the boot-menu key during POST. Common keys:
+      </p>
+      <div class="boot-keys">
+        <span class="boot-key"><kbd>F12</kbd> Dell, Lenovo</span>
+        <span class="boot-key"><kbd>F9</kbd> HP</span>
+        <span class="boot-key"><kbd>F2</kbd> ASUS, Acer</span>
+        <span class="boot-key"><kbd>Option</kbd> Mac</span>
+        <span class="boot-key"><kbd>Esc</kbd> Some laptops</span>
+      </div>
+    </li>
+    <li>
+      <strong>Select the USB drive</strong>
+      <p>Choose the entry labelled "USB" or your drive's brand name.</p>
+    </li>
+    <li>
+      <strong>Disable Secure Boot (if needed)</strong>
+      <p>
+        If the USB doesn't appear or fails to boot, enter BIOS/UEFI settings and
+        disable Secure Boot. PAI uses a signed shim, but some machines need it off.
+      </p>
+    </li>
+  </ol>
+
+  <div class="success-banner">
+    <p>🎉 PAI will auto-login and launch the AI chat interface. No passwords needed.</p>
+  </div>
+
+  <div class="step-actions">
+    <a href="/install" class="btn btn--secondary">Full install docs →</a>
+    <a href="https://docs.pai.direct/first-steps/first-boot-walkthrough" class="btn btn--primary" target="_blank" rel="noreferrer">
+      First boot guide ↗
+    </a>
+  </div>
+</section>
+
+<style>
+  .boot-steps {
+    list-style: none;
+    counter-reset: boot;
+    padding: 0;
+    margin-bottom: 2rem;
+  }
+  .boot-steps li {
+    counter-increment: boot;
+    position: relative;
+    padding: 16px 16px 16px 52px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+  }
+  .boot-steps li::before {
+    content: counter(boot);
+    position: absolute;
+    left: 16px;
+    top: 16px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+  .boot-steps li strong { display: block; margin-bottom: 4px; }
+  .boot-steps li p { margin: 0; font-size: 0.85rem; color: #aaa; }
+  .boot-keys {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .boot-key {
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.06);
+    font-size: 0.8rem;
+    color: #ccc;
+  }
+  .boot-key kbd {
+    font-family: inherit;
+    font-weight: 700;
+    color: #38bdf8;
+  }
+  .success-banner {
+    padding: 16px 20px;
+    border-radius: 10px;
+    background: rgba(34, 197, 94, 0.08);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+    margin-bottom: 2rem;
+  }
+  .success-banner p { margin: 0; font-size: 0.9rem; }
+</style>
