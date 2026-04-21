@@ -1,0 +1,311 @@
+/* Window chrome and layout */
+
+/* ─── Desktop layer ──────────────────────────────────────────────────────────── */
+
+/* Reserve topbar height so there is no layout shift. */
+.shell__topbar { height: 28px; }
+
+/* ─── Base window ─────────────────────────────────────────────────────────── */
+
+.window {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-window);
+  border: 1px solid var(--border);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    0 8px 32px rgba(0, 0, 0, 0.5);
+  background: var(--bg-elev);
+  min-width: 320px;
+  min-height: 240px;
+  overflow: hidden;
+  pointer-events: auto;
+
+  /* open animation */
+  animation: wm-open 140ms cubic-bezier(0.2, 0, 0.2, 1) forwards;
+  transform-origin: center top;
+}
+
+.window.closing {
+  animation: wm-close 120ms cubic-bezier(0.4, 0, 1, 1) forwards;
+  pointer-events: none;
+}
+
+.window.minimized {
+  display: none;
+}
+
+/* Focused / unfocused visual states */
+.window.focused {
+  opacity: 1;
+}
+
+.window.unfocused {
+  opacity: 0.85;
+}
+
+.window.unfocused .window-titlebar {
+  filter: saturate(0.35) brightness(0.85);
+}
+
+.window.dragging {
+  opacity: 0.9;
+  cursor: move;
+}
+
+/* ─── Maximized ───────────────────────────────────────────────────────────── */
+
+.window.maximized {
+  left: 0 !important;
+  top: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+}
+
+/* ─── Titlebar ────────────────────────────────────────────────────────────── */
+
+.window-titlebar {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: 32px;
+  padding: 0 var(--s-2) 0 var(--s-2);
+  background: var(--bg-chrome);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  cursor: default;
+  user-select: none;
+  outline: none;
+}
+
+.window-titlebar:focus-visible {
+  outline: 2px solid var(--pai-blue);
+  outline-offset: -2px;
+}
+
+.window.focus-flash .window-titlebar {
+  animation: wm-focus-flash 220ms ease-out;
+}
+
+@keyframes wm-focus-flash {
+  0%   { box-shadow: inset 0 0 0 2px var(--pai-blue); }
+  100% { box-shadow: inset 0 0 0 2px transparent; }
+}
+
+.window-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.window-title {
+  flex: 1;
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: 0.03em;
+}
+
+/* ─── Traffic-light buttons ───────────────────────────────────────────────── */
+
+.window-controls {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.window-btn {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0;
+  transition: filter 80ms ease;
+  position: relative;
+}
+
+.window-btn:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: 2px;
+}
+
+.window-btn:hover {
+  filter: brightness(1.25);
+}
+
+.window-btn:active {
+  filter: brightness(0.8);
+}
+
+/* PAI palette buttons — not macOS colors */
+.btn-popout   { background: var(--pai-purple); }
+.btn-minimize { background: var(--pai-yellow); }
+.btn-maximize { background: var(--pai-blue); }
+.btn-close    { background: var(--pai-red); }
+
+/* Show glyph on hover for clarity */
+.btn-popout::after,
+.btn-minimize::after,
+.btn-maximize::after,
+.btn-close::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  opacity: 0;
+  transition: opacity 80ms ease;
+}
+
+/* Popout glyph: ↗ arrow out of box */
+.btn-popout::after {
+  background: rgba(0, 0, 0, 0.5);
+  clip-path: polygon(
+    35% 0%, 100% 0%, 100% 65%,
+    80% 65%, 80% 30%, 45% 65%,
+    30% 50%, 65% 18%, 35% 18%
+  );
+}
+
+.window-btn:hover::after { opacity: 1; }
+
+.btn-minimize::after {
+  background: rgba(0, 0, 0, 0.5);
+  clip-path: inset(40% 0 40% 0);
+}
+
+.btn-maximize::after {
+  border: 1.5px solid rgba(0, 0, 0, 0.5);
+  border-radius: 1px;
+}
+
+.btn-close::after {
+  background: rgba(0, 0, 0, 0.5);
+  clip-path: polygon(
+    15% 0%, 0% 15%, 35% 50%,
+    0% 85%, 15% 100%, 50% 65%,
+    85% 100%, 100% 85%, 65% 50%,
+    100% 15%, 85% 0%, 50% 35%
+  );
+}
+
+/* ─── Content area ────────────────────────────────────────────────────────── */
+
+.window-content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  background: var(--bg);
+}
+
+.window-content iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: var(--bg);
+}
+
+/* Overlay to block iframe pointer events during drag/resize */
+.window.dragging .window-content::after,
+.window.resizing .window-content::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: all;
+}
+
+/* ─── Resize handles ──────────────────────────────────────────────────────── */
+
+.resize-handle {
+  position: absolute;
+  z-index: 10;
+  background: transparent;
+  transition: background 120ms ease;
+}
+
+.window.maximized .resize-handle { pointer-events: none; }
+
+.resize-handle:hover { background: rgba(122, 162, 247, 0.35); }
+
+/* Edges: 6px hit target */
+.resize-handle[data-dir='n'] {
+  top: 0; left: 10px; right: 10px; height: 6px;
+  cursor: n-resize;
+}
+.resize-handle[data-dir='s'] {
+  bottom: 0; left: 10px; right: 10px; height: 6px;
+  cursor: s-resize;
+}
+.resize-handle[data-dir='e'] {
+  right: 0; top: 10px; bottom: 10px; width: 6px;
+  cursor: e-resize;
+}
+.resize-handle[data-dir='w'] {
+  left: 0; top: 10px; bottom: 10px; width: 6px;
+  cursor: w-resize;
+}
+
+/* Corners: 10px hit target */
+.resize-handle[data-dir='nw'] {
+  top: 0; left: 0; width: 10px; height: 10px;
+  cursor: nw-resize;
+}
+.resize-handle[data-dir='ne'] {
+  top: 0; right: 0; width: 10px; height: 10px;
+  cursor: ne-resize;
+}
+.resize-handle[data-dir='sw'] {
+  bottom: 0; left: 0; width: 10px; height: 10px;
+  cursor: sw-resize;
+}
+.resize-handle[data-dir='se'] {
+  bottom: 0; right: 0; width: 10px; height: 10px;
+  cursor: se-resize;
+}
+
+/* ─── Open / close animations ─────────────────────────────────────────────── */
+
+@keyframes wm-open {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes wm-close {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.94) translateY(-4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .window,
+  .window.closing {
+    animation: none;
+  }
+}
