@@ -1,0 +1,22 @@
+# ── PAI Web Edition — Additional Packages ──
+# Desktop packages for kiosk / web-based desktop mode
+
+# Kernel
+linux-image-amd64
+
+# Wayland kiosk compositor
+# cage is preferred (single-window kiosk compositor)
+# sway is fallback if cage not available
+cage
+sway
+
+# Minimal Wayland support
+xwayland
+dbus-x11
+wlr-randr
+
+# No waybar, no foot terminal, no swaybg, no swayidle needed
+# CTRL provides its own UI chrome via Firefox
+
+# (provided by pai-base.list.chroot)
+# pcmanfm
