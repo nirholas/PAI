@@ -1,0 +1,38 @@
+name: PAI local assistant
+version: 1.0.0
+schema: v1
+
+models:
+  - name: Qwen 2.5 Coder 7B (local)
+    provider: ollama
+    model: qwen2.5-coder:7b
+    apiBase: http://localhost:11434
+    roles:
+      - chat
+      - edit
+      - apply
+
+  - name: Llama 3.1 8B (local)
+    provider: ollama
+    model: llama3.1:8b
+    apiBase: http://localhost:11434
+    roles:
+      - chat
+
+  - name: Nomic Embed (local)
+    provider: ollama
+    model: nomic-embed-text
+    apiBase: http://localhost:11434
+    roles:
+      - embed
+
+context:
+  - provider: file
+  - provider: code
+  - provider: docs
+  - provider: terminal
+  - provider: diff
+
+# No cloud providers, ever. If you need one, add it in your own
+# ~/.continue/config.yaml — this file lives under /etc/skel and is
+# the PAI default for new user accounts.
