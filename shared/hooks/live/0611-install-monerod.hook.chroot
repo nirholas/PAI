@@ -1,0 +1,63 @@
+#!/bin/bash
+# ── Install monerod (opt-in full node) ─────────────────────────────────
+# Downloads the official Monero CLI tarball. NOT enabled on boot. Users
+# opt in via Settings → Privacy & Security → Monero full node.
+set -euo pipefail
+
+MONERO_VERSION="v0.18.3.4"
+ARCH=$(dpkg --print-architecture)
+case "$ARCH" in
+    amd64) MTAR="monero-linux-x64-${MONERO_VERSION}.tar.bz2" ;;
+    arm64) MTAR="monero-linux-armv8-${MONERO_VERSION}.tar.bz2" ;;
+    *) echo "[pai] monerod: unsupported arch $ARCH"; exit 0 ;;
+esac
+
+echo "[pai] Installing monerod ${MONERO_VERSION}..."
+
+# Monero publishes a GPG-signed hashes.txt. We verify it against binaryFate's
+# key before checking our download against the embedded SHA256.
+# Key fingerprint: 81AC591FE9C4B65C5806AFC3F0AF4D462A0BDF92
+# Source: https://github.com/monero-project/monero/blob/master/utils/gpg_keys/binaryfate.asc
+install -d -m 0755 /opt/monero
+cd /tmp
+
+# Fetch binaryFate's signing key from the monero-project source repo
+curl -fsSL -o binaryfate.asc \
+    "https://raw.githubusercontent.com/monero-project/monero/master/utils/gpg_keys/binaryfate.asc" \
+    || { echo "[pai] Could not fetch Monero signing key — skipping."; exit 0; }
+gpg --import binaryfate.asc
+rm -f binaryfate.asc
+
+# Fetch and verify the signed hashes file
+curl -fsSL -o monero-hashes.txt "https://www.getmonero.org/downloads/hashes.txt" \
+    || { echo "[pai] Monero hashes.txt download failed — skipping."; exit 0; }
+if ! gpg --verify monero-hashes.txt 2>&1 | grep -q "Good signature"; then
+    echo "[pai] ERROR: Monero hashes.txt GPG verification failed — refusing to install."
+    rm -f monero-hashes.txt
+    exit 1
+fi
+
+# Extract the expected SHA256 for this tarball
+EXPECTED_SHA256=$(grep "${MTAR}" monero-hashes.txt | awk '{print $1}')
+rm -f monero-hashes.txt
+if [ -z "$EXPECTED_SHA256" ]; then
+    echo "[pai] WARNING: Could not find SHA256 for ${MTAR} in hashes.txt — skipping."
+    exit 0
+fi
+
+curl -fsSL -o monero.tbz \
+    "https://downloads.getmonero.org/cli/${MTAR}" \
+    || { echo "[pai] Monero download failed — skipping."; exit 0; }
+
+echo "${EXPECTED_SHA256}  monero.tbz" | sha256sum -c \
+    || { echo "[pai] ERROR: Monero SHA256 mismatch — refusing to install."; rm -f monero.tbz; exit 1; }
+
+tar --strip-components=1 -xjf monero.tbz -C /opt/monero \
+    || { echo "[pai] Monero unpack failed — skipping."; rm -f monero.tbz; exit 0; }
+rm -f monero.tbz
+
+for b in monerod monero-wallet-cli monero-wallet-rpc monero-blockchain-import; do
+    [ -x "/opt/monero/$b" ] && ln -sf "/opt/monero/$b" "/usr/local/bin/$b"
+done
+
+echo "[pai] monerod installed (not enabled)."
