@@ -1,0 +1,48 @@
+#!/bin/bash
+# ── Install Piper (local text-to-speech) ───────────────────────────────
+# Downloads the upstream Piper binary tarball per arch. No voices
+# preinstalled — voices opt-in via `pai-ai-model-picker`.
+set -euo pipefail
+
+PIPER_VERSION="2023.11.14-2"
+ARCH=$(dpkg --print-architecture)
+case "$ARCH" in
+    amd64) PIPER_TAR="piper_linux_x86_64.tar.gz" ;;
+    arm64) PIPER_TAR="piper_linux_aarch64.tar.gz" ;;
+    *) echo "[pai] Piper: unsupported arch $ARCH"; exit 0 ;;
+esac
+
+echo "[pai] Installing Piper ${PIPER_VERSION} (${ARCH})..."
+
+install -d -m 0755 /opt/piper
+curl -fsSL -o /tmp/piper.tgz \
+    "https://github.com/rhasspy/piper/releases/download/${PIPER_VERSION}/${PIPER_TAR}" \
+    || { echo "[pai] Piper download failed — skipping."; exit 0; }
+
+# Piper does not publish SHA256 checksums. Verify the download is non-trivially
+# sized (>10MB) as a basic sanity check against a truncated/empty download.
+PIPER_SIZE=$(stat -c%s /tmp/piper.tgz 2>/dev/null || echo 0)
+if [ "${PIPER_SIZE}" -lt 10000000 ]; then
+    echo "[pai] WARNING: Piper tarball appears too small (${PIPER_SIZE} bytes) — skipping."
+    rm -f /tmp/piper.tgz
+    exit 0
+fi
+
+tar -xzf /tmp/piper.tgz -C /opt/ 2>&1 | tail -5 || true
+rm -f /tmp/piper.tgz
+
+# Upstream tarball unpacks to /opt/piper/ already.
+if [ -x /opt/piper/piper ]; then
+    ln -sf /opt/piper/piper /usr/local/bin/piper
+fi
+
+install -d -m 0755 /opt/piper/voices
+cat > /opt/piper/voices/README.md <<'README'
+Piper voice files (.onnx + .onnx.json) live here. They are not shipped
+with PAI. Download via `pai-ai-model-picker` or from
+https://huggingface.co/rhasspy/piper-voices.
+
+Default voice suggested by PAI: en_US-lessac-medium.
+README
+
+echo "[pai] Piper installed."
