@@ -1,0 +1,93 @@
+#!/bin/bash
+# pai-save — flush volatile state to the encrypted persistence partition.
+#
+# With live-boot persistence active, writes to the bind-mounted paths
+# (/var/lib/ollama, /var/lib/open-webui, /etc/NetworkManager/system-connections,
+# optionally /home/pai) already land on the encrypted partition — the kernel
+# writes through to the block device on its own schedule.  The role of this
+# command is to force those writes *now* (fsync) and to emit a human-readable
+# report of what the persistence partition currently holds.
+#
+# This is what gets invoked by pai-save-on-shutdown.service before the
+# system halts, so the partition is consistent on disk before power is cut.
+#
+# Usage:
+#   pai-save            fsync persisted paths and print a summary
+#   pai-save --list     print the persisted paths without touching the fs
+#   pai-save --help
+
+set -euo pipefail
+
+readonly STATE_ACTIVE="/run/pai-persistence-active"
+
+die() { echo "pai-save: $1" >&2; exit "${2:-1}"; }
+
+# Emit each target path declared in every live-boot persistence.conf currently
+# in use.  live-boot stores the effective conf at /run/live/persistence/<luks>/
+# persistence.conf; multiple files exist only in exotic multi-partition setups.
+persisted_paths() {
+    local conf
+    shopt -s nullglob
+    for conf in /run/live/persistence/*/persistence.conf; do
+        awk '!/^[[:space:]]*(#|$)/ {print $1}' "$conf"
+    done
+    shopt -u nullglob
+}
+
+case "${1:-}" in
+    -h|--help)
+        sed -n '2,17p' "$0" | sed 's/^# \?//'
+        exit 0
+        ;;
+    --list)
+        persisted_paths
+        exit 0
+        ;;
+    ""|--sync)
+        ;;
+    *)
+        die "unknown option: $1 (try --help)"
+        ;;
+esac
+
+if ! [[ -f "$STATE_ACTIVE" ]]; then
+    die "persistence is not active — nothing to save (session is ephemeral)" 0
+fi
+
+# Collect the active persisted paths (deduped, skipping any that vanished).
+mapfile -t paths < <(persisted_paths | sort -u)
+if (( ${#paths[@]} == 0 )); then
+    die "persistence marker present but no persistence.conf found in /run/live/persistence — aborting"
+fi
+
+# Per-path fsync: `sync -f <path>` flushes only the filesystem backing <path>.
+# This is preferable to a bare `sync` because it lets us report each mount
+# individually and fails loudly if a bind-mount is somehow unreadable.
+echo "pai-save: flushing persistence to disk"
+printf '  %-44s %8s\n' "PATH" "USED"
+rc=0
+for p in "${paths[@]}"; do
+    if ! findmnt -n "$p" &>/dev/null; then
+        printf '  %-44s %8s\n' "$p" "(not mounted — skipped)"
+        continue
+    fi
+    # du -sh on /var/lib/ollama can take seconds on a full model cache; run
+    # it with a generous timeout rather than blocking shutdown forever.
+    size=$(timeout 5 du -sh "$p" 2>/dev/null | awk '{print $1}')
+    printf '  %-44s %8s\n' "$p" "${size:-?}"
+    if ! sync -f "$p" 2>/dev/null; then
+        echo "  ! sync -f failed for $p" >&2
+        rc=1
+    fi
+done
+
+# Defensive global sync in case a persisted path was missed (e.g., if
+# live-boot's conf ever gets out of sync with the bind-mount state).
+sync
+
+if (( rc == 0 )); then
+    echo "pai-save: done."
+else
+    echo "pai-save: completed with errors (see above)." >&2
+fi
+exit "$rc"
