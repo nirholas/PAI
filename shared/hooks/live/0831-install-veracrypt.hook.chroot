@@ -1,0 +1,50 @@
+#!/bin/bash
+# ── Install VeraCrypt (upstream .deb) ──────────────────────────────────
+# LICENSE NOTICE: VeraCrypt is licensed under the IDRIX VeraCrypt License
+# (based on TrueCrypt License 3.0). Redistribution requires including the
+# full license text as specified in the VeraCrypt License. This hook
+# installs VeraCrypt from the upstream source for end-user use.
+# See: https://veracrypt.io/en/License.html
+set -euo pipefail
+
+VERA_VERSION="1.26.20"
+ARCH=$(dpkg --print-architecture)
+case "$ARCH" in
+    amd64) DEB="veracrypt-${VERA_VERSION}-Debian-12-amd64.deb" ;;
+    arm64) DEB="veracrypt-${VERA_VERSION}-Debian-12-arm64.deb" ;;
+    *) echo "[pai] VeraCrypt: unsupported arch $ARCH"; exit 0 ;;
+esac
+
+echo "[pai] Installing VeraCrypt ${VERA_VERSION}..."
+
+# GPG verification — IDRIX VeraCrypt signing key
+# Fingerprint: 5069A233D55A0EEB174A5FC3821ACD02680D16DE
+# Source: https://veracrypt.io/en/Digital%20Signatures.html
+curl -fsSL -o /tmp/VeraCrypt_PGP_public_key.asc \
+    "https://www.idrix.fr/VeraCrypt/VeraCrypt_PGP_public_key.asc" \
+    || { echo "[pai] VeraCrypt GPG key download failed — skipping install."; exit 0; }
+gpg --import /tmp/VeraCrypt_PGP_public_key.asc
+rm -f /tmp/VeraCrypt_PGP_public_key.asc
+
+# VeraCrypt publishes .deb and .deb.sig files on GitHub Releases.
+VERA_BASE="https://github.com/veracrypt/VeraCrypt/releases/download/VeraCrypt_${VERA_VERSION}"
+cd /tmp
+curl -fsSL -o veracrypt.deb "${VERA_BASE}/${DEB}" \
+    || { echo "[pai] VeraCrypt download failed — skipping."; exit 0; }
+curl -fsSL -o veracrypt.deb.sig "${VERA_BASE}/${DEB}.sig" \
+    || { echo "[pai] VeraCrypt signature download failed — skipping install."; rm -f veracrypt.deb; exit 0; }
+if ! gpg --verify veracrypt.deb.sig veracrypt.deb; then
+    echo "[pai] ERROR: VeraCrypt GPG verification failed — refusing to install."
+    rm -f veracrypt.deb veracrypt.deb.sig
+    exit 1
+fi
+rm -f veracrypt.deb.sig
+
+DEBIAN_FRONTEND=noninteractive apt-get install -y /tmp/veracrypt.deb \
+    || echo "[pai] VeraCrypt install failed — non-fatal."
+rm -f /tmp/veracrypt.deb
+
+apt-get clean
+rm -rf /var/lib/apt/lists/*
+
+echo "[pai] VeraCrypt installed."
