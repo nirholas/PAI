@@ -1,0 +1,224 @@
+#!/usr/bin/env python3
+"""PAI RAG — index and query local documents using Ollama + Qdrant.
+
+Commands:
+    pai-rag index <dir>         walk <dir>, chunk text-like files, upsert into
+                                the "pai" collection.
+    pai-rag query "<question>"  embed the query, pull top-K chunks, compose a
+                                prompt, stream an answer from Ollama.
+    pai-rag status              show collection size + last indexed path.
+    pai-rag reset               drop the "pai" collection.
+
+All network calls stay on localhost:
+    Ollama       http://localhost:11434
+    Qdrant       http://localhost:6333
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+import time
+import urllib.request
+import urllib.error
+from pathlib import Path
+
+OLLAMA = os.environ.get("OLLAMA_URL", "http://localhost:11434")
+QDRANT = os.environ.get("QDRANT_URL", "http://localhost:6333")
+EMBED_MODEL = os.environ.get("PAI_RAG_EMBED_MODEL", "nomic-embed-text")
+CHAT_MODEL = os.environ.get("PAI_RAG_CHAT_MODEL", "llama3.2:8b")
+COLLECTION = "pai"
+CHUNK_CHARS = 1200
+CHUNK_OVERLAP = 120
+TOP_K = 6
+
+TEXT_EXTS = {
+    ".md", ".markdown", ".txt", ".rst", ".org",
+    ".py", ".js", ".ts", ".tsx", ".jsx", ".go", ".rs", ".java", ".c", ".h",
+    ".cpp", ".hpp", ".sh", ".bash", ".yaml", ".yml", ".toml", ".json", ".csv",
+    ".html", ".htm", ".xml", ".ini", ".conf",
+}
+
+
+def http(method: str, url: str, body=None):
+    data = None
+    headers = {"content-type": "application/json"}
+    if body is not None:
+        data = json.dumps(body).encode()
+    req = urllib.request.Request(url, data=data, method=method, headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=120) as r:
+            return json.loads(r.read().decode() or "null")
+    except urllib.error.HTTPError as e:
+        raise RuntimeError(f"{method} {url} → {e.code} {e.reason}: {e.read().decode()[:500]}") from e
+    except urllib.error.URLError as e:
+        raise RuntimeError(f"{method} {url} → {e.reason}") from e
+
+
+def ensure_services() -> None:
+    try:
+        http("GET", f"{OLLAMA}/api/tags")
+    except Exception as e:
+        sys.exit(f"Ollama unreachable at {OLLAMA}: {e}")
+    try:
+        http("GET", f"{QDRANT}/collections")
+    except Exception as e:
+        sys.exit(f"Qdrant unreachable at {QDRANT}. Start with: systemctl --user start qdrant")
+
+
+def embed(texts: list[str]) -> list[list[float]]:
+    out = []
+    for t in texts:
+        r = http("POST", f"{OLLAMA}/api/embeddings", {"model": EMBED_MODEL, "prompt": t})
+        out.append(r["embedding"])
+    return out
+
+
+def ensure_collection(dim: int) -> None:
+    try:
+        info = http("GET", f"{QDRANT}/collections/{COLLECTION}")
+        if info.get("result"):
+            return
+    except Exception:
+        pass
+    http("PUT", f"{QDRANT}/collections/{COLLECTION}", {
+        "vectors": {"size": dim, "distance": "Cosine"},
+    })
+
+
+def chunk(text: str) -> list[str]:
+    chunks, i = [], 0
+    n = len(text)
+    while i < n:
+        end = min(i + CHUNK_CHARS, n)
+        chunks.append(text[i:end])
+        if end == n:
+            break
+        i = end - CHUNK_OVERLAP
+    return chunks
+
+
+def iter_text_files(root: Path):
+    for p in root.rglob("*"):
+        if not p.is_file():
+            continue
+        if p.suffix.lower() not in TEXT_EXTS:
+            continue
+        if p.stat().st_size > 2_000_000:
+            continue
+        yield p
+
+
+def cmd_index(args) -> None:
+    ensure_services()
+    root = Path(args.path).expanduser().resolve()
+    if not root.is_dir():
+        sys.exit(f"Not a directory: {root}")
+
+    files = list(iter_text_files(root))
+    if not files:
+        print(f"No text-like files under {root}.")
+        return
+
+    sample_vec = embed(["probe"])[0]
+    ensure_collection(len(sample_vec))
+
+    point_id = int(time.time() * 1000)
+    batch = []
+    total_chunks = 0
+    for f in files:
+        try:
+            text = f.read_text(encoding="utf-8", errors="ignore")
+        except Exception:
+            continue
+        pieces = chunk(text)
+        if not pieces:
+            continue
+        vectors = embed(pieces)
+        for piece, vec in zip(pieces, vectors):
+            batch.append({
+                "id": point_id,
+                "vector": vec,
+                "payload": {"path": str(f), "text": piece},
+            })
+            point_id += 1
+            total_chunks += 1
+            if len(batch) >= 64:
+                http("PUT", f"{QDRANT}/collections/{COLLECTION}/points?wait=true", {"points": batch})
+                batch = []
+        print(f"  indexed {f.relative_to(root)} ({len(pieces)} chunks)")
+    if batch:
+        http("PUT", f"{QDRANT}/collections/{COLLECTION}/points?wait=true", {"points": batch})
+    print(f"Indexed {total_chunks} chunks from {len(files)} files under {root}.")
+
+
+def cmd_query(args) -> None:
+    ensure_services()
+    q = args.question
+    qvec = embed([q])[0]
+    r = http("POST", f"{QDRANT}/collections/{COLLECTION}/points/search", {
+        "vector": qvec, "limit": TOP_K, "with_payload": True,
+    })
+    hits = r.get("result", [])
+    if not hits:
+        sys.exit("No indexed content yet. Run: pai-rag index <dir>")
+
+    ctx_lines = []
+    for h in hits:
+        p = h["payload"]
+        ctx_lines.append(f"[{p['path']}]\n{p['text']}")
+    prompt = (
+        "Answer the user's question using ONLY the context below. If the "
+        "answer is not present, say so. Cite the source path for each claim.\n\n"
+        f"QUESTION: {q}\n\nCONTEXT:\n\n" + "\n\n---\n\n".join(ctx_lines)
+    )
+    req = urllib.request.Request(
+        f"{OLLAMA}/api/generate",
+        data=json.dumps({"model": CHAT_MODEL, "prompt": prompt, "stream": True}).encode(),
+        headers={"content-type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=600) as r:
+        for line in r:
+            try:
+                obj = json.loads(line)
+            except Exception:
+                continue
+            if "response" in obj:
+                sys.stdout.write(obj["response"])
+                sys.stdout.flush()
+            if obj.get("done"):
+                sys.stdout.write("\n")
+
+
+def cmd_status(_args) -> None:
+    ensure_services()
+    try:
+        info = http("GET", f"{QDRANT}/collections/{COLLECTION}")
+        res = info.get("result", {})
+        print(f"collection: {COLLECTION}")
+        print(f"vectors:    {res.get('points_count', 0)}")
+        print(f"status:     {res.get('status', 'unknown')}")
+    except Exception as e:
+        print(f"collection not ready: {e}")
+
+
+def cmd_reset(_args) -> None:
+    ensure_services()
+    http("DELETE", f"{QDRANT}/collections/{COLLECTION}")
+    print("Collection reset.")
+
+
+def main() -> None:
+    p = argparse.ArgumentParser(prog="pai-rag")
+    sub = p.add_subparsers(dest="cmd", required=True)
+    pi = sub.add_parser("index");  pi.add_argument("path"); pi.set_defaults(fn=cmd_index)
+    pq = sub.add_parser("query");  pq.add_argument("question"); pq.set_defaults(fn=cmd_query)
+    ps = sub.add_parser("status"); ps.set_defaults(fn=cmd_status)
+    pr = sub.add_parser("reset");  pr.set_defaults(fn=cmd_reset)
+    args = p.parse_args()
+    args.fn(args)
+
+
+if __name__ == "__main__":
+    main()
