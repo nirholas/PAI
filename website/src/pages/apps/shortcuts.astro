@@ -1,0 +1,244 @@
+---
+import AppStandalone from '../../layouts/AppStandalone.astro'
+import Head from '../../components/Head.astro'
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <Head
+      title="Shortcuts — PAI"
+      description="All keyboard shortcuts in PAI, grouped by app and searchable."
+      ogImage="/og/shortcuts.png"
+    />
+    <link rel="icon" type="image/svg+xml" href="/icons/shortcuts.svg" />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+        font-family:
+          ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          Helvetica, Arial, sans-serif;
+        background: #0f0f1a;
+        color: #e0e0e0;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      #app-root {
+        flex: 1;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .sc-head {
+        padding: 16px 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-shrink: 0;
+      }
+      .sc-title {
+        font-size: 1rem;
+        font-weight: 600;
+      }
+      .sc-sub {
+        font-size: 0.8125rem;
+        color: #888;
+        margin-left: auto;
+      }
+      .sc-search {
+        display: block;
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 6px;
+        border: 1px solid #2a2a3e;
+        background: #1a1a2e;
+        color: #e0e0e0;
+        font-size: 0.875rem;
+        font-family: inherit;
+      }
+      .sc-search:focus {
+        outline: 2px solid #7aa2f7;
+        outline-offset: 1px;
+        border-color: #7aa2f7;
+      }
+      .sc-search-wrap {
+        padding: 12px 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        flex-shrink: 0;
+      }
+      .sc-body {
+        flex: 1;
+        overflow: auto;
+        padding: 16px 20px 24px;
+      }
+      .sc-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 20px;
+      }
+      .sc-group h2 {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #7aa2f7;
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      .sc-list {
+        display: flex;
+        flex-direction: column;
+        background: #1a1a2e;
+        border: 1px solid #2a2a3e;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .sc-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        font-size: 0.8125rem;
+      }
+      .sc-row:last-child {
+        border-bottom: 0;
+      }
+      .sc-label {
+        flex: 1;
+        color: #e0e0e0;
+      }
+      .sc-keys {
+        display: inline-flex;
+        gap: 4px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+      .sc-kbd {
+        display: inline-block;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: #0f0f1a;
+        border: 1px solid #2a2a3e;
+        color: #aaa;
+        font-family:
+          ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, monospace;
+        font-size: 0.7rem;
+        line-height: 1.5;
+      }
+      .sc-empty {
+        padding: 40px;
+        color: #666;
+        text-align: center;
+        font-size: 0.875rem;
+      }
+    </style>
+  </head>
+  <body>
+    <AppStandalone appId="shortcuts" />
+    <div id="app-root">
+      <div class="sc-head">
+        <div class="sc-title">Keyboard shortcuts</div>
+        <div class="sc-sub" id="sc-source">Default bindings</div>
+      </div>
+      <div class="sc-search-wrap">
+        <input
+          type="search"
+          class="sc-search"
+          id="sc-search"
+          placeholder="Search shortcuts…"
+          autocomplete="off"
+        />
+      </div>
+      <div class="sc-body">
+        <div class="sc-grid" id="sc-grid"></div>
+        <div class="sc-empty" id="sc-empty" hidden>No shortcuts match.</div>
+      </div>
+    </div>
+
+    <script>
+      import { bridge } from '../../apps/_bridge.js'
+      import {
+        SHORTCUTS,
+        getLiveHotkeys,
+        type ShortcutGroup,
+      } from '../../apps/shortcuts/shortcuts-data.ts'
+
+      bridge.ready()
+
+      const grid = document.getElementById('sc-grid')!
+      const search = document.getElementById('sc-search') as HTMLInputElement
+      const empty = document.getElementById('sc-empty')!
+      const sourceEl = document.getElementById('sc-source')!
+
+      const live = getLiveHotkeys()
+      const groups: ShortcutGroup[] = live ?? SHORTCUTS
+      if (live) sourceEl.textContent = 'Live bindings'
+
+      function escapeHtml(s: string): string {
+        return s
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+      }
+
+      function renderKeys(keys: string): string {
+        return keys
+          .split(/\s*\+\s*/)
+          .map((k) => `<span class="sc-kbd">${escapeHtml(k)}</span>`)
+          .join(`<span class="sc-kbd-sep">+</span>`)
+      }
+
+      function render(query: string): void {
+        const q = query.trim().toLowerCase()
+        let shown = 0
+        grid.innerHTML = ''
+        for (const g of groups) {
+          const items = g.items.filter(
+            (it) =>
+              !q ||
+              it.keys.toLowerCase().includes(q) ||
+              it.label.toLowerCase().includes(q) ||
+              g.title.toLowerCase().includes(q),
+          )
+          if (items.length === 0) continue
+          shown += items.length
+
+          const sec = document.createElement('section')
+          sec.className = 'sc-group'
+          sec.innerHTML = `
+            <h2>${escapeHtml(g.title)}</h2>
+            <div class="sc-list">
+              ${items
+                .map(
+                  (it) => `
+                <div class="sc-row">
+                  <div class="sc-label">${escapeHtml(it.label)}</div>
+                  <div class="sc-keys">${renderKeys(it.keys)}</div>
+                </div>
+              `,
+                )
+                .join('')}
+            </div>
+          `
+          grid.appendChild(sec)
+        }
+        empty.hidden = shown > 0
+      }
+
+      search.addEventListener('input', () => render(search.value))
+      render('')
+    </script>
+  </body>
+</html>
