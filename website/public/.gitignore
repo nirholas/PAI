@@ -1,0 +1,10 @@
+# Synced from scripts/ at build time by website/scripts/sync-flashers.mjs.
+# Do not commit — the source of truth lives in /scripts.
+flash.sh
+flash.sh.sha256
+flash.ps1
+flash.ps1.sha256
+try.sh
+try.sh.sha256
+try.ps1
+try.ps1.sha256
