@@ -1,0 +1,397 @@
+---
+import AppStandalone from '../../layouts/AppStandalone.astro'
+import Head from '../../components/Head.astro'
+import hardware from '../../data/hardware.json'
+
+const vendors = [...new Set(hardware.map((r) => r.vendor))].sort()
+const arches = [...new Set(hardware.map((r) => r.arch))].sort()
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <Head
+      title="Hardware — PAI"
+      description="Minimum and recommended hardware for PAI — the USB requirements, RAM tiers, and GPU support for local AI inference."
+      ogImage="/og/hardware.png"
+    />
+    <link rel="icon" type="image/svg+xml" href="/icons/hardware.svg" />
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { height: 100%; font-family: system-ui, sans-serif; background: #0f0f1a; color: #e0e0e0; }
+      body { display: flex; flex-direction: column; overflow: hidden; }
+      #app-root { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+
+      /* ── Toolbar ── */
+      .hw-toolbar {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid rgba(255,255,255,0.07);
+        background: rgba(10,10,20,0.7);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+        flex-shrink: 0;
+      }
+      .hw-select, .hw-search {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 6px;
+        color: #ccc;
+        font-size: 0.8125rem;
+        padding: 0.3rem 0.6rem;
+        font-family: inherit;
+      }
+      .hw-select:focus, .hw-search:focus { outline: none; border-color: rgba(122,162,247,0.5); }
+      .hw-search { flex: 1; min-width: 120px; max-width: 240px; }
+      .hw-count { font-size: 0.75rem; color: #666; margin-left: auto; }
+      .hw-submit-btn {
+        padding: 0.3rem 0.75rem;
+        border-radius: 6px;
+        border: 1px solid rgba(74,222,128,0.3);
+        background: rgba(74,222,128,0.08);
+        color: #4ade80;
+        font-size: 0.8125rem;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background 0.15s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+      }
+      .hw-submit-btn:hover { background: rgba(74,222,128,0.18); }
+
+      /* ── Table area ── */
+      .hw-body {
+        flex: 1;
+        overflow: hidden;
+        display: flex;
+        gap: 0;
+      }
+      .hw-table-wrap {
+        flex: 1;
+        overflow: auto;
+      }
+      .hw-table-wrap::-webkit-scrollbar { width: 5px; height: 5px; }
+      .hw-table-wrap::-webkit-scrollbar-track { background: transparent; }
+      .hw-table-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.8125rem;
+        white-space: nowrap;
+      }
+      thead { position: sticky; top: 0; z-index: 2; background: rgba(15,15,26,0.95); }
+      th {
+        padding: 0.6rem 0.875rem;
+        text-align: left;
+        color: #888;
+        font-weight: 500;
+        border-bottom: 1px solid rgba(255,255,255,0.07);
+        cursor: pointer;
+        user-select: none;
+        transition: color 0.12s;
+        white-space: nowrap;
+      }
+      th:hover { color: #ccc; }
+      th[aria-sort] { color: #7aa2f7; }
+      .sort-arrow { margin-left: 0.25rem; font-size: 0.625rem; }
+      td {
+        padding: 0.5rem 0.875rem;
+        border-bottom: 1px solid rgba(255,255,255,0.04);
+        color: #ccc;
+        max-width: 240px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        vertical-align: middle;
+      }
+      tr:hover td { background: rgba(255,255,255,0.03); cursor: pointer; }
+      tr.selected td { background: rgba(122,162,247,0.08); }
+
+      .badge-works { color: #4ade80; }
+      .badge-partial { color: #fbbf24; }
+      .badge-broken { color: #f87171; }
+      .badge-unknown { color: #666; }
+
+      .hw-empty {
+        padding: 3rem;
+        text-align: center;
+        color: #555;
+        font-size: 0.875rem;
+      }
+
+      /* ── Detail panel ── */
+      .hw-detail {
+        width: 280px;
+        flex-shrink: 0;
+        border-left: 1px solid rgba(255,255,255,0.07);
+        background: rgba(8,8,18,0.85);
+        overflow-y: auto;
+        padding: 1.25rem;
+        display: none;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .hw-detail.open { display: flex; }
+      .hw-detail-close {
+        align-self: flex-end;
+        background: none;
+        border: none;
+        color: #666;
+        cursor: pointer;
+        font-size: 1rem;
+        padding: 0;
+        line-height: 1;
+        transition: color 0.12s;
+      }
+      .hw-detail-close:hover { color: #ccc; }
+      .hw-detail-title { font-size: 0.9375rem; font-weight: 600; color: #e0e0e0; line-height: 1.4; }
+      .hw-detail-vendor { font-size: 0.8125rem; color: #7aa2f7; }
+      .hw-detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+      }
+      .hw-detail-field { display: flex; flex-direction: column; gap: 0.125rem; }
+      .hw-detail-label { font-size: 0.625rem; text-transform: uppercase; letter-spacing: 0.08em; color: #555; }
+      .hw-detail-value { font-size: 0.8125rem; color: #ccc; }
+      .hw-detail-notes {
+        font-size: 0.8125rem;
+        color: #999;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .hw-detail-reporter { font-size: 0.75rem; color: #555; }
+      .hw-detail-section { font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.08em; color: #555; margin-bottom: 0.25rem; }
+    </style>
+  </head>
+  <body>
+    <AppStandalone appId="hardware" />
+    <div id="app-root">
+      <!-- Toolbar -->
+      <div class="hw-toolbar" role="toolbar" aria-label="Filter hardware list">
+        <select class="hw-select" id="filter-vendor" aria-label="Filter by vendor">
+          <option value="">All vendors</option>
+          {vendors.map((v) => <option value={v}>{v}</option>)}
+        </select>
+        <select class="hw-select" id="filter-status" aria-label="Filter by status">
+          <option value="">All statuses</option>
+          <option value="works">✅ Works</option>
+          <option value="partial">⚠ Partial</option>
+          <option value="broken">❌ Broken</option>
+        </select>
+        <select class="hw-select" id="filter-arch" aria-label="Filter by architecture">
+          <option value="">All arches</option>
+          {arches.map((a) => <option value={a}>{a}</option>)}
+        </select>
+        <input class="hw-search" id="filter-search" type="search" placeholder="Search…" aria-label="Search hardware" />
+        <span class="hw-count" id="hw-count">{hardware.length} entries</span>
+        <a
+          class="hw-submit-btn"
+          id="submit-btn"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Submit your hardware report on GitHub"
+        >+ Submit yours</a>
+      </div>
+
+      <div class="hw-body">
+        <!-- Table -->
+        <div class="hw-table-wrap" role="region" aria-label="Hardware compatibility table">
+          <table id="hw-table" aria-label="Hardware compatibility list">
+            <thead>
+              <tr>
+                <th data-key="vendor" aria-sort="none">Vendor <span class="sort-arrow"></span></th>
+                <th data-key="model" aria-sort="none">Model <span class="sort-arrow"></span></th>
+                <th data-key="arch" aria-sort="none">Arch <span class="sort-arrow"></span></th>
+                <th data-key="wifi" aria-sort="none">Wi-Fi <span class="sort-arrow"></span></th>
+                <th data-key="gpu" aria-sort="none">GPU <span class="sort-arrow"></span></th>
+                <th data-key="status" aria-sort="ascending">Status <span class="sort-arrow">↑</span></th>
+                <th data-key="lastTested" aria-sort="none">Last tested <span class="sort-arrow"></span></th>
+                <th data-key="reporter" aria-sort="none">Reporter <span class="sort-arrow"></span></th>
+              </tr>
+            </thead>
+            <tbody id="hw-tbody"></tbody>
+          </table>
+          <p class="hw-empty" id="hw-empty" hidden>No matching hardware found.</p>
+        </div>
+
+        <!-- Detail panel (hidden until row click) -->
+        <aside class="hw-detail" id="hw-detail" aria-label="Hardware details">
+          <button class="hw-detail-close" id="detail-close" aria-label="Close detail panel">✕</button>
+          <div>
+            <div class="hw-detail-vendor" id="detail-vendor"></div>
+            <div class="hw-detail-title" id="detail-model"></div>
+          </div>
+          <div class="hw-detail-grid">
+            <div class="hw-detail-field">
+              <span class="hw-detail-label">Arch</span>
+              <span class="hw-detail-value" id="detail-arch"></span>
+            </div>
+            <div class="hw-detail-field">
+              <span class="hw-detail-label">Status</span>
+              <span class="hw-detail-value" id="detail-status"></span>
+            </div>
+            <div class="hw-detail-field">
+              <span class="hw-detail-label">Wi-Fi</span>
+              <span class="hw-detail-value" id="detail-wifi"></span>
+            </div>
+            <div class="hw-detail-field">
+              <span class="hw-detail-label">GPU</span>
+              <span class="hw-detail-value" id="detail-gpu"></span>
+            </div>
+            <div class="hw-detail-field">
+              <span class="hw-detail-label">Last tested</span>
+              <span class="hw-detail-value" id="detail-tested"></span>
+            </div>
+            <div class="hw-detail-field">
+              <span class="hw-detail-label">Reporter</span>
+              <span class="hw-detail-value" id="detail-reporter"></span>
+            </div>
+          </div>
+          <div>
+            <div class="hw-detail-section">Notes</div>
+            <div class="hw-detail-notes" id="detail-notes"></div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </body>
+</html>
+
+<script define:vars={{ hardware }}>
+  import { filterAndSort, statusBadge, cellBadge } from '../../apps/hardware/table.js'
+  import { bridge } from '../../apps/_bridge.js'
+
+  bridge.ready()
+
+  const GITHUB_REPO = 'https://github.com/nirholas/pai'
+  const ISSUE_TEMPLATE = 'hardware-report'
+
+  const tbody = document.getElementById('hw-tbody')
+  const hwEmpty = document.getElementById('hw-empty')
+  const hwCount = document.getElementById('hw-count')
+  const filterVendor = document.getElementById('filter-vendor')
+  const filterStatus = document.getElementById('filter-status')
+  const filterArch = document.getElementById('filter-arch')
+  const filterSearch = document.getElementById('filter-search')
+  const submitBtn = document.getElementById('submit-btn')
+  const detail = document.getElementById('hw-detail')
+  const detailClose = document.getElementById('detail-close')
+
+  let sortKey = 'status'
+  let sortDir = 'asc'
+  let selectedRow = null
+
+  // Build GitHub Issues submit URL
+  const issueUrl = `${GITHUB_REPO}/issues/new?template=${ISSUE_TEMPLATE}.md&labels=hardware-compat&title=Hardware+report%3A+%5BVendor+Model%5D`
+  submitBtn.href = issueUrl
+
+  function getFilters() {
+    return {
+      vendor: filterVendor.value,
+      status: filterStatus.value,
+      arch: filterArch.value,
+      q: filterSearch.value.trim(),
+    }
+  }
+
+  function statusClass(s) {
+    return { works: 'badge-works', partial: 'badge-partial', broken: 'badge-broken' }[s] ?? 'badge-unknown'
+  }
+
+  function render() {
+    const rows = filterAndSort(hardware, getFilters(), { key: sortKey, dir: sortDir })
+    hwCount.textContent = `${rows.length} of ${hardware.length} entries`
+
+    if (rows.length === 0) {
+      tbody.innerHTML = ''
+      hwEmpty.hidden = false
+      return
+    }
+    hwEmpty.hidden = true
+
+    tbody.innerHTML = rows.map((r, i) => `
+      <tr data-idx="${i}" tabindex="0" role="row" aria-label="${r.vendor} ${r.model}">
+        <td>${escapeHtml(r.vendor)}</td>
+        <td>${escapeHtml(r.model)}</td>
+        <td>${escapeHtml(r.arch)}</td>
+        <td class="${statusClass(r.wifi)}">${cellBadge(r.wifi)}</td>
+        <td class="${statusClass(r.gpu)}">${cellBadge(r.gpu)}</td>
+        <td class="${statusClass(r.status)}">${statusBadge(r.status)}</td>
+        <td>${escapeHtml(r.lastTested ?? '—')}</td>
+        <td>${escapeHtml(r.reporter ?? '—')}</td>
+      </tr>
+    `).join('')
+
+    tbody.querySelectorAll('tr').forEach((tr, i) => {
+      const row = rows[i]
+      const activate = () => openDetail(row, tr)
+      tr.addEventListener('click', activate)
+      tr.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate() } })
+    })
+  }
+
+  function openDetail(row, tr) {
+    if (selectedRow) selectedRow.classList.remove('selected')
+    selectedRow = tr
+    tr.classList.add('selected')
+
+    document.getElementById('detail-vendor').textContent = row.vendor
+    document.getElementById('detail-model').textContent = row.model
+    document.getElementById('detail-arch').textContent = row.arch
+    document.getElementById('detail-status').textContent = statusBadge(row.status)
+    document.getElementById('detail-wifi').textContent = cellBadge(row.wifi)
+    document.getElementById('detail-gpu').textContent = cellBadge(row.gpu)
+    document.getElementById('detail-tested').textContent = row.lastTested ?? '—'
+    document.getElementById('detail-reporter').textContent = row.reporter ?? '—'
+    document.getElementById('detail-notes').textContent = row.notes ?? 'No notes.'
+    detail.classList.add('open')
+  }
+
+  detailClose.addEventListener('click', () => {
+    detail.classList.remove('open')
+    if (selectedRow) { selectedRow.classList.remove('selected'); selectedRow = null }
+  })
+
+  // Sort on header click
+  document.querySelectorAll('th[data-key]').forEach((th) => {
+    th.addEventListener('click', () => {
+      const key = th.dataset.key
+      if (sortKey === key) {
+        sortDir = sortDir === 'asc' ? 'desc' : 'asc'
+      } else {
+        sortKey = key
+        sortDir = 'asc'
+      }
+      updateSortHeaders()
+      render()
+    })
+  })
+
+  function updateSortHeaders() {
+    document.querySelectorAll('th[data-key]').forEach((th) => {
+      const arrow = th.querySelector('.sort-arrow')
+      if (th.dataset.key === sortKey) {
+        th.setAttribute('aria-sort', sortDir === 'asc' ? 'ascending' : 'descending')
+        arrow.textContent = sortDir === 'asc' ? '↑' : '↓'
+      } else {
+        th.removeAttribute('aria-sort')
+        arrow.textContent = ''
+      }
+    })
+  }
+
+  filterVendor.addEventListener('change', render)
+  filterStatus.addEventListener('change', render)
+  filterArch.addEventListener('change', render)
+  filterSearch.addEventListener('input', render)
+
+  function escapeHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  }
+
+  render()
+</script>
