@@ -1,0 +1,55 @@
+#!/bin/bash
+# PAI Settings — control the opt-in Monero full node.
+set -euo pipefail
+
+STYLE=/etc/pai/wofi-shutdown.css
+WOFI=(wofi --dmenu --cache-file=/dev/null)
+[ -r "$STYLE" ] && WOFI+=(--style "$STYLE")
+
+if ! command -v monerod >/dev/null 2>&1; then
+    zenity --error --title="Monero full node" \
+        --text="monerod is not installed on this image." 2>/dev/null
+    exit 1
+fi
+
+choice=$(printf '%s\n' \
+    "▶️  Start" \
+    "⏹️  Stop" \
+    "ℹ️  Status" \
+    | "${WOFI[@]}" --prompt "Monero full node" --lines 3 --width 380 --height 220 2>/dev/null)
+
+PIDFILE="$HOME/.bitmonero/monerod.pid"
+DATA_DIR="$HOME/.bitmonero"
+mkdir -p "$DATA_DIR"
+
+case "$choice" in
+    *Start*)
+        if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+            zenity --info --text="monerod is already running (pid $(cat "$PIDFILE"))."
+            exit 0
+        fi
+        monerod --detach --data-dir "$DATA_DIR" --pidfile "$PIDFILE" \
+                --non-interactive --log-file "$DATA_DIR/bitmonero.log" \
+                --no-igd --hide-my-port 2>/dev/null || true
+        sleep 1
+        zenity --info --text="monerod started. Logs: $DATA_DIR/bitmonero.log\n\nNote: full sync downloads ~150 GB."
+        ;;
+    *Stop*)
+        if [ -f "$PIDFILE" ]; then
+            kill "$(cat "$PIDFILE")" 2>/dev/null || true
+            rm -f "$PIDFILE"
+            zenity --info --text="monerod stopped."
+        else
+            zenity --info --text="monerod does not appear to be running."
+        fi
+        ;;
+    *Status*)
+        status="not running"
+        if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+            status="running (pid $(cat "$PIDFILE"))"
+        fi
+        info=$(curl -fsSL --max-time 2 http://127.0.0.1:18081/get_info 2>/dev/null || echo "")
+        zenity --info --width=440 --title="monerod" \
+            --text="Status: $status\n\n$info"
+        ;;
+esac
