@@ -1,0 +1,21 @@
+---
+question: "Does it need internet?"
+order: 5
+---
+
+No — PAI is designed to work fully offline.
+
+The AI inference engine (Ollama) runs entirely on your hardware. Once you've downloaded a model, you can disconnect from the internet and keep chatting. Your prompts never leave your machine.
+
+**What needs internet (first time only):**
+- Downloading AI models via `ollama pull <model>` — models are 1–8 GB each
+- Accessing web content in Firefox
+
+**What never needs internet:**
+- Running AI conversations with already-downloaded models
+- Accessing the PAI chat interface at `localhost:8080`
+- Everything else in PAI's default workflow
+
+**With persistence enabled:** download your models once, save them, and they're available offline on every subsequent boot.
+
+**Air-gapped operation:** if you need complete network isolation, PAI works perfectly with the Wi-Fi/Ethernet physically disconnected. The firewall also supports this: all AI services are localhost-only by default.
