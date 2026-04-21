@@ -1,0 +1,41 @@
+#!/bin/bash
+# PAI Settings — power management via swayidle.
+set -euo pipefail
+
+STYLE=/etc/pai/wofi-shutdown.css
+WOFI=(wofi --dmenu --cache-file=/dev/null)
+[ -r "$STYLE" ] && WOFI+=(--style "$STYLE")
+
+CFG_DIR="$HOME/.config/swayidle"
+CFG_FILE="$CFG_DIR/config"
+mkdir -p "$CFG_DIR"
+
+screen_off=$(printf '%s\n' 60 180 300 600 900 1800 never | "${WOFI[@]}" --prompt "Screen off after (seconds)" --lines 7 --width 320 --height 320 2>/dev/null)
+[ -z "$screen_off" ] && exit 0
+
+lock_after=$(printf '%s\n' 120 300 600 900 1800 never | "${WOFI[@]}" --prompt "Lock after (seconds)" --lines 6 --width 320 --height 280 2>/dev/null)
+[ -z "$lock_after" ] && exit 0
+
+lid=$(printf '%s\n' lock suspend ignore | "${WOFI[@]}" --prompt "On lid close" --lines 3 --width 300 --height 180 2>/dev/null)
+[ -z "$lid" ] && exit 0
+
+{
+    echo "# Written by pai-settings-power"
+    [ "$lock_after" != "never" ] && echo "timeout $lock_after 'swaylock -f -c 000000'"
+    [ "$screen_off" != "never" ] && echo "timeout $screen_off 'swaymsg \"output * dpms off\"' resume 'swaymsg \"output * dpms on\"'"
+    case "$lid" in
+        lock)    echo "before-sleep 'swaylock -f -c 000000'" ;;
+        suspend) echo "before-sleep 'systemctl suspend'" ;;
+    esac
+} > "$CFG_FILE"
+
+# Restart user swayidle service if it exists
+if systemctl --user list-unit-files swayidle.service >/dev/null 2>&1; then
+    systemctl --user restart swayidle.service 2>/dev/null || true
+else
+    pkill swayidle 2>/dev/null || true
+    (swayidle -w < "$CFG_FILE" &)
+fi
+
+zenity --info --title="Power" \
+    --text="Screen off: $screen_off s\nLock: $lock_after s\nLid: $lid" 2>/dev/null &
