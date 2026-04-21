@@ -1,0 +1,105 @@
+#!/bin/bash
+# ── PAI Model Picker ─────────────────────────────────────────────────
+# Detects available RAM and suggests the best Ollama model to download.
+# Run on first boot or anytime with: pai-models
+# ─────────────────────────────────────────────────────────────────────
+
+set -euo pipefail
+
+# Colors
+BLUE='\033[1;34m'
+GREEN='\033[1;32m'
+YELLOW='\033[1;33m'
+DIM='\033[2m'
+BOLD='\033[1m'
+RESET='\033[0m'
+
+echo -e "${BLUE}╔══════════════════════════════════════════╗${RESET}"
+echo -e "${BLUE}║         PAI — Model Picker               ║${RESET}"
+echo -e "${BLUE}╚══════════════════════════════════════════╝${RESET}"
+echo ""
+
+# Detect RAM
+TOTAL_RAM_KB=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+TOTAL_RAM_GB=$((TOTAL_RAM_KB / 1024 / 1024))
+AVAIL_RAM_KB=$(grep MemAvailable /proc/meminfo | awk '{print $2}')
+AVAIL_RAM_GB=$((AVAIL_RAM_KB / 1024 / 1024))
+
+echo -e "${DIM}System RAM: ${TOTAL_RAM_GB}GB total, ${AVAIL_RAM_GB}GB available${RESET}"
+echo ""
+
+# Check if Ollama is running
+if ! curl -sf http://localhost:11434/api/version &>/dev/null; then
+    echo -e "${YELLOW}Ollama is not running. Starting it...${RESET}"
+    sudo systemctl start ollama
+    sleep 2
+fi
+
+# Check existing models
+EXISTING=$(ollama list 2>/dev/null | tail -n +2 | awk '{print $1}' || true)
+if [ -n "$EXISTING" ]; then
+    echo -e "${GREEN}Installed models:${RESET}"
+    echo "$EXISTING" | while read -r model; do
+        echo "  ✓ $model"
+    done
+    echo ""
+fi
+
+# Recommend models based on RAM
+echo -e "${BOLD}Recommended models for your system:${RESET}"
+echo ""
+
+if [ "$TOTAL_RAM_GB" -ge 32 ]; then
+    echo -e "  ${GREEN}★ qwen3:14b${RESET}        — Best quality for 32GB (8.5GB download)"
+    echo -e "  ${GREEN}  qwen3:30b${RESET}        — Maximum quality (18GB download)"
+    echo -e "  ${DIM}  qwen3:8b${RESET}         — Fast + capable (4.9GB)"
+    echo -e "  ${DIM}  gemma4:26b${RESET}        — Multimodal (16GB)"
+elif [ "$TOTAL_RAM_GB" -ge 16 ]; then
+    echo -e "  ${GREEN}★ qwen3:8b${RESET}         — Best balance for 16GB (4.9GB download)"
+    echo -e "  ${DIM}  gemma4:e4b${RESET}        — Efficient multimodal (2.5GB)"
+    echo -e "  ${DIM}  qwen3:4b${RESET}         — Faster, lighter (2.5GB)"
+elif [ "$TOTAL_RAM_GB" -ge 8 ]; then
+    echo -e "  ${GREEN}★ qwen3:4b${RESET}         — Best for 8GB (2.5GB download)"
+    echo -e "  ${DIM}  gemma4:e2b${RESET}        — Tiny multimodal (1.5GB)"
+    echo -e "  ${DIM}  qwen3:1.7b${RESET}       — Ultra-fast (1GB)"
+else
+    echo -e "  ${GREEN}★ qwen3:0.6b${RESET}       — Best for 4GB (400MB download)"
+    echo -e "  ${DIM}  functiongemma${RESET}     — Tool calling specialist (150MB)"
+fi
+
+echo ""
+echo -e "${DIM}Specialized models (any RAM):${RESET}"
+echo -e "  ${DIM}  functiongemma${RESET}     — Agent function calling (270M, 150MB)"
+echo -e "  ${DIM}  nomic-embed-text${RESET}  — Text embeddings for knowledge base"
+
+echo ""
+echo -e "${BOLD}To install a model:${RESET}"
+echo -e "  ollama pull qwen3:8b"
+echo ""
+echo -e "${BOLD}To install the recommended model for your system:${RESET}"
+
+if [ "$TOTAL_RAM_GB" -ge 32 ]; then
+    RECOMMENDED="qwen3:14b"
+elif [ "$TOTAL_RAM_GB" -ge 16 ]; then
+    RECOMMENDED="qwen3:8b"
+elif [ "$TOTAL_RAM_GB" -ge 8 ]; then
+    RECOMMENDED="qwen3:4b"
+else
+    RECOMMENDED="qwen3:0.6b"
+fi
+
+echo -e "  ollama pull ${RECOMMENDED}"
+echo ""
+
+# Interactive mode
+read -r -p "Pull ${RECOMMENDED} now? [Y/n] " response
+response=${response:-Y}
+if [[ "$response" =~ ^[Yy]$ ]]; then
+    echo ""
+    echo -e "${BLUE}Downloading ${RECOMMENDED}...${RESET}"
+    ollama pull "$RECOMMENDED"
+    echo ""
+    echo -e "${GREEN}✓ ${RECOMMENDED} installed! Open PAI UI to start chatting.${RESET}"
+else
+    echo -e "${DIM}Skipped. Run 'pai-models' anytime to install models.${RESET}"
+fi
