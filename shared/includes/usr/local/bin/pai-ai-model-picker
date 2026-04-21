@@ -1,0 +1,121 @@
+#!/bin/bash
+# PAI AI model picker — wofi-driven downloader for all non-Ollama models:
+# Whisper.cpp models, Piper voices, ComfyUI SDXL checkpoints, and RAG
+# embeddings (pulled through Ollama's `pull` endpoint).
+#
+# For plain LLMs served by Ollama, use the existing `pai-settings-pull-model`
+# (or `ollama pull`) — this picker handles the other stacks.
+set -euo pipefail
+
+STYLE=/etc/pai/wofi-shutdown.css
+WOFI=(wofi --dmenu --cache-file=/dev/null)
+[ -r "$STYLE" ] && WOFI+=(--style "$STYLE")
+
+pick() {
+    local prompt="$1"; shift
+    printf '%s\n' "$@" | "${WOFI[@]}" --prompt "$prompt" --lines "$#" --width 420 --height $(( $# * 42 + 80 )) 2>/dev/null
+}
+
+notify() {
+    if command -v notify-send >/dev/null 2>&1; then
+        notify-send -t 5000 "PAI Models" "$1"
+    fi
+    echo "$1"
+}
+
+download() {
+    # $1 url, $2 destination
+    mkdir -p "$(dirname "$2")"
+    if [ -f "$2" ]; then
+        notify "Already downloaded: $(basename "$2")"
+        return 0
+    fi
+    notify "Downloading $(basename "$2")..."
+    if curl -fL --progress-bar -o "$2.part" "$1"; then
+        mv "$2.part" "$2"
+        notify "Done: $(basename "$2")"
+    else
+        rm -f "$2.part"
+        notify "Download failed: $1"
+        return 1
+    fi
+}
+
+stack=$(pick "AI model — pick a stack" \
+    "🎙️  Whisper (speech-to-text)" \
+    "🗣️  Piper (text-to-speech)" \
+    "🎨  ComfyUI (image generation)" \
+    "🧭  Ollama embeddings (for RAG)")
+
+case "$stack" in
+    *Whisper*)
+        model=$(pick "Whisper model size" \
+            "tiny.en  (~75 MB, fastest)" \
+            "base.en  (~145 MB, balanced — PAI default)" \
+            "small.en (~465 MB)" \
+            "medium.en (~1.4 GB)" \
+            "large-v3  (~2.9 GB, most accurate)")
+        name="${model%% *}"
+        [ -z "$name" ] && exit 0
+        download \
+            "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-${name}.bin" \
+            "$HOME/.local/share/whisper.cpp/models/ggml-${name}.bin"
+        ;;
+    *Piper*)
+        voice=$(pick "Piper voice" \
+            "en_US-lessac-medium  (PAI default, ~60 MB)" \
+            "en_US-ryan-medium" \
+            "en_US-amy-medium" \
+            "en_GB-alan-medium" \
+            "en_GB-southern_english_female-low")
+        name="${voice%% *}"
+        [ -z "$name" ] && exit 0
+        lang_code="${name%%-*}"
+        # Hugging Face path convention: en/en_US/<speaker>/<quality>
+        speaker_quality="${name#*-}"  # e.g. lessac-medium
+        speaker="${speaker_quality%-*}"
+        quality="${speaker_quality##*-}"
+        base="https://huggingface.co/rhasspy/piper-voices/resolve/main/${lang_code%_*}/${lang_code}/${speaker}/${quality}"
+        download "${base}/${name}.onnx"      "$HOME/.local/share/piper/voices/${name}.onnx"
+        download "${base}/${name}.onnx.json" "$HOME/.local/share/piper/voices/${name}.onnx.json"
+        ;;
+    *ComfyUI*)
+        ck=$(pick "Checkpoint" \
+            "sdxl-turbo  (~6.9 GB, CreativeML RAIL++-M license)" \
+            "sd_xl_base_1.0 (~6.9 GB)")
+        name="${ck%% *}"
+        [ -z "$name" ] && exit 0
+        if ! zenity --question --width=480 \
+            --title="Model license" \
+            --text="This checkpoint is distributed under the CreativeML Open RAIL++-M license. Review the license at huggingface.co before using commercially. Proceed?" 2>/dev/null; then
+            exit 0
+        fi
+        case "$name" in
+            sdxl-turbo)
+                download \
+                    "https://huggingface.co/stabilityai/sdxl-turbo/resolve/main/sd_xl_turbo_1.0_fp16.safetensors" \
+                    "/opt/comfyui/models/checkpoints/sd_xl_turbo_1.0_fp16.safetensors"
+                ;;
+            sd_xl_base_1.0)
+                download \
+                    "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/main/sd_xl_base_1.0.safetensors" \
+                    "/opt/comfyui/models/checkpoints/sd_xl_base_1.0.safetensors"
+                ;;
+        esac
+        ;;
+    *Ollama\ embeddings*)
+        model=$(pick "Embedding model" \
+            "nomic-embed-text  (~275 MB, recommended)" \
+            "mxbai-embed-large (~670 MB)" \
+            "snowflake-arctic-embed (~670 MB)")
+        name="${model%% *}"
+        [ -z "$name" ] && exit 0
+        notify "Pulling $name via Ollama..."
+        if curl -fsN -X POST "http://localhost:11434/api/pull" \
+            -d "{\"model\":\"$name\"}" >/dev/null; then
+            notify "Pulled $name."
+        else
+            notify "Pull failed — is Ollama running?"
+        fi
+        ;;
+esac
