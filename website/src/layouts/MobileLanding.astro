@@ -1,0 +1,126 @@
+---
+import '../styles/global.css'
+import Head from '../components/Head.astro'
+import { getLocale, isRTL } from '../i18n/ui'
+
+interface Props {
+  title?: string
+  description?: string
+  ogImage?: string
+  canonical?: string
+}
+
+const {
+  title = 'PAI — PAI',
+  description = 'A bootable live-USB AI operating system. Run local models, browse privately, and own your compute.',
+  ogImage,
+  canonical,
+} = Astro.props
+
+const locale = getLocale(Astro.url)
+const dir = isRTL(locale) ? 'rtl' : 'ltr'
+---
+
+<!doctype html>
+<html lang={locale} dir={dir}>
+  <head>
+    <Head title={title} description={description} ogImage={ogImage} canonical={canonical} />
+    <!-- Apply reduced-motion pref before first paint to prevent animation flash -->
+    <script is:inline>
+      try {
+        if (localStorage.getItem('pai-reduced-motion') === 'true') {
+          document.documentElement.setAttribute('data-reduced-motion', '')
+        }
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <div class="desktop-banner" role="note" aria-label="Desktop notice">
+      Best experienced on a desktop — visit on a PC to run the live OS →
+    </div>
+
+    <noscript>
+      <div class="noscript-banner" role="note">
+        Interactive desktop requires JavaScript — showing static overview below.
+      </div>
+    </noscript>
+
+    <main id="main-content">
+      <slot />
+    </main>
+  </body>
+</html>
+
+<style>
+  /* Skip link */
+  .skip-link {
+    position: absolute;
+    top: -100%;
+    left: var(--s-2);
+    background: var(--pai-blue);
+    color: var(--bg);
+    padding: var(--s-1) var(--s-3);
+    border-radius: var(--r-icon);
+    font-weight: 600;
+    font-size: 0.875rem;
+    z-index: 9999;
+    text-decoration: none;
+    transition: top var(--motion-duration) var(--motion-easing);
+  }
+
+  .skip-link:focus {
+    top: var(--s-2);
+  }
+
+  /* "Visit on desktop" banner — mobile-only */
+  .desktop-banner {
+    display: none;
+    background: var(--bg-elev);
+    border-bottom: 1px solid var(--border);
+    color: var(--fg-muted);
+    font-size: 0.8125rem;
+    text-align: center;
+    padding: var(--s-2) var(--s-5);
+  }
+
+  @media (max-width: 767px) {
+    .desktop-banner {
+      display: block;
+    }
+  }
+
+  @media (any-pointer: coarse) {
+    .desktop-banner {
+      display: block;
+    }
+  }
+
+  /* No-JS banner */
+  .noscript-banner {
+    background: color-mix(in srgb, var(--pai-yellow) 12%, var(--bg-elev));
+    border-bottom: 1px solid color-mix(in srgb, var(--pai-yellow) 30%, var(--border));
+    color: var(--fg);
+    font-size: 0.875rem;
+    text-align: center;
+    padding: var(--s-2) var(--s-5);
+  }
+
+  main {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 0 var(--s-5);
+  }
+
+  @media (max-width: 600px) {
+    main {
+      padding: 0 var(--s-4);
+    }
+  }
+</style>
+
+<script>
+  import { initSiteMenu } from '../shell/site-menu.ts'
+  initSiteMenu()
+</script>
