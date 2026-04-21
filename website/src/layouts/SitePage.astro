@@ -1,0 +1,127 @@
+---
+import '../styles/global.css'
+import Head from '../components/Head.astro'
+import { getLocale, isRTL } from '../i18n/ui'
+
+interface Props {
+  title: string
+  description: string
+  ogImage?: string
+  canonical?: string
+  active?: 'home' | 'how' | 'install' | 'docs' | 'support' | 'news'
+}
+
+const { title, description, ogImage, canonical, active } = Astro.props
+const locale = getLocale(Astro.url)
+const dir = isRTL(locale) ? 'rtl' : 'ltr'
+
+const nav = [
+  { id: 'home',    label: 'Home',           href: '/' },
+  { id: 'how',     label: 'How PAI works',  href: '/how-pai-works' },
+  { id: 'install', label: 'Install PAI',    href: '/install' },
+  { id: 'docs',    label: 'Documentation',  href: 'https://docs.pai.direct', external: true },
+  { id: 'support', label: 'Support',        href: '/support' },
+  { id: 'news',    label: 'News',           href: '/news' },
+]
+---
+
+<!doctype html>
+<html lang={locale} dir={dir}>
+  <head>
+    <Head title={title} description={description} ogImage={ogImage} canonical={canonical} />
+  </head>
+  <body class="site">
+    <a href="#main" class="skip-link">Skip to main content</a>
+
+    <header class="site-topbar" role="banner">
+      <div class="site-container site-topbar__inner">
+        <a href="/" class="site-brand" aria-label="PAI home">
+          <img src="/logo/pai-logo.png" alt="" width="32" height="32" />
+          <span>PAI</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary">
+          {nav.map(link => (
+            <a
+              href={link.href}
+              aria-current={active === link.id ? 'page' : undefined}
+              target={link.external ? '_blank' : undefined}
+              rel={link.external ? 'noreferrer' : undefined}
+            >
+              {link.label}{link.external ? ' ↗' : ''}
+            </a>
+          ))}
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" class="site-main site-container">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-container">
+        <p>
+          PAI is free software, released under the GPLv3.
+          Source on <a href="https://github.com/nirholas/pai" target="_blank" rel="noreferrer">GitHub ↗</a>.
+        </p>
+      </div>
+    </footer>
+
+    <style>
+      .site { background: #0b0b12; color: #e0e0e0; min-height: 100vh; display: flex; flex-direction: column; }
+      .site-container { max-width: 1080px; margin: 0 auto; padding: 0 24px; width: 100%; }
+
+      .skip-link {
+        position: absolute; top: -100%; left: 12px;
+        background: #7aa2f7; color: #0b0b12; padding: 6px 12px;
+        border-radius: 6px; font-weight: 600; z-index: 9999; text-decoration: none;
+      }
+      .skip-link:focus { top: 12px; }
+
+      .site-topbar {
+        background: rgba(15, 15, 26, 0.9);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        position: sticky; top: 0; z-index: 100;
+      }
+      .site-topbar__inner {
+        display: flex; align-items: center; gap: 32px;
+        padding-top: 14px; padding-bottom: 14px;
+      }
+      .site-brand {
+        display: inline-flex; align-items: center; gap: 10px;
+        color: #fff; font-weight: 700; text-decoration: none; font-size: 16px;
+      }
+      .site-brand img { border-radius: 6px; }
+
+      .site-nav { display: flex; gap: 22px; flex-wrap: wrap; }
+      .site-nav a {
+        color: #c0c0d0; text-decoration: none; font-size: 14px; font-weight: 500;
+        padding: 4px 0; border-bottom: 2px solid transparent; transition: color 0.15s, border-color 0.15s;
+      }
+      .site-nav a:hover { color: #fff; }
+      .site-nav a[aria-current="page"] { color: #fff; border-bottom-color: #7aa2f7; }
+
+      .site-main {
+        flex: 1; padding-top: 48px; padding-bottom: 80px;
+      }
+
+      .site-footer {
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+        padding: 24px 0; color: #888; font-size: 13px;
+      }
+      .site-footer a { color: #7aa2f7; }
+
+      @media (max-width: 720px) {
+        .site-topbar__inner { flex-direction: column; align-items: flex-start; gap: 12px; }
+        .site-nav { gap: 14px; }
+        .site-nav a { font-size: 13px; }
+      }
+    </style>
+
+    <script>
+      import { initSiteMenu } from '../shell/site-menu.ts'
+      initSiteMenu()
+    </script>
+  </body>
+</html>
