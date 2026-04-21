@@ -1,0 +1,122 @@
+/* ── Desktop container ─────────────────────────────────────────────────── */
+
+.desktop {
+  position: absolute;
+  inset: 0;
+  outline: none;
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Centered watermark logo */
+.desktop__watermark {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.desktop__watermark img {
+  width: 36vw;
+  max-width: 520px;
+  opacity: 0.06;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Layer that holds icon elements */
+.desktop__icons {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* Marquee selection rectangle */
+.desktop__marquee {
+  position: absolute;
+  display: none;
+  background: var(--selection-bg);
+  border: 1px solid var(--selection-border);
+  z-index: 2;
+  pointer-events: none;
+  border-radius: 2px;
+}
+
+/* ── Desktop icon ──────────────────────────────────────────────────────── */
+
+.desktop-icon {
+  position: absolute;
+  width: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 6px;
+  border-radius: var(--r-icon);
+  border: 1px solid transparent;
+  cursor: default;
+  transition:
+    background var(--motion-duration) var(--motion-easing),
+    border-color var(--motion-duration) var(--motion-easing);
+}
+
+.desktop-icon:hover {
+  background: rgba(122, 162, 247, 0.1);
+  border-color: rgba(122, 162, 247, 0.2);
+}
+
+.desktop-icon:focus-visible {
+  outline: none;
+  background: var(--icon-selected);
+  border-color: var(--pai-blue);
+  box-shadow: 0 0 0 1px var(--pai-blue);
+}
+
+.desktop-icon.selected {
+  background: var(--icon-selected);
+  border-color: var(--pai-blue);
+}
+
+.desktop-icon.dragging {
+  opacity: 0.6;
+  cursor: grabbing;
+  z-index: 100;
+  transition: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+/* Glyph area */
+.desktop-icon__glyph {
+  width: 40px;
+  height: 40px;
+  color: var(--pai-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Label underneath */
+.desktop-icon__label {
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  line-height: 1.2;
+  color: var(--fg);
+  text-align: center;
+  max-width: 76px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  /* Subtle text shadow so label is readable over any wallpaper */
+  text-shadow:
+    1px  1px 0 var(--bg),
+    -1px  1px 0 var(--bg),
+    1px -1px 0 var(--bg),
+    -1px -1px 0 var(--bg),
+    0  2px 4px rgba(0, 0, 0, 0.7);
+}
