@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# Waybar custom module for Ollama status.
+# Output: {"text": "...", "tooltip": "...", "class": "..."}
+#
+# To avoid visible flicker on every poll, we cache the last emitted
+# line in $XDG_RUNTIME_DIR (or /tmp) and re-emit it unchanged when the
+# underlying state hasn't moved. Waybar will still consume one line
+# per poll — it just gets the same bytes until something actually
+# changes. Fixes KNOWN_ISSUES "Waybar Ollama status widget flicker".
+set -euo pipefail
+
+RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp}"
+CACHE="${RUNTIME_DIR}/pai-waybar-ollama.last"
+
+emit() {
+    # If the new output matches the cached line byte-for-byte, echo
+    # the cache (identical) — Waybar treats "unchanged line" as a
+    # cheap redraw. If it differs, update the cache and emit.
+    local new="$1"
+    if [ -r "$CACHE" ] && [ "$(cat "$CACHE")" = "$new" ]; then
+        printf '%s\n' "$new"
+        return
+    fi
+    printf '%s\n' "$new" | tee "$CACHE"
+}
+
+if ! curl -sf http://localhost:11434/api/version >/dev/null 2>&1; then
+    emit '{"text": "⏳ Ollama starting...", "class": "loading"}'
+    exit 0
+fi
+
+TAGS=$(curl -sf http://localhost:11434/api/tags 2>/dev/null || echo '{}')
+COUNT=$(printf '%s' "$TAGS" | python3 -c "import sys,json
+try:
+    print(len(json.load(sys.stdin).get('models',[])))
+except Exception:
+    print(0)" 2>/dev/null || echo 0)
+
+RUNNING=$(curl -sf http://localhost:11434/api/ps 2>/dev/null || echo '{}')
+ACTIVE=$(printf '%s' "$RUNNING" | python3 -c "import sys,json
+try:
+    models = json.load(sys.stdin).get('models',[])
+    print(models[0].get('name','') if models else '')
+except Exception:
+    print('')" 2>/dev/null || echo "")
+
+if [ -n "$ACTIVE" ]; then
+    emit "{\"text\": \"🟢 $ACTIVE\", \"tooltip\": \"Active: $ACTIVE | $COUNT models installed\", \"class\": \"active\"}"
+else
+    emit "{\"text\": \"🟡 $COUNT models\", \"tooltip\": \"Ollama ready | $COUNT models installed\", \"class\": \"idle\"}"
+fi
