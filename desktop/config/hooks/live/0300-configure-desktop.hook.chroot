@@ -1,0 +1,348 @@
+#!/bin/bash
+set -euo pipefail
+
+# Configure desktop environment
+# Runs inside the chroot during ISO build.
+# Sets up sway (Wayland compositor) as default session.
+
+echo "[pai] Configuring desktop..."
+
+# Sway config
+mkdir -p /etc/skel/.config/sway
+
+cat > /etc/skel/.config/sway/config <<'SWAYCFG'
+# PAI Sway config
+
+# Use Alt as modifier
+set $mod Mod1
+
+# Terminal
+bindsym $mod+Return exec foot
+
+# Close window
+bindsym $mod+F4 kill
+
+# Lock screen
+bindsym $mod+l exec swaylock -f -c 000000
+
+# Launcher (dmenu-like via foot)
+bindsym $mod+d exec foot --app-id=launcher
+
+# Settings menu
+bindsym $mod+s exec pai-settings
+
+# Load user config.d overrides (keyboard, pointer, power, wallpaper, etc.)
+include ~/.config/sway/config.d/*.conf
+
+
+# Focus
+bindsym $mod+Left focus left
+bindsym $mod+Down focus down
+bindsym $mod+Up focus up
+bindsym $mod+Right focus right
+
+# Move windows
+bindsym $mod+Shift+Left move left
+bindsym $mod+Shift+Down move down
+bindsym $mod+Shift+Up move up
+bindsym $mod+Shift+Right move right
+
+# Workspaces
+bindsym $mod+1 workspace number 1
+bindsym $mod+2 workspace number 2
+bindsym $mod+3 workspace number 3
+bindsym $mod+Shift+1 move container to workspace number 1
+bindsym $mod+Shift+2 move container to workspace number 2
+bindsym $mod+Shift+3 move container to workspace number 3
+
+# Resize mode
+mode "resize" {
+    bindsym Left resize shrink width 10px
+    bindsym Right resize grow width 10px
+    bindsym Up resize shrink height 10px
+    bindsym Down resize grow height 10px
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+bindsym $mod+r mode "resize"
+
+# Wallpaper
+output * bg /usr/share/backgrounds/pai-wallpaper.svg fill #0f0f1a
+
+# Status bar
+bar {
+    swaybar_command waybar
+}
+
+# Gaps and borders
+gaps inner 4
+default_border pixel 2
+
+# Bitcoin wallet
+bindsym $mod+b exec electrum
+
+# Monero wallet
+bindsym $mod+Shift+w exec sh -c "command -v feather-wallet &>/dev/null && feather-wallet || foot -e sh -c 'echo Feather Wallet not installed. Install via: sudo apt install feather-wallet ; read -r -p Press Enter...'"
+
+# Media player
+bindsym $mod+m exec audacious
+
+# Media keys (for keyboards with media buttons)
+bindsym XF86AudioPlay exec playerctl play-pause
+bindsym XF86AudioNext exec playerctl next
+bindsym XF86AudioPrev exec playerctl previous
+bindsym XF86AudioRaiseVolume exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+
+bindsym XF86AudioLowerVolume exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-
+bindsym XF86AudioMute exec wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
+
+# Git UI
+bindsym $mod+g exec sh -c "command -v lazygit &>/dev/null && foot -e lazygit || foot -e sh -c 'echo lazygit not installed. ; read -r -p Press Enter...'"
+
+# Privacy apps ($mod+Shift+t is used by pai-speak; Tor Browser moved to $mod+Shift+F2)
+bindsym $mod+Shift+F2 exec torbrowser-launcher
+bindsym $mod+Shift+o exec onionshare
+# Security tools
+bindsym $mod+k exec keepassxc
+
+# Productivity (Wave 2)
+bindsym $mod+n exec sh -c "command -v joplin >/dev/null && joplin || zenity --error --text='Joplin not installed'"
+bindsym $mod+Shift+l exec libreoffice --show
+bindsym $mod+c exec sh -c "command -v codium >/dev/null && codium || zenity --error --text='VSCodium not installed'"
+bindsym $mod+Shift+c exec geany
+bindsym $mod+e exec thunderbird
+bindsym $mod+Shift+s exec sh -c "command -v signal-desktop >/dev/null && signal-desktop || zenity --error --text='Signal not available on this architecture'"
+bindsym $mod+Shift+m exec sh -c "command -v element-desktop >/dev/null && element-desktop || zenity --error --text='Element not installed'"
+bindsym $mod+Shift+b exec sh -c "command -v bruno >/dev/null && bruno || zenity --error --text='Bruno not installed'"
+
+# Creative (Wave 3). $mod+b stays bound to electrum; Blender goes to $mod+F1
+# to avoid collision. $mod+g stays bound to lazygit; GIMP goes to $mod+Shift+g.
+bindsym $mod+Shift+g exec gimp
+bindsym $mod+Shift+k exec krita
+bindsym $mod+i exec inkscape
+bindsym $mod+v exec kdenlive
+bindsym $mod+Shift+v exec shotcut
+bindsym $mod+a exec audacity
+bindsym $mod+Shift+a exec strawberry
+bindsym $mod+p exec shotwell
+bindsym $mod+F1 exec blender
+
+# AI stack (Wave 4)
+bindsym $mod+Shift+i exec pai-comfyui
+bindsym $mod+t exec pai-transcribe paste
+bindsym $mod+Shift+t exec sh -c "wl-paste | pai-speak"
+
+# Launch Firefox on startup pointing at PAI
+exec sleep 3 && firefox-esr http://localhost:8080
+SWAYCFG
+
+# Ollama status script for waybar
+cat > /usr/local/bin/pai-waybar-ollama <<'OLLAMASCRIPT'
+#!/bin/bash
+# Waybar custom module for Ollama status
+# Output format: {"text": "...", "tooltip": "...", "class": "..."}
+
+if ! curl -sf http://localhost:11434/api/version &>/dev/null; then
+    echo '{"text": "⏳ Ollama starting...", "class": "loading"}'
+    exit 0
+fi
+
+# Get loaded models
+TAGS=$(curl -sf http://localhost:11434/api/tags 2>/dev/null)
+COUNT=$(echo "$TAGS" | python3 -c "import sys,json; print(len(json.load(sys.stdin).get('models',[])))" 2>/dev/null || echo 0)
+
+# Get running models (currently loaded in memory)
+RUNNING=$(curl -sf http://localhost:11434/api/ps 2>/dev/null)
+ACTIVE=$(echo "$RUNNING" | python3 -c "
+import sys,json
+models = json.load(sys.stdin).get('models',[])
+if models:
+    print(models[0].get('name',''))
+else:
+    print('')
+" 2>/dev/null || echo "")
+
+if [ -n "$ACTIVE" ]; then
+    echo "{\"text\": \"🟢 $ACTIVE\", \"tooltip\": \"Active: $ACTIVE | $COUNT models installed\", \"class\": \"active\"}"
+else
+    echo "{\"text\": \"🟡 $COUNT models\", \"tooltip\": \"Ollama ready | $COUNT models installed\", \"class\": \"idle\"}"
+fi
+OLLAMASCRIPT
+chmod +x /usr/local/bin/pai-waybar-ollama
+
+# waybar config: minimal status bar with Ollama module
+mkdir -p /etc/skel/.config/waybar
+cat > /etc/skel/.config/waybar/config <<'EOF'
+{
+    "layer": "top",
+    "position": "top",
+    "height": 30,
+    "modules-left": ["custom/logo", "custom/ai-status", "custom/privacy-posture"],
+    "modules-center": [],
+    "modules-right": ["custom/media", "custom/crypto", "network", "cpu", "memory", "clock", "custom/settings"],
+    "custom/logo": {
+        "format": " PAI",
+        "tooltip": false
+    },
+    "custom/ai-status": {
+        "exec": "/usr/local/bin/pai-waybar-ai-status",
+        "return-type": "json",
+        "interval": 5,
+        "tooltip": true
+    },
+    "custom/privacy-posture": {
+        "exec": "/usr/local/bin/pai-waybar-privacy-posture",
+        "return-type": "json",
+        "interval": 10,
+        "tooltip": true,
+        "on-click": "pai-privacy"
+    },
+    "clock": {
+        "format": "{:%H:%M}"
+    },
+    "cpu": {
+        "format": " {usage}%"
+    },
+    "memory": {
+        "format": " {percentage}%"
+    },
+    "custom/crypto": {
+        "exec": "/usr/local/bin/pai-waybar-crypto",
+        "return-type": "json",
+        "interval": 60,
+        "tooltip": true
+    },
+    "custom/media": {
+        "format": " {}",
+        "interval": 5,
+        "exec": "playerctl metadata --format '{{artist}} - {{title}}' 2>/dev/null || echo ''",
+        "max-length": 30,
+        "on-click": "playerctl play-pause"
+    },
+    "network": {
+        "format-wifi": " {signalStrength}%",
+        "format-ethernet": " ETH",
+        "format-disconnected": " Off"
+    },
+    "custom/settings": {
+        "format": "⚙",
+        "tooltip-format": "Settings (Super+S)",
+        "on-click": "pai-settings"
+    }
+}
+EOF
+
+cat > /etc/skel/.config/waybar/style.css <<'EOF'
+* {
+    font-family: "Noto Sans", sans-serif;
+    font-size: 13px;
+    color: #e0e0e0;
+}
+window#waybar {
+    background-color: rgba(20, 20, 30, 0.95);
+}
+#custom-logo {
+    font-weight: bold;
+    padding: 0 12px;
+    color: #7aa2f7;
+}
+#custom-ai-status {
+    padding: 0 8px;
+}
+#custom-ai-status.active {
+    color: #4ade80;
+}
+#custom-ai-status.idle {
+    color: #fbbf24;
+}
+#custom-ai-status.down {
+    color: #888888;
+}
+#custom-privacy-posture {
+    padding: 0 8px;
+}
+#custom-privacy-posture.active {
+    color: #4ade80;
+}
+#custom-privacy-posture.idle {
+    color: #7aa2f7;
+}
+#custom-privacy-posture.warn {
+    color: #fbbf24;
+}
+#custom-crypto {
+    padding: 0 10px;
+    font-weight: bold;
+}
+#custom-crypto.up {
+    color: #4ade80;
+}
+#custom-crypto.down {
+    color: #f87171;
+}
+#custom-crypto.error {
+    color: #888888;
+}
+#custom-media {
+    padding: 0 8px;
+    color: #7aa2f7;
+}
+#custom-settings {
+    padding: 0 12px;
+    font-size: 15px;
+    color: #c084fc;
+}
+#custom-settings:hover {
+    color: #e0e0e0;
+}
+EOF
+
+# GTK3 dark theme
+mkdir -p /etc/skel/.config/gtk-3.0
+cat > /etc/skel/.config/gtk-3.0/settings.ini <<'EOF'
+[Settings]
+gtk-theme-name=Adwaita-dark
+gtk-icon-theme-name=Adwaita
+gtk-font-name=Noto Sans 10
+gtk-cursor-theme-name=Adwaita
+gtk-application-prefer-dark-theme=true
+EOF
+
+# GTK2 (for older apps like pcmanfm)
+cat > /etc/skel/.gtkrc-2.0 <<'EOF'
+gtk-theme-name="Adwaita-dark"
+gtk-icon-theme-name="Adwaita"
+gtk-font-name="Noto Sans 10"
+EOF
+
+# Set environment variable for Qt apps
+echo 'export QT_QPA_PLATFORMTHEME=gtk2' >> /etc/skel/.profile
+
+# Foot terminal theme (matches PAI color palette)
+mkdir -p /etc/skel/.config/foot
+cat > /etc/skel/.config/foot/foot.ini <<'EOF'
+[main]
+font=monospace:size=11
+pad=8x8
+
+[colors]
+background=0f0f1a
+foreground=e0e0e0
+regular0=1a1a2e
+regular1=f87171
+regular2=4ade80
+regular3=fbbf24
+regular4=7aa2f7
+regular5=c084fc
+regular6=22d3ee
+regular7=e0e0e0
+bright0=2a2a3e
+bright1=fca5a5
+bright2=86efac
+bright3=fde68a
+bright4=93c5fd
+bright5=d8b4fe
+bright6=67e8f9
+bright7=ffffff
+EOF
+
+echo "[pai] Desktop configured."
