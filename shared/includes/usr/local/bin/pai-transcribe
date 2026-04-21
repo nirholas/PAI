@@ -1,0 +1,109 @@
+#!/bin/bash
+# PAI Transcribe — local speech-to-text via whisper.cpp.
+#
+# Usage:
+#   pai-transcribe record                  # fixed-length record + print
+#   pai-transcribe file <path>             # transcribe an audio file
+#   pai-transcribe paste                   # record + copy transcript to clipboard
+#   pai-transcribe --model <name> <cmd>    # model: tiny|base|small|medium|large-v3 (+.en)
+#
+# Models live under ~/.local/share/whisper.cpp/models/ggml-<name>.bin and
+# are downloaded on demand by `pai-ai-model-picker`.
+set -euo pipefail
+
+DEFAULT_MODEL="base.en"
+DEFAULT_DURATION=10   # seconds for `record`/`paste`
+
+MODEL_NAME="$DEFAULT_MODEL"
+while [ "${1:-}" = "--model" ]; do
+    MODEL_NAME="${2:-}"
+    shift 2
+done
+
+MODEL_PATH="$HOME/.local/share/whisper.cpp/models/ggml-${MODEL_NAME}.bin"
+
+find_binary() {
+    if command -v whisper-cpp-main >/dev/null 2>&1; then
+        echo whisper-cpp-main
+    elif [ -x /opt/whisper.cpp/main ]; then
+        echo /opt/whisper.cpp/main
+    else
+        echo ""
+    fi
+}
+
+WHISPER="$(find_binary)"
+if [ -z "$WHISPER" ]; then
+    echo "whisper.cpp is not installed. Expected /opt/whisper.cpp/main." >&2
+    exit 1
+fi
+
+require_model() {
+    if [ ! -f "$MODEL_PATH" ]; then
+        cat >&2 <<EOF
+Model not found: $MODEL_PATH
+
+Download it with:  pai-ai-model-picker
+or manually:       mkdir -p "$(dirname "$MODEL_PATH")" && \\
+                   curl -L -o "$MODEL_PATH" \\
+                     https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-${MODEL_NAME}.bin
+EOF
+        exit 1
+    fi
+}
+
+record_to_wav() {
+    local wav="$1" dur="${2:-$DEFAULT_DURATION}"
+    echo "Recording ${dur}s..." >&2
+    if command -v pw-record >/dev/null 2>&1; then
+        timeout "${dur}s" pw-record --rate=16000 --format=s16 --channels=1 "$wav" || true
+    elif command -v arecord >/dev/null 2>&1; then
+        arecord -q -f S16_LE -r 16000 -c 1 -d "$dur" "$wav"
+    else
+        echo "No recorder found (pw-record or arecord)." >&2
+        exit 1
+    fi
+}
+
+transcribe() {
+    local wav="$1"
+    require_model
+    "$WHISPER" -m "$MODEL_PATH" -f "$wav" -nt -np 2>/dev/null
+}
+
+case "${1:-}" in
+    record)
+        tmp=$(mktemp --suffix=.wav /tmp/pai-rec-XXXXXX)
+        trap 'rm -f "$tmp"' EXIT
+        record_to_wav "$tmp"
+        transcribe "$tmp"
+        ;;
+    file)
+        [ -f "${2:-}" ] || { echo "File not found: ${2:-}" >&2; exit 1; }
+        transcribe "$2"
+        ;;
+    paste)
+        tmp=$(mktemp --suffix=.wav /tmp/pai-rec-XXXXXX)
+        trap 'rm -f "$tmp"' EXIT
+        if command -v notify-send >/dev/null 2>&1; then
+            notify-send -t 3000 "PAI Transcribe" "Recording ${DEFAULT_DURATION}s..."
+        fi
+        record_to_wav "$tmp"
+        out=$(transcribe "$tmp")
+        if command -v wl-copy >/dev/null 2>&1; then
+            printf '%s' "$out" | wl-copy
+            if command -v notify-send >/dev/null 2>&1; then
+                notify-send -t 3000 "PAI Transcribe" "Transcript copied to clipboard."
+            fi
+        else
+            printf '%s\n' "$out"
+        fi
+        ;;
+    ""|help|-h|--help)
+        sed -n '2,11p' "$0"
+        ;;
+    *)
+        echo "Unknown command: $1" >&2
+        exit 2
+        ;;
+esac
