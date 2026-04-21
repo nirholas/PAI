@@ -1,0 +1,25 @@
+#!/bin/bash
+# ── Install Bruno (local-first Postman alternative) ────────────────────
+# Bruno publishes official debs for amd64 and arm64 via its apt repo.
+set -euo pipefail
+
+echo "[pai] Installing Bruno..."
+
+install -d -m 0755 /etc/apt/keyrings
+
+curl -fsSL https://www.usebruno.com/gpg-public.key \
+    | gpg --dearmor -o /etc/apt/keyrings/bruno-archive-keyring.gpg \
+    || { echo "[pai] Bruno key fetch failed — skipping."; exit 0; }
+
+cat > /etc/apt/sources.list.d/bruno.list <<'REPO'
+deb [signed-by=/etc/apt/keyrings/bruno-archive-keyring.gpg] https://debian.usebruno.com/ bruno stable
+REPO
+
+apt-get update
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends bruno \
+    || echo "[pai] Bruno install failed — not fatal."
+
+apt-get clean
+rm -rf /var/lib/apt/lists/*
+
+echo "[pai] Bruno step complete."
