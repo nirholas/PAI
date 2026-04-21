@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+# pai-install-devtools — install dev-language toolchains on demand.
+#
+# Rust, Go, and npm global CLIs are not bundled in the default PAI image
+# to keep the ISO small. Run this to install them when you need them.
+
+set -euo pipefail
+
+GO_VERSION="1.23.4"
+
+usage() {
+    cat <<EOF
+Usage: pai-install-devtools [TARGET...]
+
+Targets:
+  all           Install everything (default)
+  rust          Rust via rustup
+  go            Go ${GO_VERSION}
+  npm-globals   yarn, pnpm, typescript, ts-node, nodemon
+
+Examples:
+  pai-install-devtools
+  pai-install-devtools rust go
+  pai-install-devtools npm-globals
+EOF
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+    usage; exit 0
+fi
+
+if [[ $EUID -ne 0 ]]; then
+    exec sudo -E "$0" "$@"
+fi
+
+install_rust() {
+    echo "[pai] Installing Rust..."
+    export RUSTUP_HOME=/opt/rustup
+    export CARGO_HOME=/opt/cargo
+    if curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+        | sh -s -- -y --no-modify-path --profile minimal; then
+        ln -sf /opt/cargo/bin/rustc /usr/local/bin/rustc
+        ln -sf /opt/cargo/bin/cargo /usr/local/bin/cargo
+        ln -sf /opt/cargo/bin/rustup /usr/local/bin/rustup
+        cat > /etc/profile.d/pai-rust.sh <<'EOF'
+export RUSTUP_HOME=/opt/rustup
+export CARGO_HOME=/opt/cargo
+export PATH=$PATH:/opt/cargo/bin
+EOF
+        echo "[pai] Rust $(rustc --version | awk '{print $2}') installed."
+    else
+        echo "[pai] ERROR: Rust installation failed." >&2
+        return 1
+    fi
+}
+
+install_go() {
+    echo "[pai] Installing Go ${GO_VERSION}..."
+    local arch
+    arch="$(dpkg --print-architecture)"
+    case "$arch" in amd64|arm64) ;; *) arch="amd64" ;; esac
+    local tmp
+    tmp="$(mktemp)"
+    if curl -fSL -o "$tmp" "https://go.dev/dl/go${GO_VERSION}.linux-${arch}.tar.gz"; then
+        rm -rf /usr/local/go
+        tar -C /usr/local -xzf "$tmp"
+        rm -f "$tmp"
+        cat > /etc/profile.d/pai-go.sh <<'EOF'
+export PATH=$PATH:/usr/local/go/bin
+export GOPATH=$HOME/go
+export PATH=$PATH:$GOPATH/bin
+EOF
+        echo "[pai] Go $(/usr/local/go/bin/go version | awk '{print $3}') installed."
+    else
+        rm -f "$tmp"
+        echo "[pai] ERROR: Go download failed." >&2
+        return 1
+    fi
+}
+
+install_npm_globals() {
+    echo "[pai] Installing npm global CLIs..."
+    if ! command -v npm >/dev/null 2>&1; then
+        echo "[pai] ERROR: npm not found. Node.js should be preinstalled." >&2
+        return 1
+    fi
+    npm install -g yarn pnpm typescript ts-node nodemon
+    echo "[pai] npm globals installed."
+}
+
+targets=("$@")
+[[ ${#targets[@]} -eq 0 ]] && targets=(all)
+
+rc=0
+for t in "${targets[@]}"; do
+    case "$t" in
+        all)         install_rust || rc=1; install_go || rc=1; install_npm_globals || rc=1 ;;
+        rust)        install_rust || rc=1 ;;
+        go)          install_go || rc=1 ;;
+        npm-globals) install_npm_globals || rc=1 ;;
+        *)           echo "Unknown target: $t" >&2; usage; exit 2 ;;
+    esac
+done
+
+exit "$rc"
