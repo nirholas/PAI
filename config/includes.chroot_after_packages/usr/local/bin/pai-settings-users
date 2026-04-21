@@ -1,0 +1,28 @@
+#!/bin/bash
+# PAI Settings — user account utilities.
+set -euo pipefail
+
+user=$(whoami)
+
+pw1=$(zenity --password --title="Change password for $user" --text="New password" 2>/dev/null) || exit 0
+pw2=$(zenity --password --title="Change password for $user" --text="Confirm new password" 2>/dev/null) || exit 0
+
+if [ "$pw1" != "$pw2" ]; then
+    zenity --error --text="Passwords do not match." 2>/dev/null
+    exit 1
+fi
+
+if [ -z "$pw1" ]; then
+    zenity --error --text="Password cannot be empty." 2>/dev/null
+    exit 1
+fi
+
+if printf '%s\n%s\n' "$pw1" "$pw1" | pkexec passwd "$user" >/dev/null 2>&1; then
+    msg="Password updated for $user."
+    if ! findmnt --source /dev/disk/by-label/persistence >/dev/null 2>&1; then
+        msg+="\n\n<b>Heads-up:</b> this is a live system without persistence enabled.\nThe new password will be lost at reboot."
+    fi
+    zenity --info --no-wrap --title="Users" --text="$msg" 2>/dev/null &
+else
+    zenity --error --text="Failed to change password." 2>/dev/null
+fi
