@@ -1,0 +1,98 @@
+/* Calculator app — PAI */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-ui);
+  overflow: hidden;
+  user-select: none;
+}
+
+.calc-root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.calc-display {
+  flex: 0 0 auto;
+  padding: var(--s-4) var(--s-5) var(--s-3);
+  background: var(--bg-elev);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 110px;
+}
+
+.calc-prev {
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  text-align: right;
+  min-height: 1.2em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calc-current {
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 2rem;
+  font-weight: 600;
+  text-align: right;
+  margin-top: var(--s-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-height: 1.2em;
+}
+
+.calc-current.error {
+  color: var(--pai-red);
+}
+
+.calc-keys {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--s-1);
+  padding: var(--s-2);
+}
+
+.calc-key {
+  border: 1px solid var(--border);
+  background: var(--bg-elev);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  border-radius: var(--r-icon);
+  cursor: pointer;
+  transition: background var(--motion-duration) var(--motion-easing),
+              transform 80ms var(--motion-easing);
+  outline: none;
+  padding: 0;
+}
+
+.calc-key:hover { background: color-mix(in srgb, var(--pai-blue) 10%, var(--bg-elev)); }
+.calc-key:active { transform: scale(0.96); }
+.calc-key:focus-visible { outline: 2px solid var(--pai-blue); outline-offset: -2px; }
+
+.calc-key.op { color: var(--pai-blue); }
+.calc-key.fn { color: var(--pai-yellow); font-size: 0.95rem; }
+.calc-key.eq {
+  background: var(--pai-blue);
+  color: var(--bg);
+  font-weight: 700;
+  border-color: var(--pai-blue);
+}
+.calc-key.eq:hover {
+  background: color-mix(in srgb, var(--pai-blue) 85%, #fff);
+}
+
+.calc-key.wide { grid-column: span 2; }
