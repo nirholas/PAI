@@ -1,0 +1,436 @@
+---
+import AppStandalone from '../../layouts/AppStandalone.astro'
+import Head from '../../components/Head.astro'
+
+const PRESS_BOILERPLATE = `PAI
+
+PAI is a bootable live-USB operating system designed for anyone who wants the power of modern AI without surrendering their privacy. Plug it into any x86_64 PC, set the boot order to USB, and within seconds you have a fully functional private AI workstation — no installation, no accounts, no cloud.
+
+Built on Debian 12 "Bookworm" with a Sway + Wayland desktop, PAI ships with Open WebUI and Ollama pre-installed and pre-configured. Visitors to the PAI desktop can chat with locally-running language models (Llama 3, Mistral 7B, Phi-3, and others) through a polished browser-based chat interface — the same experience as leading cloud AI products, minus the privacy trade-off.
+
+Privacy is not an afterthought. PAI is amnesic by design: the entire OS runs in RAM, and every conversation, file, and session is permanently wiped when you shut down or remove the drive. Optional Tor routing anonymizes network traffic. MAC address spoofing prevents device fingerprinting. The root filesystem is read-only to prevent persistent malware.
+
+PAI is free, open source software released under the GNU General Public License v3.0. Contributions welcome at github.com/nirholas/pai.
+
+For press inquiries: press@pai.direct`
+
+const blurbs = {
+  '8-word': 'PAI: private AI, bootable from any USB drive.',
+  '1-sentence':
+    'PAI is a bootable live-USB operating system that runs a private, offline AI assistant — 100% locally, with no cloud, no accounts, and no data leaving your machine.',
+  '1-paragraph':
+    'PAI is a Debian-based live-USB OS that gives you a complete AI workstation in your pocket. Boot from USB on any x86_64 PC, and you get a Sway + Wayland desktop, Open WebUI, and Ollama pre-configured with Llama, Mistral, and Phi models — all running locally on your hardware. PAI is amnesic by design: everything runs in RAM and is wiped on shutdown, so your conversations leave no trace. No cloud, no API keys, no surveillance.',
+  '1-page': PRESS_BOILERPLATE,
+}
+
+const palette = [
+  { name: 'Background', hex: '#0f0f1a', role: 'Main background' },
+  { name: 'Accent Blue', hex: '#7aa2f7', role: 'Links, highlights' },
+  { name: 'Accent Green', hex: '#4ade80', role: 'Terminal, success states' },
+  { name: 'Accent Amber', hex: '#fbbf24', role: 'Warnings, replay banner' },
+  { name: 'Text Primary', hex: '#e0e0e0', role: 'Body text' },
+  { name: 'Text Muted', hex: '#888888', role: 'Secondary text' },
+  { name: 'Border Subtle', hex: '#1a1a2e', role: 'Card borders' },
+]
+
+const fonts = [
+  { name: 'UI', stack: 'system-ui, sans-serif', note: 'All body copy and UI elements' },
+  { name: 'Monospace', stack: "'Monaco', 'Courier New', monospace", note: 'Terminal, code blocks' },
+]
+
+const logos = [
+  { label: 'PNG (color)', file: '/logo/pai-logo.png', mime: 'image/png' },
+  { label: 'SVG (vector)', file: '/logo/pai-logo.svg', mime: 'image/svg+xml' },
+  { label: 'On black (JPG)', file: '/logo/pai-logo-onblack.jpg', mime: 'image/jpeg' },
+  { label: 'Favicon 256px', file: '/logo/favicon-256.png', mime: 'image/png' },
+  { label: 'Favicon 32px', file: '/logo/favicon-32.png', mime: 'image/png' },
+]
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <Head
+      title="Press Kit — PAI"
+      description="PAI press kit — project summary, logos, screenshots, and contact for journalists and reviewers covering private, offline AI."
+      ogImage="/og/press.png"
+    />
+    <link rel="icon" type="image/svg+xml" href="/icons/press.svg" />
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { height: 100%; font-family: system-ui, sans-serif; background: #0f0f1a; color: #e0e0e0; }
+      body { display: flex; flex-direction: column; overflow: hidden; }
+      #app-root { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+
+      /* ── Layout ── */
+      .press-shell { display: flex; flex: 1; overflow: hidden; }
+
+      /* ── Sidebar nav ── */
+      .press-nav {
+        width: 180px;
+        flex-shrink: 0;
+        background: rgba(8,8,18,0.85);
+        border-right: 1px solid rgba(255,255,255,0.07);
+        padding: 0.875rem 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.125rem;
+        overflow-y: auto;
+      }
+      .press-nav-section {
+        padding: 0.5rem 0.875rem 0.25rem;
+        font-size: 0.6875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #555;
+      }
+      .press-nav-item {
+        display: block;
+        padding: 0.375rem 0.875rem;
+        font-size: 0.8125rem;
+        color: #999;
+        text-decoration: none;
+        transition: color 0.12s, background 0.12s;
+        cursor: pointer;
+        border: none;
+        background: none;
+        width: 100%;
+        text-align: left;
+      }
+      .press-nav-item:hover { color: #e0e0e0; background: rgba(255,255,255,0.04); }
+      .press-nav-item.active { color: #7aa2f7; background: rgba(122,162,247,0.1); }
+
+      /* ── Content ── */
+      .press-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        max-width: 720px;
+      }
+      .press-content::-webkit-scrollbar { width: 5px; }
+      .press-content::-webkit-scrollbar-track { background: transparent; }
+      .press-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+      /* ── Section ── */
+      .press-section { display: flex; flex-direction: column; gap: 0.875rem; scroll-margin-top: 1rem; }
+      .press-section-title {
+        font-size: 0.6875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #555;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+      }
+
+      /* ── Blurbs ── */
+      .blurb-card {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 8px;
+        padding: 0.875rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .blurb-label {
+        font-size: 0.6875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #7aa2f7;
+      }
+      .blurb-text {
+        font-size: 0.875rem;
+        color: #ccc;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .copy-btn {
+        align-self: flex-start;
+        padding: 0.25rem 0.625rem;
+        border-radius: 5px;
+        border: 1px solid rgba(255,255,255,0.1);
+        background: rgba(255,255,255,0.04);
+        color: #888;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s, border-color 0.15s;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+      }
+      .copy-btn:hover { background: rgba(255,255,255,0.1); color: #ccc; }
+      .copy-btn.copied { border-color: rgba(74,222,128,0.4); color: #4ade80; background: rgba(74,222,128,0.08); }
+
+      /* ── Logos ── */
+      .logo-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+      }
+      .logo-item {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 8px;
+        padding: 0.875rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.625rem;
+        min-width: 120px;
+      }
+      .logo-preview {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+        background: rgba(255,255,255,0.03);
+        border-radius: 6px;
+        padding: 4px;
+      }
+      .logo-label { font-size: 0.75rem; color: #888; text-align: center; }
+      .logo-dl {
+        font-size: 0.75rem;
+        color: #7aa2f7;
+        text-decoration: none;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        border: 1px solid rgba(122,162,247,0.25);
+        background: rgba(122,162,247,0.06);
+        transition: background 0.15s;
+      }
+      .logo-dl:hover { background: rgba(122,162,247,0.18); }
+
+      /* ── Palette ── */
+      .palette-list { display: flex; flex-direction: column; gap: 0.5rem; }
+      .palette-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem 0.75rem;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 6px;
+      }
+      .palette-swatch {
+        width: 28px;
+        height: 28px;
+        border-radius: 5px;
+        flex-shrink: 0;
+        border: 1px solid rgba(255,255,255,0.08);
+      }
+      .palette-name { font-size: 0.8125rem; color: #ccc; flex: 1; min-width: 80px; }
+      .palette-hex { font-size: 0.8125rem; font-family: monospace; color: #7aa2f7; min-width: 72px; }
+      .palette-role { font-size: 0.75rem; color: #666; flex: 1; }
+
+      /* ── Fonts ── */
+      .font-list { display: flex; flex-direction: column; gap: 0.625rem; }
+      .font-row {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 6px;
+        padding: 0.625rem 0.875rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+      .font-label { font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.08em; color: #555; }
+      .font-stack { font-size: 0.8125rem; color: #7aa2f7; font-family: monospace; }
+      .font-note { font-size: 0.75rem; color: #666; }
+
+      /* ── Contact / Meta ── */
+      .meta-list { display: flex; flex-direction: column; gap: 0.375rem; }
+      .meta-row { display: flex; gap: 0.75rem; font-size: 0.8125rem; }
+      .meta-key { color: #666; min-width: 120px; flex-shrink: 0; }
+      .meta-val { color: #ccc; }
+      .meta-val a { color: #7aa2f7; text-decoration: none; }
+      .meta-val a:hover { text-decoration: underline; }
+    </style>
+  </head>
+  <body>
+    <AppStandalone appId="press" />
+    <div id="app-root">
+      <div class="press-shell">
+        <!-- Sidebar nav -->
+        <nav class="press-nav" aria-label="Press kit sections">
+          <div class="press-nav-section">Sections</div>
+          <a class="press-nav-item active" href="#blurbs">Blurbs</a>
+          <a class="press-nav-item" href="#logos">Logos</a>
+          <a class="press-nav-item" href="#palette">Color palette</a>
+          <a class="press-nav-item" href="#fonts">Font stack</a>
+          <a class="press-nav-item" href="#contact">Contact</a>
+          <a class="press-nav-item" href="#meta">Boilerplate</a>
+        </nav>
+
+        <!-- Content -->
+        <div class="press-content" id="press-content">
+
+          <!-- Blurbs -->
+          <section class="press-section" id="blurbs" aria-labelledby="blurbs-title">
+            <h2 class="press-section-title" id="blurbs-title">Blurbs</h2>
+            {Object.entries(blurbs).map(([key, text]) => (
+              <div class="blurb-card">
+                <span class="blurb-label">{key}</span>
+                <p class="blurb-text">{text}</p>
+                <button class="copy-btn" data-copy={text} aria-label={`Copy ${key} blurb`}>
+                  📋 Copy
+                </button>
+              </div>
+            ))}
+          </section>
+
+          <!-- Logos -->
+          <section class="press-section" id="logos" aria-labelledby="logos-title">
+            <h2 class="press-section-title" id="logos-title">Logos</h2>
+            <div class="logo-grid">
+              {logos.map((logo) => (
+                <div class="logo-item">
+                  <img class="logo-preview" src={logo.file} alt={logo.label} loading="lazy" />
+                  <span class="logo-label">{logo.label}</span>
+                  <a class="logo-dl" href={logo.file} download aria-label={`Download ${logo.label}`}>↓ Download</a>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <!-- Color palette -->
+          <section class="press-section" id="palette" aria-labelledby="palette-title">
+            <h2 class="press-section-title" id="palette-title">Color Palette</h2>
+            <div class="palette-list">
+              {palette.map((c) => (
+                <div class="palette-row">
+                  <div class="palette-swatch" style={`background: ${c.hex}`} aria-hidden="true"></div>
+                  <span class="palette-name">{c.name}</span>
+                  <code class="palette-hex">{c.hex}</code>
+                  <span class="palette-role">{c.role}</span>
+                  <button class="copy-btn" data-copy={c.hex} aria-label={`Copy hex ${c.hex}`}>📋</button>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <!-- Font stack -->
+          <section class="press-section" id="fonts" aria-labelledby="fonts-title">
+            <h2 class="press-section-title" id="fonts-title">Font Stack</h2>
+            <div class="font-list">
+              {fonts.map((f) => (
+                <div class="font-row">
+                  <span class="font-label">{f.name}</span>
+                  <code class="font-stack">{f.stack}</code>
+                  <span class="font-note">{f.note}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <!-- Contact -->
+          <section class="press-section" id="contact" aria-labelledby="contact-title">
+            <h2 class="press-section-title" id="contact-title">Contact</h2>
+            <div class="meta-list">
+              <div class="meta-row">
+                <span class="meta-key">Press email</span>
+                <span class="meta-val"><a href="mailto:press@pai.direct">press@pai.direct</a></span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-key">GitHub</span>
+                <span class="meta-val"><a href="https://github.com/nirholas/pai" target="_blank" rel="noopener">github.com/nirholas/pai</a></span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Boilerplate metadata -->
+          <section class="press-section" id="meta" aria-labelledby="meta-title">
+            <h2 class="press-section-title" id="meta-title">Boilerplate Metadata</h2>
+            <div class="meta-list">
+              <div class="meta-row">
+                <span class="meta-key">Full name</span>
+                <span class="meta-val">PAI</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-key">Short name</span>
+                <span class="meta-val">PAI</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-key">Category</span>
+                <span class="meta-val">Privacy software / Live OS / Local AI</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-key">License</span>
+                <span class="meta-val">GNU General Public License v3.0</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-key">Base OS</span>
+                <span class="meta-val">Debian 12 "Bookworm"</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-key">Desktop</span>
+                <span class="meta-val">Sway (Wayland)</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-key">AI engine</span>
+                <span class="meta-val">Ollama + Open WebUI</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-key">Project start</span>
+                <span class="meta-val">2024</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-key">Website</span>
+                <span class="meta-val"><a href="https://pai.direct" target="_blank" rel="noopener">pai.direct</a></span>
+              </div>
+            </div>
+          </section>
+
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+<script>
+  import { bridge } from '../../apps/_bridge.js'
+  bridge.ready()
+
+  // Copy-to-clipboard for all .copy-btn elements
+  document.querySelectorAll('.copy-btn[data-copy]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const text = btn.dataset.copy
+      try {
+        await navigator.clipboard.writeText(text)
+      } catch {
+        // Fallback for non-secure contexts
+        const ta = document.createElement('textarea')
+        ta.value = text
+        ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none'
+        document.body.appendChild(ta)
+        ta.select()
+        document.execCommand('copy')
+        ta.remove()
+      }
+      btn.classList.add('copied')
+      const orig = btn.textContent
+      btn.textContent = '✓ Copied'
+      setTimeout(() => {
+        btn.classList.remove('copied')
+        btn.textContent = orig
+      }, 1800)
+    })
+  })
+
+  // Sidebar active state on scroll
+  const sections = document.querySelectorAll('.press-section[id]')
+  const navItems = document.querySelectorAll('.press-nav-item')
+  const content = document.getElementById('press-content')
+
+  content?.addEventListener('scroll', () => {
+    let active = sections[0]?.id
+    sections.forEach((s) => {
+      if (s.getBoundingClientRect().top <= 80) active = s.id
+    })
+    navItems.forEach((a) => {
+      a.classList.toggle('active', a.getAttribute('href') === `#${active}`)
+    })
+  }, { passive: true })
+</script>
