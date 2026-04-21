@@ -1,0 +1,20 @@
+pkgbase = pai-cli-git
+	pkgdesc = Flash, verify, and try PAI — bleeding-edge development version
+	pkgver = 0.2.0.r0.g0000000
+	pkgrel = 1
+	url = https://pai.direct
+	arch = any
+	license = GPL3
+	makedepends = git
+	depends = bash
+	depends = coreutils
+	depends = curl
+	optdepends = qemu-full: for `pai try`
+	optdepends = ovmf: UEFI firmware for QEMU
+	optdepends = util-linux: lsblk used by `pai flash`
+	provides = pai-cli=0.2.0.r0.g0000000
+	conflicts = pai-cli
+	source = git+https://github.com/nirholas/pai.git
+	sha256sums = SKIP
+
+pkgname = pai-cli-git
