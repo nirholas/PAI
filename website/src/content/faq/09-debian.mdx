@@ -1,0 +1,16 @@
+---
+question: "Why Debian and not Arch/Alpine?"
+order: 9
+---
+
+Three reasons: `live-build`, stability, and ecosystem.
+
+**`live-build`** is Debian's toolchain for building live ISOs. It's battle-tested by Tails, Kali, and Parrot. Building a live USB OS that boots reliably across hundreds of hardware configurations is hard — `live-build` solves most of that problem. Porting to Arch or Alpine would require rebuilding that entire toolchain from scratch.
+
+**Stability.** Debian Stable (Bookworm) has predictable behavior: packages don't break between runs, the kernel is well-tested, and security patches come reliably for 5 years. Arch's rolling release is great for personal machines but harder to pin for a reproducible OS build.
+
+**Ecosystem.** Debian has 59,000+ packages in its repositories. Tails, Kali, and Parrot all chose Debian for the same reasons. The live USB community tooling, documentation, and institutional knowledge is deeply Debian-oriented.
+
+Alpine's tiny size is appealing but its musl libc introduces compatibility headaches with binaries like Ollama that are built against glibc.
+
+Could PAI work on Arch or Alpine? Probably. Would it be worth the engineering cost compared to the user benefit? Not yet.
