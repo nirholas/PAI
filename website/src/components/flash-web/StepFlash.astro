@@ -1,0 +1,128 @@
+---
+/**
+ * Step 4 — Flash
+ * Shows one-liner command OR WebUSB progress OR manual link.
+ */
+---
+
+<section
+  class="step-panel"
+  id="step-panel-4"
+  role="tabpanel"
+  aria-labelledby="step-tab-4"
+>
+  <h2>Flash</h2>
+
+  <!-- Quick path: one-liner -->
+  <div class="flash-section" id="flash-quick" hidden>
+    <p class="step-desc">Run this command in your terminal to flash the verified ISO to a USB drive:</p>
+    <div class="command-block">
+      <pre id="flash-command"><code>Loading command…</code></pre>
+      <button class="btn btn--copy" id="btn-copy-command" aria-label="Copy command to clipboard">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="5" y="5" width="9" height="9" rx="1.5"/>
+          <path d="M11 3H3.5A1.5 1.5 0 002 4.5V11"/>
+        </svg>
+        Copy
+      </button>
+    </div>
+    <p class="command-note" id="command-note"></p>
+  </div>
+
+  <!-- WebUSB path -->
+  <div class="flash-section" id="flash-webusb" hidden>
+    <div class="webusb-warning" id="webusb-warning">
+      <h3>⚠️ Experimental Feature</h3>
+      <p>
+        In-browser USB writing is non-standard and may fail depending on your OS and browser.
+        If it doesn't work, use the Quick method above.
+      </p>
+      <label class="webusb-accept">
+        <input type="checkbox" id="webusb-accept-checkbox" />
+        I understand this is experimental and may not work
+      </label>
+      <button class="btn btn--primary" id="btn-webusb-start" disabled>
+        Select USB Device
+      </button>
+    </div>
+
+    <div class="webusb-progress" id="webusb-progress" hidden>
+      <div class="progress-bar">
+        <div class="progress-fill" id="webusb-progress-fill" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+      </div>
+      <p id="webusb-status" aria-live="polite">Preparing…</p>
+    </div>
+
+    <div class="webusb-error" id="webusb-error" hidden aria-live="assertive">
+      <p id="webusb-error-msg"></p>
+      <button class="btn btn--primary" id="btn-webusb-fallback">Switch to Quick method</button>
+    </div>
+  </div>
+
+  <!-- Manual path -->
+  <div class="flash-section" id="flash-manual" hidden>
+    <p class="step-desc">Follow the full installation guide for detailed step-by-step instructions:</p>
+    <a href="/install" class="btn btn--primary">View full install instructions →</a>
+  </div>
+
+  <div class="step-actions">
+    <button class="btn btn--secondary" id="btn-back-to-method">← Back</button>
+    <button class="btn btn--primary" id="btn-continue-boot" hidden>Continue →</button>
+  </div>
+</section>
+
+<style>
+  .flash-section { margin-bottom: 2rem; }
+  .command-block {
+    position: relative;
+    background: #1a1a2e;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 20px;
+    padding-right: 80px;
+    overflow-x: auto;
+  }
+  .command-block pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-all;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: #e0e0e0;
+  }
+  .btn--copy {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 6px;
+    background: rgba(255,255,255,0.04);
+    color: #aaa;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+  .btn--copy:hover { background: rgba(255,255,255,0.08); color: #fff; }
+  .btn--copy.copied { color: #22c55e; border-color: rgba(34,197,94,0.3); }
+  .command-note { margin-top: 12px; font-size: 0.8rem; color: #888; }
+  .webusb-warning {
+    background: rgba(234, 179, 8, 0.06);
+    border: 1px solid rgba(234, 179, 8, 0.2);
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .webusb-warning h3 { margin: 0 0 8px; font-size: 1rem; color: #eab308; }
+  .webusb-warning p { margin: 0 0 12px; font-size: 0.9rem; color: #ccc; }
+  .webusb-accept { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; font-size: 0.85rem; cursor: pointer; }
+  .webusb-error {
+    background: rgba(239, 68, 68, 0.06);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 12px;
+  }
+</style>
