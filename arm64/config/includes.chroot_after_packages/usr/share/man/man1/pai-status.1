@@ -1,0 +1,49 @@
+.TH PAI-STATUS 1 "April 2026" "PAI" "PAI User Commands"
+.SH NAME
+pai-status \- report PAI privacy and system status
+.SH SYNOPSIS
+.B pai-status
+.RI [ --json | --brief | -h | --help ]
+.SH DESCRIPTION
+.B pai-status
+is a one-shot command that answers \(lqam I private right now?\(rq on a
+running PAI system. It inspects the local Ollama daemon, memory usage,
+listening and outbound network sockets, firewall posture, MAC address
+spoofing, persistence state, and Tor status, and prints a summary
+suitable for quick inspection or for a status bar.
+.PP
+The same data backs the Waybar applet and the forthcoming GTK
+dashboard, so what the CLI reports is what the GUI reports.
+.SH OPTIONS
+.TP
+.B --json
+Emit structured JSON. Intended for Waybar custom modules, dashboards,
+and scripts. The shape is stable across releases within a major
+version.
+.TP
+.B --brief
+One-line summary suitable for a status bar or prompt.
+.TP
+.BR -h ", " --help
+Print usage and exit.
+.SH EXIT STATUS
+.TP
+.B 0
+Status printed; private-mode defaults are healthy.
+.TP
+.B 1
+A problem was detected (e.g. service down, firewall open, unexpected
+outbound connection).
+.TP
+.B 2
+Usage error.
+.SH FILES
+.TP
+.I /usr/local/bin/pai-status
+The executable.
+.SH SEE ALSO
+.BR pai-recommend-model (1),
+.BR pai-models (1),
+.BR ollama (1)
+.SH AUTHOR
+The PAI project \[em] https://pai.direct
