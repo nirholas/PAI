@@ -1,0 +1,6 @@
+version: 1
+artifacts:
+  - name: pai-scripts
+    include:
+      - scripts/flash.ps1
+    signing-policy: release
