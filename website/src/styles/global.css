@@ -1,0 +1,44 @@
+@import '../shell/reset.css';
+@import '../shell/tokens.css';
+@import '../shell/waybar.css';
+@import '../shell/desktop.css';
+@import '../shell/context-menu.css';
+@import 'tailwindcss';
+
+body {
+  font-family: var(--font-ui);
+  background-color: var(--bg);
+  color: var(--fg);
+}
+
+/* Reduced motion: honor OS preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Reduced motion: honor manual toggle (set via localStorage + JS on <html>) */
+html[data-reduced-motion] *,
+html[data-reduced-motion] *::before,
+html[data-reduced-motion] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Focus style — always visible, 2px pai-blue outline */
+:focus-visible {
+  outline: 2px solid var(--pai-blue);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
