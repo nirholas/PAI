@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" role="img" aria-label="Terminal showing dd writing the PAI ISO to a USB drive with progress output">
+  <rect width="960" height="600" fill="#0f0f1a"/>
+
+  <!-- Window chrome -->
+  <g transform="translate(60 60)">
+    <rect width="840" height="480" rx="8" fill="#0b0b15" stroke="rgba(251,191,36,0.35)"/>
+    <rect width="840" height="28" rx="8" fill="#1a1a2e"/>
+    <rect y="20" width="840" height="8" fill="#1a1a2e"/>
+    <circle cx="16" cy="14" r="5" fill="#f87171"/>
+    <circle cx="34" cy="14" r="5" fill="#fbbf24"/>
+    <circle cx="52" cy="14" r="5" fill="#4ade80"/>
+    <text x="380" y="18" font-family="ui-monospace" font-size="11" fill="#888">Flashing PAI → /dev/sdb</text>
+
+    <g font-family="ui-monospace" font-size="12">
+      <!-- Pre-check -->
+      <text x="20" y="58"><tspan fill="#4ade80">$</tspan> <tspan fill="#e0e0e0">sudo ./flash-usb.sh</tspan></text>
+      <text x="20" y="80" fill="#fbbf24">▸ Detected devices:</text>
+      <text x="40" y="98" fill="#e0e0e0">/dev/sda  nvme0n1  256 GB  internal    (skipped)</text>
+      <text x="40" y="116" fill="#e0e0e0">/dev/sdb  sdb      32 GB   <tspan fill="#fbbf24">removable</tspan>   selected</text>
+
+      <text x="20" y="148" fill="#fbbf24">▸ Verifying SHA256 of pai-live-amd64-0.1.0.iso…</text>
+      <text x="20" y="166" fill="#4ade80">✓ checksum matches signed manifest</text>
+
+      <text x="20" y="198" fill="#fbbf24">▸ Unmounting partitions on /dev/sdb…</text>
+      <text x="20" y="216" fill="#4ade80">✓ /dev/sdb1 unmounted</text>
+
+      <text x="20" y="248" fill="#fbbf24">▸ Writing image (dd bs=4M status=progress)…</text>
+    </g>
+
+    <!-- Progress block -->
+    <g transform="translate(20 264)" font-family="ui-monospace" font-size="11">
+      <rect width="800" height="24" rx="4" fill="rgba(255,255,255,0.04)"/>
+      <rect width="612" height="24" rx="4" fill="#fbbf24"/>
+      <rect x="608" width="4" height="24" fill="#e0e0e0"/>
+      <text x="8" y="16" fill="#0f0f1a" font-weight="700">76% · 1.82 GiB / 2.40 GiB · 42.8 MiB/s · ETA 00:14</text>
+
+      <!-- Stats -->
+      <g transform="translate(0 40)" fill="#888">
+        <text y="12">records in: 466/614</text>
+        <text x="160" y="12">records out: 466/614</text>
+        <text x="340" y="12">bytes written: 1 955 774 464</text>
+        <text x="560" y="12">avg rate: 42.8 MiB/s</text>
+      </g>
+    </g>
+
+    <!-- Verify step -->
+    <g transform="translate(20 340)" font-family="ui-monospace" font-size="12">
+      <text fill="#888">After dd completes, flash-usb.sh re-reads the device and compares:</text>
+      <rect x="0" y="10" width="800" height="64" rx="4" fill="#12121f" stroke="rgba(74,222,128,0.25)"/>
+      <text x="14" y="32" fill="#4ade80">$ sha256sum /dev/sdb | head -c 64</text>
+      <text x="14" y="50" fill="#e0e0e0">b4c1f7a01e63d9ad… ✓ matches signed ISO manifest</text>
+      <text x="14" y="68" fill="#888">Safe to eject. Boot from USB and choose "PAI Live" in the boot menu.</text>
+    </g>
+
+    <text x="20" y="450" font-family="ui-monospace" font-size="12"><tspan fill="#4ade80">$</tspan> <tspan fill="#fbbf24">█</tspan></text>
+  </g>
+</svg>
