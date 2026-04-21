@@ -1,0 +1,122 @@
+---
+---
+
+<div id="lockscreen" class="lockscreen" hidden>
+  <div class="lockscreen__panel">
+    <img
+      src="/logo/pai-logo.png"
+      alt="PAI"
+      class="lockscreen__logo"
+      width="96"
+      height="96"
+    />
+    <p class="lockscreen__tagline">PAI — Live USB OS</p>
+    <p id="lock-time" class="lockscreen__time" aria-live="off">00:00:00</p>
+    <div class="lockscreen__prompt">
+      <span class="lockscreen__user">guest@pai</span>
+      <span class="lockscreen__cursor" aria-hidden="true"></span>
+    </div>
+    <p class="lockscreen__hint">Press any key or click to unlock</p>
+  </div>
+</div>
+
+<script>
+  import { initLockscreen } from '../shell/lockscreen.js'
+  initLockscreen()
+</script>
+
+<style>
+  .lockscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 15, 26, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  :global(.lockscreen--visible) {
+    opacity: 1;
+  }
+
+  .lockscreen__panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    text-align: center;
+  }
+
+  .lockscreen__logo {
+    width: 96px;
+    height: 96px;
+    object-fit: contain;
+    image-rendering: pixelated;
+    opacity: 0.9;
+  }
+
+  .lockscreen__tagline {
+    font-family: var(--font-mono, monospace);
+    font-size: 13px;
+    color: var(--fg-muted, #888);
+    margin: 0;
+  }
+
+  .lockscreen__time {
+    font-family: var(--font-pixel, monospace);
+    font-size: clamp(40px, 8vw, 72px);
+    color: var(--fg, #e0e0e0);
+    letter-spacing: 0.05em;
+    margin: 0;
+    line-height: 1;
+  }
+
+  .lockscreen__prompt {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    font-family: var(--font-mono, monospace);
+    font-size: 14px;
+    color: var(--fg-muted, #888);
+    border: 1px solid var(--border, #2a2a3e);
+    background: var(--bg-elev, #1a1a2e);
+    padding: 6px 12px;
+    border-radius: 4px;
+    min-width: 220px;
+  }
+
+  .lockscreen__user::after {
+    content: ':~$ ';
+  }
+
+  .lockscreen__cursor {
+    display: inline-block;
+    width: 8px;
+    height: 14px;
+    background: var(--fg, #e0e0e0);
+    animation: cursor-blink 1s step-end infinite;
+  }
+
+  @keyframes cursor-blink {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0;
+    }
+  }
+
+  .lockscreen__hint {
+    font-family: var(--font-mono, monospace);
+    font-size: 11px;
+    color: var(--fg-muted, #888);
+    opacity: 0.5;
+    margin: 0;
+  }
+</style>
