@@ -1,0 +1,41 @@
+#!/bin/bash
+# PAI Settings — About this system.
+set -euo pipefail
+
+pai_version="unknown"
+if [ -r /etc/pai-release ]; then
+    pai_version=$(cat /etc/pai-release)
+elif [ -r /etc/os-release ]; then
+    # shellcheck disable=SC1091
+    pai_version=$(. /etc/os-release; echo "${PRETTY_NAME:-unknown}")
+fi
+
+kernel=$(uname -r)
+arch=$(uname -m)
+host=$(hostnamectl --static 2>/dev/null || hostname)
+uptime=$(uptime -p 2>/dev/null || uptime)
+cpu=$(awk -F: '/model name/ {print $2; exit}' /proc/cpuinfo | sed 's/^ //')
+[ -z "$cpu" ] && cpu=$(lscpu | awk -F: '/Model name/ {print $2; exit}' | sed 's/^ *//')
+ram=$(free -h | awk '/^Mem:/ {print $3 " / " $2}')
+gpu=$(lspci 2>/dev/null | awk -F: '/VGA|3D|Display/ {print $3}' | head -n1 | sed 's/^ //')
+[ -z "$gpu" ] && gpu="(none detected)"
+disk=$(df -h / | awk 'NR==2 {print $3 " / " $2 " (" $5 " used)"}')
+
+body=$(cat <<EOF
+<b>PAI version</b>   $pai_version
+<b>Kernel</b>        $kernel ($arch)
+<b>Hostname</b>      $host
+<b>Uptime</b>        $uptime
+
+<b>CPU</b>           $cpu
+<b>Memory</b>        $ram
+<b>GPU</b>           $gpu
+<b>Root disk</b>     $disk
+EOF
+)
+
+if command -v zenity >/dev/null 2>&1; then
+    zenity --info --no-wrap --title="About PAI" --text="$body" 2>/dev/null
+else
+    foot -e sh -c "printf '%s\n' '$body' | sed 's/<[^>]*>//g'; read -rp 'Press Enter...' _"
+fi
