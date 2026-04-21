@@ -1,0 +1,30 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "[pai] Configuring firewall..."
+
+# Reset to defaults
+ufw --force reset
+
+# Default policies
+ufw default deny incoming
+ufw default allow outgoing
+
+# Allow loopback (needed for Ollama ↔ chat UI communication)
+ufw allow in on lo
+
+# Block non-loopback access to our services
+# (Ollama and chat UI should only be accessible locally)
+# No explicit rules needed — default deny handles this
+
+# Allow SSH only if user explicitly enables it later
+# ufw allow ssh  ← intentionally commented out
+
+# Enable UFW service so it activates on live-system boot.
+# Do NOT run `ufw enable` here — iptables rules are kernel-level, shared with
+# the build host, and enabling them mid-build will lock us out of SSH on cloud
+# builders. Rules are still configured (above) and the service is enabled, so
+# UFW activates correctly when the live USB boots into its own kernel.
+systemctl enable ufw 2>/dev/null || true
+
+echo "[pai] Firewall configured: deny incoming, allow outgoing, localhost only."
