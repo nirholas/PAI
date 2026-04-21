@@ -1,0 +1,88 @@
+---
+title: "Getting Started"
+description: "Boot PAI for the first time and start your first AI conversation."
+section: "Guides"
+order: 1
+editPath: "README.md"
+---
+
+## Getting Started
+
+PAI boots from a USB drive into a complete, private AI workstation. Nothing is installed on your computer — everything runs in RAM.
+
+### Requirements
+
+- **USB drive**: 8 GB minimum (32 GB+ recommended for AI models)
+- **Target machine**: x86_64 (Intel or AMD, 64-bit)
+- **RAM**: 4 GB minimum — 8 GB recommended for 7B parameter models
+- **Boot order**: ability to select USB from BIOS/UEFI (F12 / F2 / DEL at POST)
+
+### Step 1: Flash the ISO
+
+**Linux / macOS (one command):**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nirholas/pai/main/scripts/flash.sh | sudo bash
+```
+
+The script detects USB drives, shows your options, and asks for confirmation before writing.
+
+**Manual (Linux):**
+
+```bash
+# Find your USB device
+lsblk -d -o NAME,SIZE,MODEL,TRAN | grep usb
+
+# Flash
+sudo dd if=pai.iso of=/dev/sdX bs=4M status=progress && sync
+```
+
+**Windows:** Download the ISO and use [Rufus](https://rufus.ie/) — select your USB, select the ISO, click Start.
+
+### Step 2: Boot
+
+1. Plug the USB into your target machine
+2. Reboot and press F12 (or F2/DEL/ESC) at the POST screen
+3. Select your USB drive from the boot menu
+4. PAI loads into RAM — usually takes 15–30 seconds
+
+### Step 3: Talk to AI
+
+Firefox opens automatically to the PAI chat interface at `localhost:8080`.
+
+1. Click **Models** → pull a model (e.g., `llama3.2` for a fast 3B model)
+2. Wait for the download (only needed once per session)
+3. Start chatting — your prompts never leave your machine
+
+```bash
+# Or use the terminal (Alt+Enter to open):
+ollama pull llama3.2
+ollama run llama3.2 "Explain how PAI protects my privacy"
+```
+
+### Keyboard shortcuts
+
+| Shortcut | Action |
+|---|---|
+| `Alt + Enter` | Open terminal |
+| `Alt + D` | Application launcher |
+| `Alt + F4` | Close window |
+| `Alt + L` | Lock screen |
+| `Alt + 1–9` | Switch workspace |
+
+### Privacy commands
+
+```bash
+# Enable Tor (routes all traffic through Tor)
+sudo pai-privacy on
+
+# Disable Tor
+sudo pai-privacy off
+
+# Check your randomized MAC address
+ip link show | grep ether
+```
+
+### Shutdown
+
+Power off normally. When PAI shuts down, all RAM is cleared. Your chat history, downloaded files, and any credentials are gone — the machine returns to exactly how it was before you booted PAI.
