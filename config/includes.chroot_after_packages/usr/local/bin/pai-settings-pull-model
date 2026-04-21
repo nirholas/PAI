@@ -1,0 +1,34 @@
+#!/bin/bash
+# PAI Settings — pull an Ollama model by name.
+set -euo pipefail
+
+STYLE=/etc/pai/wofi-shutdown.css
+WOFI=(wofi --dmenu --cache-file=/dev/null)
+[ -r "$STYLE" ] && WOFI+=(--style "$STYLE")
+
+if ! command -v ollama >/dev/null 2>&1; then
+    zenity --error --text="Ollama is not installed." 2>/dev/null
+    exit 1
+fi
+
+# Common curated options, plus a free-form "Other…" fallback.
+pick=$(printf '%s\n' \
+    "qwen3:0.6b" \
+    "qwen3:1.7b" \
+    "qwen3:4b" \
+    "qwen3:8b" \
+    "qwen3:14b" \
+    "qwen3:30b" \
+    "nomic-embed-text" \
+    "Other…" \
+    | "${WOFI[@]}" --prompt "Pull model" --lines 8 --width 340 --height 400 2>/dev/null)
+
+[ -z "$pick" ] && exit 0
+
+if [ "$pick" = "Other…" ]; then
+    pick=$(zenity --entry --title="Pull Ollama model" --text="Model name (e.g. llama3.2:3b):") || exit 0
+fi
+
+[ -z "$pick" ] && exit 0
+
+foot -e sh -c "ollama pull '$pick'; echo; read -rp 'Press Enter to close...' _" &
