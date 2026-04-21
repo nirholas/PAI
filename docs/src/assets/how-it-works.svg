@@ -1,0 +1,262 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 620" role="img"
+     aria-label="A frame of the PAI desktop: Sway-style topbar, a Chat window showing an Ollama response being streamed locally, and the dock at the bottom.">
+  <defs>
+    <!-- desktop wallpaper (matches website/public/wallpapers/default.svg) -->
+    <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0"   stop-color="#0a0a14"/>
+      <stop offset="1"   stop-color="#0f0f1a"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1a1a2e" stroke-width="0.5" opacity="0.4"/>
+    </pattern>
+    <linearGradient id="ribbon" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0"   stop-color="#f472b6"/>
+      <stop offset=".5"  stop-color="#9f7aea"/>
+      <stop offset="1"   stop-color="#7aa2f7"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="winshadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="10"/>
+    </filter>
+
+    <!-- typing clip: reveals assistant reply left-to-right -->
+    <clipPath id="typing">
+      <rect x="202" y="278" width="0" height="80">
+        <animate attributeName="width" values="0;500;500;0"
+                 keyTimes="0;0.55;0.92;1" dur="6s" repeatCount="indefinite"/>
+      </rect>
+    </clipPath>
+
+    <style><![CDATA[
+      .ui   { font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+      .mono { font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace; }
+      .pix  { font-family: "Courier New", Courier, monospace; font-weight: 700; letter-spacing: 0.03em; }
+      .fg   { fill: #e0e0e0; }
+      .mut  { fill: #888; }
+      .fg-muted { fill: #888; }
+    ]]></style>
+  </defs>
+
+  <!-- ═══════════════════════════ DESKTOP WALLPAPER ═══════════════════════════ -->
+  <rect width="1000" height="620" fill="url(#wall)"/>
+  <rect width="1000" height="620" fill="url(#grid)"/>
+  <text x="500" y="330" text-anchor="middle" class="ui"
+        font-size="120" font-weight="700" fill="#7aa2f7" opacity="0.18"
+        letter-spacing="18">PAI</text>
+  <text x="500" y="372" text-anchor="middle" class="ui"
+        font-size="14" fill="#888" opacity="0.45">Private AI · Offline · Amnesic</text>
+
+  <!-- ═══════════════════════════ TOPBAR (waybar) ═══════════════════════════ -->
+  <rect x="0" y="0" width="1000" height="28" fill="rgba(20,20,30,0.92)"/>
+  <line x1="0" y1="28" x2="1000" y2="28" stroke="#2a2a3e"/>
+
+  <!-- left: logo + app title -->
+  <g transform="translate(8,3)">
+    <rect width="22" height="22" rx="4" fill="#7aa2f7" opacity=".14"/>
+    <text x="11" y="17" text-anchor="middle" class="pix" font-size="13" fill="#7aa2f7">P</text>
+  </g>
+  <text x="40" y="18" class="ui" font-size="12" fill="#888">Chat — Ollama (llama3.1)</text>
+
+  <!-- center: workspace pills -->
+  <g transform="translate(430,4)">
+    <g>
+      <rect width="22" height="20" rx="4" fill="#7aa2f7"/>
+      <text x="11" y="14" text-anchor="middle" class="mono" font-size="11" fill="#0f0f1a" font-weight="700">1</text>
+    </g>
+    <g transform="translate(26,0)">
+      <rect width="22" height="20" rx="4" fill="none" stroke="#2a2a3e"/>
+      <text x="11" y="14" text-anchor="middle" class="mono" font-size="11" fill="#888">2</text>
+    </g>
+    <g transform="translate(52,0)">
+      <rect width="22" height="20" rx="4" fill="none" stroke="#2a2a3e"/>
+      <text x="11" y="14" text-anchor="middle" class="mono" font-size="11" fill="#888">3</text>
+    </g>
+    <g transform="translate(78,0)">
+      <rect width="22" height="20" rx="4" fill="none" stroke="#2a2a3e"/>
+      <text x="11" y="14" text-anchor="middle" class="mono" font-size="11" fill="#888">4</text>
+    </g>
+  </g>
+
+  <!-- right: status cluster -->
+  <g transform="translate(700,0)" class="ui" font-size="11" fill="#888">
+    <!-- cpu -->
+    <g transform="translate(0,0)">
+      <text x="8" y="18">◼ CPU</text>
+      <rect x="42" y="11" width="30" height="6" rx="1" fill="#1a1a2e"/>
+      <rect x="42" y="11" width="18" height="6" rx="1" fill="#7aa2f7">
+        <animate attributeName="width" values="10;22;14;26;16" dur="3s" repeatCount="indefinite"/>
+      </rect>
+    </g>
+    <!-- ram -->
+    <g transform="translate(84,0)">
+      <text x="0" y="18">RAM</text>
+      <text x="26" y="18" fill="#e0e0e0" class="mono">1.6G</text>
+    </g>
+    <!-- tor status (opt-in / off by default = yellow) -->
+    <g transform="translate(150,0)">
+      <circle cx="8" cy="14" r="4" fill="#fbbf24"/>
+      <text x="18" y="18">Tor off</text>
+    </g>
+    <!-- net -->
+    <g transform="translate(214,0)">
+      <text x="0" y="18">↑↓ lo</text>
+    </g>
+    <!-- separator -->
+    <line x1="252" y1="4" x2="252" y2="24" stroke="#2a2a3e"/>
+    <!-- clock -->
+    <g transform="translate(260,0)">
+      <text x="0" y="18" fill="#e0e0e0" class="mono" font-size="12">
+        <tspan>03:14</tspan><tspan dx="1" dy="0" fill="#e0e0e0">
+          <animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite"/>:</tspan><tspan>15</tspan>
+      </text>
+    </g>
+    <!-- power -->
+    <g transform="translate(272,0)">
+      <text x="0" y="18" fill="#888" font-size="14">⏻</text>
+    </g>
+  </g>
+
+  <!-- ═══════════════════════════ WINDOW: Chat ═══════════════════════════ -->
+  <!-- drop shadow -->
+  <rect x="170" y="90" width="660" height="440" rx="8" fill="#000" opacity=".55" filter="url(#winshadow)"/>
+
+  <g transform="translate(170,85)">
+    <!-- window body -->
+    <rect width="660" height="440" rx="8" fill="#1a1a2e" stroke="#2a2a3e"/>
+
+    <!-- titlebar -->
+    <rect width="660" height="32" rx="8" fill="rgba(20,20,30,0.92)"/>
+    <rect y="24" width="660" height="8" fill="rgba(20,20,30,0.92)"/>
+    <line x1="0" y1="32" x2="660" y2="32" stroke="#2a2a3e"/>
+
+    <!-- pixel icon (chat) in titlebar -->
+    <g transform="translate(8,8)">
+      <rect width="16" height="16" fill="#EC4899"/>
+      <rect x="1" y="1" width="14" height="1" fill="rgba(255,255,255,0.25)"/>
+      <rect x="1" y="1" width="1" height="14" fill="rgba(255,255,255,0.25)"/>
+      <rect x="1" y="14" width="14" height="1" fill="rgba(0,0,0,0.3)"/>
+      <rect x="14" y="1" width="1" height="14" fill="rgba(0,0,0,0.3)"/>
+      <text x="8" y="12" text-anchor="middle" class="pix" font-size="10" fill="#fff">C</text>
+    </g>
+    <text x="32" y="20" class="pix" font-size="11" fill="#e0e0e0">Chat — Ollama</text>
+
+    <!-- traffic lights -->
+    <circle cx="602" cy="16" r="6" fill="#fbbf24"/>
+    <circle cx="620" cy="16" r="6" fill="#4ade80"/>
+    <circle cx="638" cy="16" r="6" fill="#f87171"/>
+
+    <!-- chat body background -->
+    <rect y="33" width="660" height="407" fill="#0f0f1a"/>
+
+    <!-- model chip -->
+    <g transform="translate(16,50)">
+      <rect width="140" height="22" rx="11" fill="#141427" stroke="#2a2a3e"/>
+      <circle cx="12" cy="11" r="3" fill="#4ade80">
+        <animate attributeName="opacity" values="1;.35;1" dur="1.4s" repeatCount="indefinite"/>
+      </circle>
+      <text x="22" y="15" class="mono" font-size="10" fill="#e0e0e0">llama3.1 · localhost</text>
+    </g>
+    <text x="520" y="65" class="mono" font-size="10" fill="#4ade80">● offline · no cloud</text>
+
+    <!-- USER bubble -->
+    <g transform="translate(236,96)">
+      <rect width="408" height="44" rx="10" fill="#7aa2f7"/>
+      <text x="16" y="20" class="ui" font-size="12" fill="#0f0f1a" font-weight="600">You</text>
+      <text x="16" y="36" class="ui" font-size="12" fill="#0f0f1a">Explain zero-knowledge proofs in one paragraph.</text>
+    </g>
+
+    <!-- ASSISTANT bubble -->
+    <g transform="translate(16,156)">
+      <rect width="500" height="188" rx="10" fill="#141427" stroke="#2a2a3e"/>
+      <text x="16" y="22" class="ui" font-size="12" fill="#9f7aea" font-weight="600">llama3.1</text>
+    </g>
+  </g>
+
+  <!-- Assistant streaming text — clipped by growing rect (typing effect). -->
+  <!-- coordinates are in SVG root space because clipPath above uses root coords -->
+  <g clip-path="url(#typing)">
+    <text class="ui" font-size="12" fill="#e0e0e0">
+      <tspan x="202" y="293">A zero-knowledge proof lets one party convince another that a</tspan>
+      <tspan x="202" y="311">statement is true — without revealing why it is true.</tspan>
+      <tspan x="202" y="329">The verifier learns nothing except the fact of correctness,</tspan>
+      <tspan x="202" y="347">and the prover never has to disclose the underlying secret.</tspan>
+    </text>
+  </g>
+
+  <!-- typing caret: sweeps with the reveal, then blinks idle -->
+  <rect width="2" height="14" fill="#9f7aea">
+    <animate attributeName="x"
+             values="202;530;530;202"
+             keyTimes="0;0.55;0.92;1" dur="6s" repeatCount="indefinite"/>
+    <animate attributeName="y"
+             values="282;336;336;282"
+             keyTimes="0;0.55;0.92;1" dur="6s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="1;0;1" dur="0.9s" repeatCount="indefinite"/>
+  </rect>
+
+  <!-- input row -->
+  <g transform="translate(186,445)">
+    <rect width="628" height="36" rx="8" fill="#141427" stroke="#2a2a3e"/>
+    <text x="14" y="23" class="ui" font-size="12" fill="#555">Message llama3.1…</text>
+    <rect x="584" y="6" width="36" height="24" rx="6" fill="#7aa2f7"/>
+    <text x="602" y="22" text-anchor="middle" class="ui" font-size="12" fill="#0f0f1a" font-weight="700">↵</text>
+  </g>
+
+  <!-- status footer inside window -->
+  <g transform="translate(170,545)">
+    <text x="16" y="-6" class="mono" font-size="10" fill="#555">127.0.0.1:8080 · served by python3 -m http.server · 0 bytes sent upstream</text>
+  </g>
+
+  <!-- ═══════════════════════════ DOCK ═══════════════════════════ -->
+  <g transform="translate(330,560)">
+    <rect width="340" height="52" rx="16" fill="rgba(20,20,30,0.78)" stroke="#2a2a3e"/>
+    <!-- 6 icons: chat, terminal, files, security, docs, flash -->
+    <!-- each 42x42 face, 48 cell -->
+    <g transform="translate(10,5)">
+      <!-- chat (focused) -->
+      <g transform="translate(0,0)">
+        <rect width="42" height="42" rx="6" fill="#EC4899" stroke="#fbbf24" stroke-width="2"/>
+        <rect x="1" y="1" width="40" height="2" fill="rgba(255,255,255,0.25)"/>
+        <rect x="1" y="1" width="2" height="40" fill="rgba(255,255,255,0.25)"/>
+        <text x="21" y="29" text-anchor="middle" class="pix" font-size="20" fill="#fff">C</text>
+        <circle cx="21" cy="46" r="2" fill="#fbbf24"/>
+      </g>
+      <!-- terminal -->
+      <g transform="translate(54,0)">
+        <rect width="42" height="42" rx="6" fill="#18181B"/>
+        <rect x="1" y="1" width="40" height="2" fill="rgba(255,255,255,0.25)"/>
+        <text x="21" y="28" text-anchor="middle" class="pix" font-size="18" fill="#4ade80">&gt;_</text>
+      </g>
+      <!-- files -->
+      <g transform="translate(108,0)">
+        <rect width="42" height="42" rx="6" fill="#0F766E"/>
+        <rect x="1" y="1" width="40" height="2" fill="rgba(255,255,255,0.25)"/>
+        <text x="21" y="29" text-anchor="middle" class="pix" font-size="20" fill="#fff">F</text>
+      </g>
+      <!-- security -->
+      <g transform="translate(162,0)">
+        <rect width="42" height="42" rx="6" fill="#D97706"/>
+        <rect x="1" y="1" width="40" height="2" fill="rgba(255,255,255,0.25)"/>
+        <text x="21" y="29" text-anchor="middle" class="pix" font-size="20" fill="#fff">S</text>
+      </g>
+      <!-- docs -->
+      <g transform="translate(216,0)">
+        <rect width="42" height="42" rx="6" fill="#16A34A"/>
+        <rect x="1" y="1" width="40" height="2" fill="rgba(255,255,255,0.25)"/>
+        <text x="21" y="29" text-anchor="middle" class="pix" font-size="20" fill="#fff">D</text>
+      </g>
+      <!-- flash -->
+      <g transform="translate(270,0)">
+        <rect width="42" height="42" rx="6" fill="#D62828"/>
+        <rect x="1" y="1" width="40" height="2" fill="rgba(255,255,255,0.25)"/>
+        <text x="21" y="29" text-anchor="middle" class="pix" font-size="20" fill="#fff">⚡</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- ribbon accent at bottom edge -->
+  <rect x="0" y="618" width="1000" height="2" fill="url(#ribbon)" opacity=".5"/>
+</svg>
