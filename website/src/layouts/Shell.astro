@@ -1,0 +1,292 @@
+---
+import '../styles/global.css'
+import '../shell/windows.css'
+import '../shell/startmenu.css'
+import '../shell/topbar.css'
+import '../shell/dock.css'
+import '../shell/spotlight.css'
+import '../shell/shortcuts-help.css'
+import '../shell/widgets.css'
+import '../shell/workspace-switcher.css'
+import Head from '../components/Head.astro'
+import Window from '../components/Window.astro'
+import Topbar from '../components/Topbar.astro'
+import Dock from '../components/Dock.astro'
+import { getLocale, isRTL } from '../i18n/ui'
+
+const locale = getLocale(Astro.url)
+const dir = isRTL(locale) ? 'rtl' : 'ltr'
+
+interface Props {
+  title: string
+  description: string
+  ogImage?: string
+  canonical?: string
+  structuredData?: object
+}
+
+const { title, description, ogImage, canonical, structuredData } = Astro.props
+---
+
+<!doctype html>
+<html lang={locale} dir={dir}>
+  <head>
+    <Head
+      title={title}
+      description={description}
+      ogImage={ogImage}
+      canonical={canonical}
+      structuredData={structuredData}
+    />
+    <!-- Apply reduced-motion preference before first paint to avoid animation flash -->
+    <script is:inline>
+      try {
+        if (localStorage.getItem('pai-reduced-motion') === 'true') {
+          document.documentElement.setAttribute('data-reduced-motion', '')
+        }
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <!-- Accessibility: skip to main content -->
+    <a href="#wm-desktop" class="skip-link">Skip to main content</a>
+
+    <!-- Shell: hidden by default; JS activates it on desktop viewports -->
+    <div class="shell">
+      <header class="shell__topbar">
+        <Topbar />
+      </header>
+
+      <main class="shell__desktop" id="wm-desktop">
+        <slot name="desktop" />
+        <div class="shell__windows" id="wm-layer">
+          <slot name="windows" />
+        </div>
+      </main>
+
+      <footer class="shell__dock">
+        <Dock />
+      </footer>
+    </div>
+
+    <Window />
+
+    <!-- No-JS notice (shown to desktop users without JS) -->
+    <noscript>
+      <div class="noscript-banner" role="note">
+        Interactive desktop requires JavaScript — showing static overview below.
+      </div>
+    </noscript>
+
+    <!-- Default slot: BootSplash, Lockscreen, and mobile layout from index.astro -->
+    <slot />
+  </body>
+</html>
+
+<script>
+  import { playBootSequence } from '../shell/boot.ts'
+  import { wm } from '../shell/wm.js'
+  import { initTopbar } from '../shell/topbar.js'
+  import { initDock } from '../shell/dock.js'
+  import { StartMenu } from '../shell/startmenu.ts'
+  import { APPS } from '../shell/apps.js'
+  import { hotkeys } from '../shell/hotkeys.ts'
+  import { openSpotlight, initSpotlight } from '../shell/search.ts'
+  import { initShortcutsHelp } from '../shell/shortcuts-help.ts'
+  import { initWidgets } from '../shell/widgets.ts'
+  import {
+    initWorkspaceSwitcher,
+    openWorkspaceSwitcher,
+  } from '../shell/workspace-switcher.ts'
+  import '../shell/permissions-bridge.ts'
+  import '../shell/gestures.ts'
+  import '../shell/welcome-tour.ts'
+
+  const MOBILE_MQ = window.matchMedia('(max-width: 767px), (any-pointer: coarse)')
+
+  async function initShell(): Promise<void> {
+    if (MOBILE_MQ.matches) return
+
+    // Activate the shell layout
+    document.documentElement.dataset.desktop = ''
+
+    await playBootSequence()
+
+    wm.restoreCurrent()
+
+    initTopbar()
+    initDock()
+    initSpotlight()
+    initShortcutsHelp()
+    initWidgets()
+    initWorkspaceSwitcher()
+
+    // ── Cross-module hotkeys ─────────────────────────────────────────────────
+    hotkeys.register('ctrl+k', openSpotlight, {
+      description: 'Open spotlight search',
+      category: 'Shell',
+    })
+    hotkeys.register('meta+k', openSpotlight, {
+      description: 'Open spotlight search',
+      category: 'Shell',
+    })
+    hotkeys.register('meta+tab', openWorkspaceSwitcher, {
+      description: 'Open workspace switcher',
+      category: 'Workspaces',
+    })
+    hotkeys.register(
+      'ctrl+alt+l',
+      () => document.dispatchEvent(new CustomEvent('pai:lock')),
+      { description: 'Lock the desktop', category: 'Shell' },
+    )
+
+    const startmenu = new StartMenu((appId: string) => {
+      const app = (APPS as Record<string, any>)[appId]
+      if (!app) return
+      wm.open(appId, { title: app.title, w: app.default?.w, h: app.default?.h })
+    })
+    ;(window as any).__startmenu = startmenu
+    ;(window as any).__wm = wm
+
+    maybeAutoOpenDocs()
+
+    console.log('[PAI] Desktop initialized — Alt+D for Start menu, Super+D for dock')
+  }
+
+  const DOCS_AUTOOPEN_KEY = 'pai-docs-autoopened'
+
+  function maybeAutoOpenDocs(): void {
+    try {
+      if (localStorage.getItem(DOCS_AUTOOPEN_KEY)) return
+    } catch { return }
+
+    // Skip if a deep-link already opened something
+    if (location.hash.startsWith('#app=')) return
+
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+    const w = Math.round(vw * 0.5)
+    const h = Math.round(vh * 0.5)
+    const x = Math.round((vw - w) / 2)
+    const y = Math.round((vh - h) / 2)
+
+    wm.open('about', { title: 'About', w, h, x, y })
+
+    try { localStorage.setItem(DOCS_AUTOOPEN_KEY, '1') } catch {}
+  }
+
+  // Re-check on viewport resize (DevTools responsive toggle, window resize)
+  MOBILE_MQ.addEventListener('change', (e) => {
+    if (e.matches) {
+      delete document.documentElement.dataset.desktop
+    } else if (!document.documentElement.dataset.desktop) {
+      initShell()
+    }
+  })
+
+  initShell()
+</script>
+
+<style>
+  /* Skip link */
+  .skip-link {
+    position: absolute;
+    top: -100%;
+    left: var(--s-2);
+    background: var(--pai-blue);
+    color: #0f0f1a;
+    padding: var(--s-1) var(--s-3);
+    border-radius: var(--r-icon);
+    font-weight: 600;
+    font-size: 0.875rem;
+    z-index: 9999;
+    text-decoration: none;
+    transition: top var(--motion-duration) var(--motion-easing);
+  }
+
+  .skip-link:focus {
+    top: var(--s-2);
+  }
+
+  /* Shell: hidden until JS activates it (sets data-desktop on <html>) */
+  .shell {
+    display: none;
+    flex-direction: column;
+    height: 100dvh;
+    overflow: hidden;
+    position: relative;
+  }
+
+  :global(html[data-desktop]) .shell {
+    display: flex;
+  }
+
+  /* Safety: on narrow/coarse viewports, always hide shell even if data-desktop was set */
+  @media (max-width: 767px), (any-pointer: coarse) {
+    :global(html[data-desktop]) .shell {
+      display: none !important;
+    }
+  }
+
+  .shell__topbar {
+    flex-shrink: 0;
+    position: relative;
+    z-index: var(--z-topbar);
+  }
+
+  .shell__desktop {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    z-index: var(--z-desktop);
+  }
+
+  .shell__windows {
+    position: absolute;
+    inset: 0;
+    z-index: var(--z-window);
+  }
+
+  .shell__dock {
+    flex-shrink: 0;
+    position: relative;
+    z-index: var(--z-dock);
+  }
+
+  /* No-JS banner */
+  .noscript-banner {
+    background: color-mix(in srgb, var(--pai-yellow) 12%, var(--bg-elev));
+    border-bottom: 1px solid color-mix(in srgb, var(--pai-yellow) 30%, var(--border));
+    color: var(--fg);
+    font-size: 0.875rem;
+    text-align: center;
+    padding: var(--s-2) var(--s-5);
+  }
+
+  /* Hide boot splash and lockscreen on mobile (they're desktop-only overlays) */
+  @media (max-width: 767px), (any-pointer: coarse) {
+    :global(#boot-splash) {
+      display: none !important;
+    }
+
+    :global(#lockscreen) {
+      display: none !important;
+    }
+  }
+
+  /* Mobile layout container: visible by default, hidden when shell is active */
+  :global(#pai-mobile) {
+    display: block;
+  }
+
+  :global(html[data-desktop] #pai-mobile) {
+    display: none;
+  }
+
+  /* Safety: on mobile, always show mobile layout */
+  @media (max-width: 767px), (any-pointer: coarse) {
+    :global(html[data-desktop] #pai-mobile) {
+      display: block !important;
+    }
+  }
+</style>
