@@ -1,0 +1,79 @@
+---
+import SitePage from '../layouts/SitePage.astro'
+---
+
+<SitePage
+  title="Support — PAI"
+  description="Get help with PAI. Community support, documentation, and how to report bugs or security issues."
+  active="support"
+>
+  <article class="support">
+    <header>
+      <h1>Support</h1>
+      <p class="lede">
+        PAI is a volunteer-run free software project. There's no paid support line —
+        but there are several ways to get help and report problems.
+      </p>
+    </header>
+
+    <section class="support-grid">
+      <div class="card">
+        <h2>📚 Documentation</h2>
+        <p>Installation guides, architecture, troubleshooting, and FAQ.</p>
+        <a href="https://docs.pai.direct" target="_blank" rel="noreferrer">docs.pai.direct ↗</a>
+      </div>
+
+      <div class="card">
+        <h2>🐛 Report a bug</h2>
+        <p>Found something broken? Open an issue with steps to reproduce.</p>
+        <a href="https://github.com/nirholas/pai/issues" target="_blank" rel="noreferrer">GitHub Issues ↗</a>
+      </div>
+
+      <div class="card">
+        <h2>💬 Ask a question</h2>
+        <p>Usage questions, hardware compatibility, feature ideas — start a discussion.</p>
+        <a href="https://github.com/nirholas/pai/discussions" target="_blank" rel="noreferrer">GitHub Discussions ↗</a>
+      </div>
+
+      <div class="card">
+        <h2>🔒 Security issues</h2>
+        <p>
+          Please do <strong>not</strong> file public issues for vulnerabilities.
+          See the responsible disclosure policy.
+        </p>
+        <a href="https://docs.pai.direct/security/" target="_blank" rel="noreferrer">Security policy ↗</a>
+      </div>
+    </section>
+
+    <section class="before-asking">
+      <h2>Before you ask</h2>
+      <ul>
+        <li>Search <a href="https://github.com/nirholas/pai/issues?q=" target="_blank" rel="noreferrer">existing issues</a> — your problem may already be known.</li>
+        <li>Check <a href="https://docs.pai.direct/advanced/troubleshooting/" target="_blank" rel="noreferrer">Troubleshooting</a> and <a href="https://docs.pai.direct/reference/faq/" target="_blank" rel="noreferrer">FAQ</a>.</li>
+        <li>Include: your PAI version, the computer model, and exact steps to reproduce.</li>
+      </ul>
+    </section>
+  </article>
+
+  <style>
+    .support { max-width: 880px; }
+    h1 { font-size: 40px; color: #fff; margin: 0 0 16px; font-weight: 700; }
+    .lede { font-size: 18px; line-height: 1.6; color: #c0c0d0; margin: 0 0 48px; max-width: 620px; }
+    .support-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px; margin-bottom: 48px;
+    }
+    .card {
+      background: #15151f; border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px; padding: 20px;
+    }
+    .card h2 { font-size: 16px; color: #fff; margin: 0 0 8px; font-weight: 600; }
+    .card p { font-size: 14px; color: #b0b0c0; margin: 0 0 12px; line-height: 1.5; }
+    .card a { color: #7aa2f7; font-weight: 600; font-size: 14px; text-decoration: none; }
+    .card a:hover { text-decoration: underline; }
+    .before-asking { padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.06); }
+    .before-asking h2 { font-size: 20px; color: #fff; margin: 0 0 12px; }
+    .before-asking ul { padding-left: 20px; color: #b0b0c0; line-height: 1.8; font-size: 15px; }
+    .before-asking a { color: #7aa2f7; }
+  </style>
+</SitePage>
