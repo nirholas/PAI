@@ -1,0 +1,121 @@
+---
+/**
+ * Step 2 — Download & Verify
+ * Streams the ISO via fetch, computes SHA256 incrementally, shows progress.
+ */
+import release from '../../data/release.json'
+---
+
+<section
+  class="step-panel"
+  id="step-panel-2"
+  role="tabpanel"
+  aria-labelledby="step-tab-2"
+>
+  <h2>Download &amp; Verify</h2>
+  <p class="step-desc">
+    Downloading <strong>{release.isoName}</strong> and verifying its SHA256 checksum in your browser.
+  </p>
+
+  <div class="download-card" id="download-card">
+    <div class="download-meta">
+      <span class="download-filename">{release.isoName}</span>
+      <span class="download-size" id="download-size">—</span>
+    </div>
+
+    <div class="progress-wrap" id="progress-wrap">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+      </div>
+      <div class="progress-stats">
+        <span id="progress-pct">0%</span>
+        <span id="progress-speed">— MB/s</span>
+        <span id="progress-eta">—</span>
+      </div>
+    </div>
+
+    <div class="verify-status" id="verify-status" aria-live="polite">
+      Waiting to start…
+    </div>
+
+    <div class="download-error" id="download-error" aria-live="assertive" hidden>
+      <p id="download-error-msg"></p>
+      <button class="btn btn--secondary" id="btn-retry-download">Retry</button>
+      <button class="btn btn--ghost" id="btn-copy-error">Copy error details</button>
+    </div>
+  </div>
+
+  <div class="step-actions">
+    <button class="btn btn--secondary" id="btn-back-to-detect">← Back</button>
+    <button class="btn btn--primary" id="btn-start-download-action">
+      Download &amp; Verify
+    </button>
+    <button class="btn btn--primary" id="btn-continue-method" hidden>
+      Continue →
+    </button>
+  </div>
+</section>
+
+<script define:vars={{ downloadUrl: release.downloadUrl, expectedSha256: release.sha256, isoName: release.isoName }}>
+  // These vars are embedded at build time for offline fallback
+  window.__PAI_RELEASE__ = { downloadUrl, expectedSha256, isoName };
+</script>
+
+<style>
+  .download-card {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 1.5rem;
+  }
+  .download-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .download-filename { font-weight: 600; color: #e0e0e0; }
+  .download-size { color: #888; font-size: 0.9rem; }
+  .progress-wrap { margin-bottom: 16px; }
+  .progress-bar {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #38bdf8, #22c55e);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
+  .progress-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 0.8rem;
+    color: #888;
+  }
+  .verify-status {
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: rgba(56, 189, 248, 0.06);
+    font-size: 0.85rem;
+    color: #38bdf8;
+  }
+  .verify-status.success {
+    background: rgba(34, 197, 94, 0.08);
+    color: #22c55e;
+  }
+  .verify-status.error {
+    background: rgba(239, 68, 68, 0.08);
+    color: #ef4444;
+  }
+  .download-error {
+    background: rgba(239, 68, 68, 0.06);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 12px;
+  }
+</style>
