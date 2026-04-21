@@ -1,0 +1,71 @@
+---
+/**
+ * Step 1 — Detect & Prep
+ * OS detection, USB detection, browser capability checks.
+ */
+---
+
+<section
+  class="step-panel"
+  id="step-panel-1"
+  role="tabpanel"
+  aria-labelledby="step-tab-1"
+>
+  <h2>Detect &amp; Prep</h2>
+  <p class="step-desc">Checking your system before we begin.</p>
+
+  <div class="checks" id="preflight-checks">
+    <div class="check-item" data-check="os">
+      <span class="check-icon" aria-hidden="true">●</span>
+      <span class="check-label">Operating system</span>
+      <span class="check-value" id="detected-os">Detecting…</span>
+    </div>
+    <div class="check-item" data-check="crypto">
+      <span class="check-icon" aria-hidden="true">●</span>
+      <span class="check-label">SHA256 support</span>
+      <span class="check-value" id="detected-crypto">Checking…</span>
+    </div>
+    <div class="check-item" data-check="stream">
+      <span class="check-icon" aria-hidden="true">●</span>
+      <span class="check-label">Streaming downloads</span>
+      <span class="check-value" id="detected-stream">Checking…</span>
+    </div>
+    <div class="check-item" data-check="usb">
+      <span class="check-icon" aria-hidden="true">●</span>
+      <span class="check-label">WebUSB (optional)</span>
+      <span class="check-value" id="detected-usb">Checking…</span>
+    </div>
+    <div class="check-item" data-check="fs">
+      <span class="check-icon" aria-hidden="true">●</span>
+      <span class="check-label">File System Access (optional)</span>
+      <span class="check-value" id="detected-fs">Checking…</span>
+    </div>
+  </div>
+
+  <div class="step-actions">
+    <button class="btn btn--primary" id="btn-start-download" disabled>
+      Continue to Download →
+    </button>
+  </div>
+</section>
+
+<style>
+  .step-panel { display: none; }
+  .step-panel[data-active] { display: block; }
+  .step-desc { color: #aaa; margin-bottom: 1.5rem; }
+  .checks { display: flex; flex-direction: column; gap: 12px; margin-bottom: 2rem; }
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+  }
+  .check-icon { font-size: 0.6rem; color: #666; }
+  .check-item.pass .check-icon { color: #22c55e; }
+  .check-item.fail .check-icon { color: #ef4444; }
+  .check-item.warn .check-icon { color: #eab308; }
+  .check-label { flex: 1; font-weight: 500; }
+  .check-value { font-size: 0.85rem; color: #888; }
+</style>
