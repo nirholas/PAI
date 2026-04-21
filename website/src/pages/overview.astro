@@ -1,0 +1,463 @@
+---
+import '../styles/global.css'
+import Head from '../components/Head.astro'
+
+const title = 'PAI — Private AI on a bootable USB drive'
+const description =
+  'PAI is a portable operating system that gives you a private, offline AI workstation. Boot from USB, use local models, leave no trace.'
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <Head title={title} description={description} ogImage="/og/home.png" />
+  </head>
+  <body class="overview">
+    <header class="topbar" role="banner">
+      <a href="/" class="brand" aria-label="PAI home">
+        <img src="/logo/pai-logo.png" alt="" width="32" height="32" />
+        <span>PAI</span>
+      </a>
+      <nav class="topnav" aria-label="Primary">
+        <a href="/overview" aria-current="page">Overview</a>
+        <a href="/apps/about">About</a>
+        <a href="/apps/docs">Docs</a>
+        <a href="/apps/flash">Install</a>
+        <a href="/apps/faq">FAQ</a>
+        <a href="/apps/changelog">News</a>
+      </nav>
+      <a class="donate" href="https://github.com/nirholas/pai" target="_blank" rel="noopener">
+        ★ Star on GitHub
+      </a>
+    </header>
+
+    <main>
+      <!-- Hero -->
+      <section class="hero">
+        <div class="hero-art" aria-hidden="true">
+          <img src="/logo/pai-logo.png" alt="" width="160" height="160" />
+        </div>
+        <div class="hero-copy">
+          <h1><span class="brand-name">PAI</span></h1>
+          <p class="tagline">
+            is a portable operating system that gives you a private, offline AI workstation.
+          </p>
+        </div>
+      </section>
+
+      <!-- Feature cards -->
+      <section class="cards">
+        <article class="card">
+          <div class="card-art card-art--offline" aria-hidden="true"></div>
+          <h2>Private AI, fully offline</h2>
+          <p>
+            PAI runs local language models via Ollama. No API keys, no cloud calls — your prompts
+            and responses never leave the machine.
+          </p>
+        </article>
+
+        <article class="card">
+          <div class="card-art card-art--portable" aria-hidden="true"></div>
+          <h2>Your secure computer anywhere</h2>
+          <p>
+            Shut down the computer and start on your PAI USB stick instead of Windows, macOS, or
+            Linux. PAI leaves no trace on the host when shut down.
+          </p>
+        </article>
+
+        <article class="card">
+          <div class="card-art card-art--toolbox" aria-hidden="true"></div>
+          <h2>Digital privacy toolbox</h2>
+          <p>
+            Firefox ESR, Tor (opt-in), Electrum and Monero wallets, LUKS2-encrypted persistence,
+            MAC spoofing, and a UFW firewall — all configured with safe defaults.
+          </p>
+        </article>
+
+        <article class="card">
+          <div class="card-art card-art--free" aria-hidden="true"></div>
+          <h2>Free Software</h2>
+          <p>
+            PAI is GPL-v3 licensed and built on Debian GNU/Linux. Download it for free, read the
+            source, and build the ISO yourself to verify what you're running.
+          </p>
+        </article>
+      </section>
+
+      <div class="cta-row">
+        <a class="btn btn--primary" href="/apps/flash">Install PAI</a>
+        <a class="btn" href="/apps/about">How PAI works</a>
+      </div>
+
+      <!-- Who uses PAI -->
+      <section class="who">
+        <h2>Who uses PAI</h2>
+        <div class="personas">
+          <div class="persona">
+            <div class="persona-art persona-art--privacy" aria-hidden="true"></div>
+            <h3>Privacy-conscious users</h3>
+            <p>use PAI to chat with an AI assistant that never ships prompts to a third party.</p>
+          </div>
+          <div class="persona">
+            <div class="persona-art persona-art--journalists" aria-hidden="true"></div>
+            <h3>Journalists and researchers</h3>
+            <p>
+              use PAI to work with sensitive documents and sources on an amnesic system that leaves
+              no trace.
+            </p>
+          </div>
+          <div class="persona">
+            <div class="persona-art persona-art--crypto" aria-hidden="true"></div>
+            <h3>Crypto users</h3>
+            <p>use PAI as a network-isolated environment for managing wallets and signing keys.</p>
+          </div>
+          <div class="persona">
+            <div class="persona-art persona-art--you" aria-hidden="true"></div>
+            <h3>You</h3>
+            <p>whenever you want a portable, private AI workstation on any PC you touch.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Built on -->
+      <section class="built-on">
+        <h2>Built on</h2>
+        <p>
+          PAI is assembled from trusted free software: <a href="https://www.debian.org"
+            target="_blank"
+            rel="noopener">Debian</a
+          >, <a href="https://ollama.com" target="_blank" rel="noopener">Ollama</a>,
+          <a href="https://swaywm.org" target="_blank" rel="noopener">Sway</a>, and
+          <a href="https://www.torproject.org" target="_blank" rel="noopener">Tor</a>. The source
+          and build scripts are open on
+          <a href="https://github.com/nirholas/pai" target="_blank" rel="noopener">GitHub</a>.
+        </p>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="foot-cols">
+        <div>
+          <h4>PAI</h4>
+          <a href="/">Home</a>
+          <a href="/apps/about">About</a>
+          <a href="/apps/flash">Install</a>
+          <a href="/apps/docs">Documentation</a>
+        </div>
+        <div>
+          <h4>Support</h4>
+          <a href="/apps/faq">FAQ</a>
+          <a href="/apps/security">Security</a>
+          <a href="/apps/hardware">Hardware</a>
+          <a href="/apps/verify">Verify ISO</a>
+        </div>
+        <div>
+          <h4>Project</h4>
+          <a href="https://github.com/nirholas/pai" target="_blank" rel="noopener">GitHub</a>
+          <a href="/apps/changelog">Changelog</a>
+          <a href="/apps/press">Press</a>
+        </div>
+      </div>
+      <p class="foot-meta">PAI — GPL v3. No telemetry. No cloud.</p>
+    </footer>
+
+    <script>
+      import { initSiteMenu } from '../shell/site-menu.ts'
+      initSiteMenu()
+    </script>
+  </body>
+</html>
+
+<style>
+  :global(body.overview) {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-ui);
+    line-height: 1.55;
+  }
+
+  main {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: var(--s-7) var(--s-5);
+  }
+
+  /* Topbar */
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: var(--s-5);
+    padding: var(--s-3) var(--s-5);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-elev);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: var(--s-2);
+    text-decoration: none;
+    color: var(--fg);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .topnav {
+    display: flex;
+    gap: var(--s-4);
+    margin-left: var(--s-4);
+    flex-wrap: wrap;
+  }
+  .topnav a {
+    color: var(--fg-muted);
+    text-decoration: none;
+    font-size: 0.9375rem;
+    padding: 4px 2px;
+    border-bottom: 2px solid transparent;
+  }
+  .topnav a:hover {
+    color: var(--fg);
+  }
+  .topnav a[aria-current='page'] {
+    color: var(--fg);
+    border-bottom-color: var(--pai-blue);
+  }
+  .donate {
+    margin-left: auto;
+    color: var(--fg);
+    text-decoration: none;
+    padding: 6px var(--s-3);
+    border-radius: var(--r-icon);
+    border: 1px solid var(--border);
+    font-size: 0.875rem;
+    background: var(--bg);
+  }
+  .donate:hover {
+    background: var(--border);
+  }
+
+  /* Hero */
+  .hero {
+    display: flex;
+    align-items: center;
+    gap: var(--s-6);
+    padding: var(--s-6) 0 var(--s-7);
+    border-bottom: 1px solid var(--border);
+  }
+  .hero-art img {
+    opacity: 0.9;
+  }
+  .hero-copy h1 {
+    margin: 0 0 var(--s-3);
+    font-size: 2.25rem;
+    line-height: 1.1;
+  }
+  .brand-name {
+    color: var(--pai-blue);
+    font-weight: 800;
+    letter-spacing: 0.01em;
+  }
+  .tagline {
+    margin: 0;
+    font-size: 1.125rem;
+    color: var(--fg-muted);
+    max-width: 48ch;
+  }
+
+  /* Cards */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--s-5);
+    margin: var(--s-7) 0;
+  }
+  .card {
+    border: 1px solid var(--border);
+    background: var(--bg-elev);
+    border-radius: var(--r-window);
+    padding: var(--s-5);
+  }
+  .card h2 {
+    margin: var(--s-4) 0 var(--s-2);
+    font-size: 1.125rem;
+  }
+  .card p {
+    margin: 0;
+    color: var(--fg-muted);
+  }
+  .card-art {
+    height: 140px;
+    border-radius: var(--r-icon);
+    background: linear-gradient(135deg, var(--bg), var(--border));
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+  }
+  .card-art--offline::before {
+    content: '🔌';
+  }
+  .card-art--portable::before {
+    content: '💾';
+  }
+  .card-art--toolbox::before {
+    content: '🧰';
+  }
+  .card-art--free::before {
+    content: '🆓';
+  }
+
+  .cta-row {
+    display: flex;
+    gap: var(--s-3);
+    flex-wrap: wrap;
+    margin: var(--s-6) 0 var(--s-7);
+  }
+  .btn {
+    padding: 10px var(--s-5);
+    border-radius: var(--r-icon);
+    border: 1px solid var(--border);
+    background: var(--bg-elev);
+    color: var(--fg);
+    text-decoration: none;
+    font-size: 0.9375rem;
+    font-family: var(--font-ui);
+  }
+  .btn:hover {
+    background: var(--border);
+  }
+  .btn--primary {
+    background: var(--pai-blue);
+    color: #0f0f1a;
+    border-color: transparent;
+    font-weight: 600;
+  }
+  .btn--primary:hover {
+    background: var(--pai-yellow);
+  }
+
+  /* Who */
+  .who {
+    padding-top: var(--s-6);
+    border-top: 1px solid var(--border);
+  }
+  .who h2 {
+    color: var(--pai-blue);
+    font-size: 1.5rem;
+    margin: 0 0 var(--s-5);
+  }
+  .personas {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--s-5);
+  }
+  .persona h3 {
+    margin: var(--s-3) 0 var(--s-2);
+    font-size: 1rem;
+    color: var(--pai-blue);
+  }
+  .persona p {
+    margin: 0;
+    color: var(--fg-muted);
+    font-size: 0.9375rem;
+  }
+  .persona-art {
+    height: 110px;
+    border-radius: var(--r-icon);
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+  }
+  .persona-art--privacy::before {
+    content: '🕶️';
+  }
+  .persona-art--journalists::before {
+    content: '📰';
+  }
+  .persona-art--crypto::before {
+    content: '🔐';
+  }
+  .persona-art--you::before {
+    content: '👤';
+  }
+
+  /* Built on */
+  .built-on {
+    margin-top: var(--s-7);
+    padding-top: var(--s-6);
+    border-top: 1px solid var(--border);
+  }
+  .built-on h2 {
+    color: var(--pai-blue);
+    font-size: 1.25rem;
+    margin: 0 0 var(--s-3);
+  }
+  .built-on p {
+    margin: 0;
+    color: var(--fg-muted);
+    max-width: 72ch;
+  }
+  .built-on a {
+    color: var(--pai-blue);
+  }
+
+  /* Footer */
+  .site-footer {
+    border-top: 1px solid var(--border);
+    background: var(--bg-elev);
+    padding: var(--s-6) var(--s-5);
+    margin-top: var(--s-7);
+  }
+  .foot-cols {
+    max-width: 72rem;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--s-6);
+  }
+  .foot-cols h4 {
+    margin: 0 0 var(--s-3);
+    font-size: 0.875rem;
+    color: var(--fg);
+  }
+  .foot-cols a {
+    display: block;
+    color: var(--fg-muted);
+    text-decoration: none;
+    font-size: 0.875rem;
+    padding: 2px 0;
+  }
+  .foot-cols a:hover {
+    color: var(--fg);
+  }
+  .foot-meta {
+    max-width: 72rem;
+    margin: var(--s-5) auto 0;
+    color: var(--fg-muted);
+    font-size: 0.8125rem;
+  }
+
+  @media (max-width: 800px) {
+    .cards,
+    .personas,
+    .foot-cols {
+      grid-template-columns: 1fr;
+    }
+    .hero {
+      flex-direction: column;
+      text-align: center;
+    }
+    .tagline {
+      margin: 0 auto;
+    }
+    .topnav {
+      display: none;
+    }
+  }
+</style>
