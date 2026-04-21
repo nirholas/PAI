@@ -1,0 +1,78 @@
+---
+title: "v0.1.0"
+date: "2026-04-20"
+description: "First public release of PAI — a bootable USB Linux distribution for private, offline AI."
+stable: true
+githubUrl: "https://github.com/nirholas/pai/releases/tag/v0.1.0"
+---
+
+## PAI v0.1.0
+
+First public release of PAI — a bootable USB Linux distribution for private,
+offline AI. Flash the ISO to a USB stick, boot any recent amd64 or arm64
+machine from it, and you have a self-contained Sway desktop with a local LLM
+stack that runs entirely on-device.
+
+### Core system
+
+- Bootable live-USB ISO for `amd64` and `arm64`, built from Debian 12.
+- Sway (Wayland tiling compositor) with Waybar status bar and app launcher.
+- `pai-settings` — a `wofi`-driven settings menu for quick toggles and tools.
+
+### AI stack
+
+- **Ollama** preinstalled with `llama3.2:1b` baked into the ISO, so the
+  system works end-to-end with zero network access on first boot.
+- **Open WebUI** as the default chat interface, PAI-branded.
+- **First-boot model picker** — detects available RAM, suggests a
+  size-matched model, and offers a one-click download. Offline-safe:
+  falls back to the baked-in model if there's no internet.
+
+### Privacy & security
+
+- `pai-shutdown` wipes memory (zeroing free RAM) before powering off,
+  so no residual model or chat state survives in DRAM.
+- UFW firewall enabled by default with a default-deny inbound policy.
+- MAC address randomization on every boot (WiFi and Ethernet).
+- Optional Tor privacy mode — opt-in toggle for network-level privacy.
+
+### Encrypted persistence (opt-in)
+
+- `pai-persistence` first-boot wizard creates a LUKS2 (argon2id)
+  partition on the USB stick. Persists Ollama models, Open WebUI
+  history, and WiFi credentials across reboots, with optional
+  home-directory persistence.
+
+### Crypto wallet toolkits
+
+- Offline Solana, Ethereum/EVM, and BIP39 seed-phrase generators
+  bundled for air-gapped key management. Launch with `$mod+Shift+S`,
+  `$mod+Shift+E`, and `$mod+Shift+9` in the crypto profile.
+
+### Installation & flashing
+
+- `pai` CLI (`pai flash`, `pai try`, `pai verify`, `pai doctor`) for
+  Linux, macOS, and Windows.
+- Windows one-liner flasher:
+  `irm https://pai.direct/flash.ps1 | iex`
+- Browser-based install assistant at `/flash-web`.
+- Homebrew, Scoop, Winget, and Arch AUR packages.
+- Raspberry Pi Imager custom repository at `https://pai.direct/imager.json`.
+
+### Verify your download
+
+```bash
+sha256sum -c pai-v0.1.0-amd64.iso.sha256
+```
+
+### Known limitations
+
+- No signed shims for Secure Boot — disable it or add a MOK manually.
+- Open WebUI runs without authentication (single-user live-system model).
+- PowerShell flashers are not Authenticode-signed yet — planned for v0.2.
+- ISO minisign signatures are not published for v0.1.0 — SHA-256 checksum
+  verification is the only verification path on this release. Full
+  authenticity verification via `minisign` becomes available starting v0.2.
+
+See the [full changelog](https://github.com/nirholas/pai/blob/main/CHANGELOG.md)
+on GitHub for complete notes.
