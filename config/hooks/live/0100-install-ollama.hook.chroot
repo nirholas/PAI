@@ -1,0 +1,46 @@
+#!/bin/bash
+set -euo pipefail
+
+# Pinned Ollama release.
+# To bump: update OLLAMA_VERSION and the SHA256 values from
+# https://github.com/ollama/ollama/releases/download/${OLLAMA_VERSION}/sha256sum.txt
+OLLAMA_VERSION="v0.21.0"
+OLLAMA_SHA256_AMD64="a7fc4261298aeca8f785f695978a5e997004d414c13d4cfb965a10da9f4db6ea"
+OLLAMA_SHA256_ARM64="49238f32a4757aa7776ac85211cb2fb0e6aa0b31b6ed949191918b0c28c51992"
+
+echo "[pai] Installing Ollama ${OLLAMA_VERSION} (CPU-only)..."
+
+apt-get install -y --no-install-recommends zstd
+
+ARCH=$(dpkg --print-architecture)
+case "$ARCH" in
+    amd64) OLLAMA_SHA256="$OLLAMA_SHA256_AMD64" ;;
+    arm64) OLLAMA_SHA256="$OLLAMA_SHA256_ARM64" ;;
+    *)
+        echo "[pai] WARNING: Unsupported architecture $ARCH for Ollama"
+        exit 0
+        ;;
+esac
+
+OLLAMA_TARBALL="ollama-linux-${ARCH}.tar.zst"
+OLLAMA_URL="https://github.com/ollama/ollama/releases/download/${OLLAMA_VERSION}/${OLLAMA_TARBALL}"
+
+TMPDIR=$(mktemp -d)
+trap 'rm -rf "$TMPDIR"' EXIT
+
+echo "[pai] Downloading ${OLLAMA_URL}"
+curl -fSL "$OLLAMA_URL" -o "$TMPDIR/$OLLAMA_TARBALL"
+
+echo "[pai] Verifying SHA256..."
+echo "${OLLAMA_SHA256}  $TMPDIR/$OLLAMA_TARBALL" | sha256sum -c -
+
+rm -rf /usr/lib/ollama 2>/dev/null || true
+tar x --zstd -f "$TMPDIR/$OLLAMA_TARBALL" -C /usr
+/usr/bin/ollama --version || echo "[pai] WARNING: Ollama binary may not be functional"
+
+useradd -r -s /bin/false -m -d /usr/share/ollama ollama 2>/dev/null || true
+mkdir -p /usr/share/ollama/.ollama/models
+chown -R ollama:ollama /usr/share/ollama
+systemctl enable ollama.service 2>/dev/null || true
+
+echo "[pai] Ollama ${OLLAMA_VERSION} installed (CPU-only, ${ARCH})."
