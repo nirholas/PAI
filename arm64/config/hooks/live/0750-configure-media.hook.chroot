@@ -1,0 +1,45 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "[pai] Configuring media players..."
+
+# ── Audacious dark GTK theme (inherits system theme) ──────────────
+# Audacious uses GTK3 and will pick up the system dark theme
+# No special config needed — it respects GTK_THEME
+
+# ── Waybar media widget ──────────────────────────────────────────
+# playerctl integration allows media controls in waybar
+# This is used by the waybar config (if media module is included)
+
+# Create music directory with a README
+mkdir -p /etc/skel/Music
+cat > /etc/skel/Music/README.txt <<'EOF'
+PAI Music Directory
+===================
+
+Drop your music files here, or:
+
+  1. Open Audacious (Alt+M) for a lightweight music player
+  2. Use ffmpeg for video conversion: pai-convert input.mp4 output.webm
+
+Supported formats: MP3, FLAC, OGG, WAV, AAC, M4A, WMA, and more.
+EOF
+
+# ── Documents directory with Bitcoin whitepaper ──────────────────
+echo "[pai] Setting up Documents with Bitcoin whitepaper..."
+mkdir -p /etc/skel/Documents
+
+# Download Bitcoin whitepaper
+if curl -fsSL -o /etc/skel/Documents/bitcoin.pdf \
+    "https://bitcoin.org/bitcoin.pdf"; then
+    echo "[pai] Bitcoin whitepaper downloaded successfully."
+else
+    echo "[pai] WARNING: Failed to download Bitcoin whitepaper from bitcoin.org"
+    # Fallback: try from bitcoincore.org
+    curl -fsSL -o /etc/skel/Documents/bitcoin.pdf \
+        "https://bitcoincore.org/bitcoin.pdf" \
+        && echo "[pai] Bitcoin whitepaper downloaded from fallback." \
+        || echo "[pai] WARNING: Could not download Bitcoin whitepaper."
+fi
+
+echo "[pai] Media players configured."
