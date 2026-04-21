@@ -1,0 +1,29 @@
+#!/bin/bash
+# ── Install whisper.cpp (local speech-to-text) ─────────────────────────
+# Builds whisper.cpp from source at a pinned release tag. No weights
+# downloaded; weights fetched on demand by the model picker.
+set -euo pipefail
+
+WHISPER_TAG="v1.7.2"
+echo "[pai] Building whisper.cpp ${WHISPER_TAG}..."
+
+apt-get update
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    git make g++ pkg-config ca-certificates
+
+install -d -m 0755 /opt/whisper.cpp
+git clone --depth 1 --branch "${WHISPER_TAG}" \
+    https://github.com/ggerganov/whisper.cpp /opt/whisper.cpp \
+    || { echo "[pai] whisper.cpp clone failed — skipping."; exit 0; }
+
+(
+    cd /opt/whisper.cpp
+    make -j"$(nproc)" main quantize 2>&1 | tail -40
+)
+
+# Symlink the binaries so they're on PATH
+ln -sf /opt/whisper.cpp/main /usr/local/bin/whisper-cpp-main
+ln -sf /opt/whisper.cpp/quantize /usr/local/bin/whisper-cpp-quantize
+
+apt-get clean && rm -rf /var/lib/apt/lists/*
+echo "[pai] whisper.cpp installed."
