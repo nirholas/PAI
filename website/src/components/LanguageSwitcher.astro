@@ -1,0 +1,43 @@
+---
+import { locales, defaultLocale, languageNames, getLocale } from '../i18n/ui'
+
+const current = getLocale(Astro.url)
+
+const pathWithoutLocale = (() => {
+  const parts = Astro.url.pathname.split('/').filter(Boolean)
+  if (locales.includes(parts[0])) parts.shift()
+  return '/' + parts.join('/')
+})()
+
+const hrefFor = (locale: string) => {
+  const suffix = pathWithoutLocale === '/' ? '' : pathWithoutLocale
+  return locale === defaultLocale ? (suffix || '/') : `/${locale}${suffix}`
+}
+---
+
+<label class="lang-switcher">
+  <span class="sr-only">Language</span>
+  <select onchange="if(this.value)window.location.href=this.value">
+    {locales.map(l => (
+      <option value={hrefFor(l)} selected={l === current}>{languageNames[l] ?? l}</option>
+    ))}
+  </select>
+</label>
+
+<style>
+  .lang-switcher select {
+    background: transparent;
+    color: inherit;
+    border: 1px solid currentColor;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font: inherit;
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0);
+    white-space: nowrap; border: 0;
+  }
+</style>
