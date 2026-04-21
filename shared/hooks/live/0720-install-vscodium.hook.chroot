@@ -1,0 +1,59 @@
+#!/bin/bash
+# ── Install VSCodium (FOSS, telemetry-free VS Code build) ──────────────
+# Adds the VSCodium apt repository and installs `codium`. Supports both
+# amd64 and arm64 (paulcarroty.gitlab.io publishes both). A small curated
+# extension set is installed from Open VSX.
+set -euo pipefail
+
+echo "[pai] Installing VSCodium..."
+
+install -d -m 0755 /etc/apt/keyrings
+
+# VSCodium GPG key (VSCodium gitlab-pages signing key)
+curl -fsSL https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/raw/master/pub.gpg \
+    | gpg --dearmor -o /etc/apt/keyrings/vscodium-archive-keyring.gpg
+
+cat > /etc/apt/sources.list.d/vscodium.list <<'REPO'
+deb [signed-by=/etc/apt/keyrings/vscodium-archive-keyring.gpg] https://download.vscodium.com/debs vscodium main
+REPO
+
+apt-get update
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends codium
+
+# Preinstall a curated extension set from Open VSX (VSCodium's default).
+# Best-effort — fail soft so build does not abort if one ext is missing.
+EXTS=(
+    ms-python.python
+    golang.go
+    rust-lang.rust-analyzer
+    esbenp.prettier-vscode
+    dbaeumer.vscode-eslint
+    Continue.continue
+)
+install -d -m 0755 /etc/skel/.vscode-oss/extensions
+for ext in "${EXTS[@]}"; do
+    sudo -u nobody --preserve-env=HOME HOME=/tmp \
+        codium --no-sandbox --user-data-dir=/tmp/pai-codium \
+               --extensions-dir=/etc/skel/.vscode-oss/extensions \
+               --install-extension "$ext" 2>/dev/null \
+        || echo "[pai] VSCodium extension $ext — skipped (offline repo or unavailable)"
+done
+rm -rf /tmp/pai-codium
+
+# Telemetry-off user settings baked into /etc/skel
+install -d -m 0755 /etc/skel/.config/VSCodium/User
+cat > /etc/skel/.config/VSCodium/User/settings.json <<'JSON'
+{
+    "telemetry.telemetryLevel": "off",
+    "update.mode": "none",
+    "extensions.autoUpdate": false,
+    "extensions.autoCheckUpdates": false,
+    "workbench.startupEditor": "welcomePageInEmptyWorkbench",
+    "workbench.colorTheme": "Default Dark Modern"
+}
+JSON
+
+apt-get clean
+rm -rf /var/lib/apt/lists/*
+
+echo "[pai] VSCodium installed."
