@@ -1,0 +1,15 @@
+{
+  "id": "quantum-tunneling",
+  "title": "Explain quantum tunneling to me like I'm 10.",
+  "model": "llama3.2:3b",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Explain quantum tunneling to me like I'm 10."
+    },
+    {
+      "role": "assistant",
+      "content": "Okay! Imagine you have a ball, and there's a hill in front of you. Normally, if you don't roll the ball hard enough, it can't get over the hill — it just rolls back.\n\nBut here's where quantum stuff gets *weird*.\n\nIn the quantum world, tiny things like electrons don't behave like normal balls. They're also kind of like waves — sloshing around in space. And because they're wavy, they have a tiny, tiny chance of just *appearing on the other side of the hill* even without enough energy to climb over it.\n\nIt's as if the ball sort of \"leaked through\" the hill instead of going over it. Scientists call this **quantum tunneling**.\n\nThis actually happens all the time in the real world:\n- **Inside the Sun**, atoms smash together through tunneling — that's what makes the Sun shine ☀️\n- **USB flash drives** use tunneling to store your files\n- **Scanning tunneling microscopes** can take pictures of individual atoms!\n\nThe weirder part: the thinner the \"hill\" (called a potential barrier), the more likely tunneling is. If the barrier is very thick, tunneling almost never happens. If it's thin, particles slip through pretty often.\n\nSo quantum tunneling is basically particles doing the impossible by cheating the rules — because at tiny scales, the rules are different!"
+    }
+  ]
+}
