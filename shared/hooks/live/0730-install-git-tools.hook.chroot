@@ -1,0 +1,73 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "[pai] Installing Git tools..."
+
+# Detect build arch so this hook works on amd64 and arm64 without editing.
+DEB_ARCH="$(dpkg --print-architecture)"
+case "$DEB_ARCH" in
+    amd64) LAZYGIT_ARCH="x86_64" ;;
+    arm64) LAZYGIT_ARCH="arm64" ;;
+    *)     LAZYGIT_ARCH="x86_64" ;;
+esac
+
+# ── GitHub CLI (gh) ─────────────────────────────────────────────────
+echo "[pai] Installing GitHub CLI..."
+GH_VERSION="2.63.2"
+cd /tmp
+if curl -fSL -o gh.deb "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${DEB_ARCH}.deb"; then
+    dpkg -i gh.deb || apt-get install -f -y
+    rm -f gh.deb
+    echo "[pai] GitHub CLI $(gh --version | head -1) installed."
+else
+    rm -f gh.deb
+    echo "[pai] WARNING: GitHub CLI download failed. Skipping."
+fi
+
+# ── Git LFS ─────────────────────────────────────────────────────────
+apt-get install -y git-lfs 2>/dev/null || true
+git lfs install --system 2>/dev/null || true
+echo "[pai] Git LFS installed."
+
+# ── Lazygit (terminal Git UI) ──────────────────────────────────────
+echo "[pai] Installing Lazygit..."
+LAZYGIT_VERSION="0.44.1"
+cd /tmp
+if curl -fSL -o lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/download/v${LAZYGIT_VERSION}/lazygit_${LAZYGIT_VERSION}_Linux_${LAZYGIT_ARCH}.tar.gz"; then
+    tar xzf lazygit.tar.gz lazygit
+    mv lazygit /usr/local/bin/
+    rm -f lazygit.tar.gz
+    echo "[pai] Lazygit installed."
+else
+    rm -f lazygit.tar.gz
+    echo "[pai] WARNING: Lazygit download failed. Skipping."
+fi
+
+# ── Default Git config ──────────────────────────────────────────────
+cat > /etc/skel/.gitconfig <<'EOF'
+[init]
+    defaultBranch = main
+[pull]
+    rebase = true
+[push]
+    autoSetupRemote = true
+[core]
+    editor = code --wait
+    autocrlf = input
+[color]
+    ui = auto
+[alias]
+    st = status
+    co = checkout
+    br = branch
+    ci = commit
+    lg = log --oneline --graph --all -20
+    last = log -1 HEAD
+    unstage = reset HEAD --
+    amend = commit --amend --no-edit
+EOF
+
+apt-get clean
+rm -rf /var/lib/apt/lists/*
+
+echo "[pai] Git tools configured."
