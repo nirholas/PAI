@@ -1,0 +1,31 @@
+# PAI — Hardware wallet udev rules.
+# Lets non-root users access the devices via the plugdev group.
+# Upstream sources (MIT / similar):
+#   Ledger: https://github.com/LedgerHQ/udev-rules
+#   Trezor: https://github.com/trezor/trezor-firmware/blob/main/data/udev/51-trezor.rules
+#   Coldcard: https://github.com/Coldcard/firmware
+#   Jade: https://github.com/Blockstream/Jade
+
+# ── Ledger (all models) ─────────────────────────────────────────────────
+# Vendor ID 2c97 = Ledger SAS
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="2c97", MODE="0660", TAG+="uaccess", TAG+="udev-acl", GROUP="plugdev"
+SUBSYSTEM=="usb", ATTR{idVendor}=="2c97", MODE="0660", TAG+="uaccess", TAG+="udev-acl", GROUP="plugdev"
+
+# ── Trezor (v1 and T) ──────────────────────────────────────────────────
+# Vendor ID 534c = SatoshiLabs (Trezor v1)
+SUBSYSTEM=="usb", ATTR{idVendor}=="534c", ATTR{idProduct}=="0001", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+# Vendor ID 1209 = generic InterBiometrics (Trezor T and Safe 3/5)
+SUBSYSTEM=="usb", ATTR{idVendor}=="1209", ATTR{idProduct}=="53c0", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTR{idVendor}=="1209", ATTR{idProduct}=="53c1", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+KERNEL=="hidraw*", ATTRS{idVendor}=="534c", ATTRS{idProduct}=="0001", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+KERNEL=="hidraw*", ATTRS{idVendor}=="1209", ATTRS{idProduct}=="53c1", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+
+# ── Coldcard (Coinkite) ────────────────────────────────────────────────
+# Vendor ID d13e = Coinkite
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="d13e", ATTRS{idProduct}=="cc10", GROUP="plugdev", MODE="0660", TAG+="uaccess"
+KERNEL=="hidraw*", ATTRS{idVendor}=="d13e", ATTRS{idProduct}=="cc10", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+
+# ── Blockstream Jade ───────────────────────────────────────────────────
+# Vendor ID 10c4 = Silicon Labs (Jade uses an ESP32 with SiLabs serial)
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", GROUP="plugdev", MODE="0660", TAG+="uaccess"
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="55d4", GROUP="plugdev", MODE="0660", TAG+="uaccess"
