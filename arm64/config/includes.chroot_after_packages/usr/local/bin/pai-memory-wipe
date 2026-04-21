@@ -1,0 +1,26 @@
+#!/bin/bash
+# PAI Memory Wipe — clears RAM before shutdown
+# Must run as root
+
+if [[ $EUID -ne 0 ]]; then
+    echo "  Error: must run as root"
+    exit 1
+fi
+
+echo "  [1/4] Syncing filesystems..."
+sync
+
+echo "  [2/4] Dropping page cache, dentries, and inodes..."
+echo 3 > /proc/sys/vm/drop_caches
+
+echo "  [3/4] Wiping free RAM (single pass)..."
+if command -v sdmem &>/dev/null; then
+    # -l -l = single pass (fast, ~20s), good enough for most threat models
+    sdmem -v -l -l
+else
+    echo "  sdmem not found — skipping RAM wipe"
+fi
+
+echo "  [4/4] Memory wiped. Shutting down..."
+sleep 2
+systemctl poweroff
