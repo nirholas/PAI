@@ -1,0 +1,12 @@
+# shellcheck shell=bash
+# bash completion for pai-status
+_pai_status() {
+    local cur opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    opts="--json --brief -h --help"
+    if [[ ${cur} == -* ]]; then
+        mapfile -t COMPREPLY < <(compgen -W "${opts}" -- "${cur}")
+    fi
+}
+complete -F _pai_status pai-status
