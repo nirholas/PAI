@@ -1,0 +1,17 @@
+[Unit]
+Description=PAI persistence state marker
+# live-boot handles the real LUKS unlock in the initramfs; this unit just
+# writes /run/pai-persistence-active once the bind-mounts are in place so
+# waybar, the MOTD, and pai-save can detect the active state.
+After=local-fs.target
+Before=ollama.service
+
+[Service]
+Type=oneshot
+# Leading "-" ignores non-zero exit: no persistence => no marker, no error.
+ExecStart=-/usr/local/bin/pai-persistence unlock
+RemainAfterExit=yes
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=multi-user.target
