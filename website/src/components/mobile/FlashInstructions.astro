@@ -1,0 +1,189 @@
+---
+---
+
+<section class="flash-section" aria-labelledby="flash-heading">
+  <h2 id="flash-heading" class="section-heading">Flash &amp; boot in minutes</h2>
+  <p class="flash-intro">
+    Download the ISO, write it to a USB drive, and reboot. No installation, no partition changes.
+  </p>
+
+  <ol class="steps">
+    <li class="step">
+      <span class="step__num" aria-hidden="true">1</span>
+      <div class="step__content">
+        <strong>Download</strong>
+        <p>Grab the latest PAI ISO from the <a href="#download">download section</a> below.</p>
+      </div>
+    </li>
+    <li class="step">
+      <span class="step__num" aria-hidden="true">2</span>
+      <div class="step__content" id="flash-step">
+        <strong>Flash to USB</strong>
+        <!-- OS-specific instructions injected by JS; fallback shown by default -->
+        <div data-os-block="default" class="os-block">
+          <p>Use <strong>Balena Etcher</strong> (Windows/macOS/Linux) or <code>dd</code> on Linux/macOS:</p>
+          <pre class="code-block"><code>dd if=pai.iso of=/dev/sdX bs=4M status=progress</code></pre>
+          <p class="os-note">
+            On mobile you cannot flash a USB directly — use a desktop computer.
+          </p>
+        </div>
+        <div data-os-block="linux" class="os-block" hidden>
+          <pre class="code-block"><code>sudo dd if=pai.iso of=/dev/sdX bs=4M status=progress conv=fsync</code></pre>
+          <p class="os-note">Replace <code>/dev/sdX</code> with your USB drive (check <code>lsblk</code>).</p>
+        </div>
+        <div data-os-block="mac" class="os-block" hidden>
+          <pre class="code-block"><code>sudo dd if=pai.iso of=/dev/rdiskN bs=4m && sync</code></pre>
+          <p class="os-note">
+            Replace <code>/dev/rdiskN</code> with your USB disk (check <code>diskutil list</code>).
+          </p>
+        </div>
+        <div data-os-block="windows" class="os-block" hidden>
+          <p>
+            Use <strong>Rufus</strong> or <strong>Balena Etcher</strong> — select the ISO and your
+            USB drive, then click Flash.
+          </p>
+        </div>
+      </div>
+    </li>
+    <li class="step">
+      <span class="step__num" aria-hidden="true">3</span>
+      <div class="step__content">
+        <strong>Boot</strong>
+        <p>
+          Plug the USB into your PC, reboot, and select the USB from your BIOS/UEFI boot menu
+          (usually <kbd>F12</kbd> or <kbd>F2</kbd>).
+        </p>
+      </div>
+    </li>
+  </ol>
+
+  <a href="/apps/flash" class="flash-cta">Open the Flash app for guided setup →</a>
+</section>
+
+<script>
+  // Detect OS and show the matching instructions block
+  const platform = (navigator as Navigator & { userAgentData?: { platform: string } })
+    .userAgentData?.platform ?? navigator.platform ?? ''
+  const os = /mac/i.test(platform)
+    ? 'mac'
+    : /win/i.test(platform)
+      ? 'windows'
+      : /linux/i.test(platform)
+        ? 'linux'
+        : null
+
+  if (os) {
+    const defaultBlock = document.querySelector('[data-os-block="default"]') as HTMLElement | null
+    const osBlock = document.querySelector(`[data-os-block="${os}"]`) as HTMLElement | null
+    if (defaultBlock) defaultBlock.hidden = true
+    if (osBlock) osBlock.hidden = false
+  }
+</script>
+
+<style>
+  .flash-section {
+    padding: var(--s-7) 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .section-heading {
+    font-size: clamp(1.25rem, 3vw, 1.75rem);
+    font-weight: 700;
+    margin-bottom: var(--s-3);
+    color: var(--fg);
+  }
+
+  .flash-intro {
+    color: var(--fg-muted);
+    margin-bottom: var(--s-6);
+    line-height: 1.6;
+  }
+
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-5);
+    list-style: none;
+    counter-reset: none;
+    margin-bottom: var(--s-6);
+  }
+
+  .step {
+    display: flex;
+    gap: var(--s-4);
+    align-items: flex-start;
+  }
+
+  .step__num {
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: var(--pai-blue);
+    color: #0f0f1a;
+    font-weight: 700;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+  }
+
+  .step__content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-2);
+  }
+
+  .step__content strong {
+    font-size: 1rem;
+    color: var(--fg);
+  }
+
+  .step__content p {
+    font-size: 0.9375rem;
+    color: var(--fg-muted);
+    line-height: 1.5;
+  }
+
+  .code-block {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--r-icon);
+    padding: var(--s-3) var(--s-4);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--pai-green);
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  .os-note {
+    font-size: 0.8125rem !important;
+    color: var(--fg-muted) !important;
+  }
+
+  kbd {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+  }
+
+  .flash-cta {
+    display: inline-flex;
+    align-items: center;
+    color: var(--pai-blue);
+    font-weight: 500;
+    text-decoration: none;
+    font-size: 0.9375rem;
+    gap: var(--s-1);
+  }
+
+  .flash-cta:hover {
+    text-decoration: underline;
+  }
+</style>
