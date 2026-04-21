@@ -1,0 +1,56 @@
+#!/bin/bash
+set -uo pipefail
+
+echo "[pai] Installing developer toolchains..."
+
+# ── Node.js (LTS via NodeSource) ─────────────────────────────────
+echo "[pai] Installing Node.js..."
+if curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && apt-get install -y nodejs; then
+    npm install -g yarn pnpm typescript ts-node nodemon 2>/dev/null || true
+    echo "[pai] Node.js $(node --version) installed."
+else
+    echo "[pai] WARNING: Node.js installation failed. Skipping."
+fi
+
+# ── Go (arch-detected binary) ─────────────────────────────────────
+echo "[pai] Installing Go..."
+GO_VERSION="1.23.4"
+GO_ARCH="$(dpkg --print-architecture)"
+if curl -fSL -o /tmp/go.tar.gz "https://go.dev/dl/go${GO_VERSION}.linux-${GO_ARCH}.tar.gz"; then
+    tar -C /usr/local -xzf /tmp/go.tar.gz
+    rm -f /tmp/go.tar.gz
+
+    cat >> /etc/profile.d/pai-go.sh <<'EOF'
+export PATH=$PATH:/usr/local/go/bin
+export GOPATH=$HOME/go
+export PATH=$PATH:$GOPATH/bin
+EOF
+    echo "[pai] Go $(/usr/local/go/bin/go version | awk '{print $3}') installed."
+else
+    rm -f /tmp/go.tar.gz
+    echo "[pai] WARNING: Go download failed. Skipping."
+fi
+
+# ── Rust (rustup auto-detects arch) ──────────────────────────────
+echo "[pai] Installing Rust..."
+export RUSTUP_HOME=/opt/rustup
+export CARGO_HOME=/opt/cargo
+if curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path; then
+    ln -sf /opt/cargo/bin/rustc /usr/local/bin/rustc
+    ln -sf /opt/cargo/bin/cargo /usr/local/bin/cargo
+    ln -sf /opt/cargo/bin/rustup /usr/local/bin/rustup
+
+    cat >> /etc/profile.d/pai-rust.sh <<'EOF'
+export RUSTUP_HOME=/opt/rustup
+export CARGO_HOME=/opt/cargo
+export PATH=$PATH:/opt/cargo/bin
+EOF
+    echo "[pai] Rust installed."
+else
+    echo "[pai] WARNING: Rust installation failed. Skipping."
+fi
+
+# ── Python dev tools (already installed, add pip & venv) ─────────
+apt-get install -y python3-pip python3-venv 2>/dev/null || true
+
+echo "[pai] All developer toolchains installed."
