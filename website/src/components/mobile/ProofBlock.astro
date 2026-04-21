@@ -1,0 +1,179 @@
+---
+import release from '../../data/release.json'
+
+const isUnreleased = release.sha256 === 'not-yet-released' || release.sizeBytes === 0
+const shaDisplay = release.sha256 && !isUnreleased ? `${release.sha256.slice(0, 16)}…` : 'pending'
+const gpgDisplay = release.gpgFingerprint ? release.gpgFingerprint : 'pending'
+const sizeGB = (release.sizeMB / 1024).toFixed(1)
+---
+
+<section class="proof-section" aria-labelledby="proof-heading" id="download">
+  <h2 id="proof-heading" class="section-heading">Verify &amp; download</h2>
+  <p class="proof-intro">
+    Every PAI release is cryptographically signed. Verify the image before flashing.
+  </p>
+
+  <div class="proof-card">
+    <dl class="proof-table">
+      <div class="proof-row">
+        <dt>Version</dt>
+        <dd><code>{release.version}</code></dd>
+      </div>
+      <div class="proof-row">
+        <dt>SHA-256</dt>
+        <dd>
+          <code class="hash">{shaDisplay}</code>
+        </dd>
+      </div>
+      <div class="proof-row">
+        <dt>Signed by</dt>
+        <dd><code>{gpgDisplay}</code></dd>
+      </div>
+    </dl>
+
+    <div class="proof-actions">
+      {isUnreleased ? (
+        <span class="btn btn--primary" aria-disabled="true">Release coming soon</span>
+      ) : (
+        <a href={release.downloadUrl} class="btn btn--primary">Download {release.isoName} ({sizeGB} GB)</a>
+      )}
+      <a href="/apps/verify" class="btn btn--secondary">Verify in browser →</a>
+    </div>
+  </div>
+
+  <p class="proof-source">
+    Source code and release artifacts:
+    <a href="https://github.com/nirholas/pai" class="source-link" rel="noopener noreferrer"
+      >github.com/nirholas/pai →</a
+    >
+  </p>
+</section>
+
+<style>
+  .proof-section {
+    padding: var(--s-7) 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .section-heading {
+    font-size: clamp(1.25rem, 3vw, 1.75rem);
+    font-weight: 700;
+    margin-bottom: var(--s-3);
+    color: var(--fg);
+  }
+
+  .proof-intro {
+    color: var(--fg-muted);
+    margin-bottom: var(--s-5);
+    line-height: 1.6;
+  }
+
+  .proof-card {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--r-window);
+    padding: var(--s-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-5);
+    margin-bottom: var(--s-4);
+  }
+
+  .proof-table {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-3);
+  }
+
+  .proof-row {
+    display: grid;
+    grid-template-columns: 6rem 1fr;
+    gap: var(--s-3);
+    align-items: baseline;
+  }
+
+  @media (max-width: 480px) {
+    .proof-row {
+      grid-template-columns: 1fr;
+      gap: var(--s-1);
+    }
+  }
+
+  .proof-table dt {
+    font-size: 0.8125rem;
+    color: var(--fg-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .proof-table dd {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--fg);
+    word-break: break-all;
+  }
+
+  .hash {
+    color: var(--pai-green);
+  }
+
+  .proof-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-3);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--s-3) var(--s-5);
+    border-radius: var(--r-icon);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition:
+      background-color var(--motion-duration) var(--motion-easing),
+      color var(--motion-duration) var(--motion-easing);
+    min-height: 44px;
+  }
+
+  .btn--primary {
+    background: var(--pai-blue);
+    color: #0f0f1a;
+  }
+
+  .btn--primary[aria-disabled='true'] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .btn--secondary {
+    background: transparent;
+    color: var(--fg);
+    border: 1px solid var(--border);
+  }
+
+  .btn--secondary:hover {
+    border-color: var(--pai-blue);
+    color: var(--pai-blue);
+  }
+
+  .proof-source {
+    font-size: 0.875rem;
+    color: var(--fg-muted);
+  }
+
+  .source-link {
+    color: var(--pai-blue);
+    text-decoration: none;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+  }
+
+  .source-link:hover {
+    text-decoration: underline;
+  }
+</style>
