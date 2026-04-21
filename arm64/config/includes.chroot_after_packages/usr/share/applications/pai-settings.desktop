@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=PAI Settings
+GenericName=System Settings
+Comment=Configure PAI — system, network, privacy, AI, and more
+Exec=pai-settings
+Icon=preferences-system
+Terminal=false
+Categories=Settings;System;DesktopSettings;
+Keywords=settings;preferences;config;control;panel;
+StartupNotify=false
