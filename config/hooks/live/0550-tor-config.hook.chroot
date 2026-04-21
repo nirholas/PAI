@@ -1,0 +1,21 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "[pai] Configuring Tor..."
+
+# Don't start Tor by default (privacy mode is opt-in)
+systemctl disable tor 2>/dev/null || true
+
+# Pre-configure Tor for transparent proxy mode
+cat >> /etc/tor/torrc <<'EOF'
+
+# PAI Privacy Mode (activated by pai-privacy on)
+TransPort 9040
+DNSPort 5353
+AutomapHostsOnResolve 1
+VirtualAddrNetworkIPv4 10.192.0.0/10
+EOF
+
+chmod +x /usr/local/bin/pai-privacy
+
+echo "[pai] Tor configured (inactive by default, use 'sudo pai-privacy on' to enable)."
