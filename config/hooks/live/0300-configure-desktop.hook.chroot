@@ -1,0 +1,9 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "[pai] Configuring desktop..."
+
+# Ensure scripts are executable (git doesn't reliably preserve +x)
+chmod +x /usr/local/bin/pai-waybar-ollama
+
+echo "[pai] Desktop configured."
