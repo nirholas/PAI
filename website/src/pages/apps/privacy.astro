@@ -1,0 +1,97 @@
+---
+import ContentApp from '../../layouts/ContentApp.astro'
+
+const sections = [
+  { id: 'tldr', label: 'TL;DR' },
+  { id: 'what-we-collect', label: 'What this site collects' },
+  { id: 'what-we-dont', label: "What this site doesn't do" },
+  { id: 'third-parties', label: 'Third parties' },
+  { id: 'the-pai-os-itself', label: 'The PAI OS itself' },
+  { id: 'contact', label: 'Contact' },
+]
+---
+
+<ContentApp
+  title="Privacy"
+  description="How pai.direct handles your data: no analytics, no cookies, no tracking — by design."
+>
+  <nav slot="sidebar">
+    <p class="sb-brand">Privacy</p>
+    {sections.map((s) => <a href={`#${s.id}`} class="sb-link">{s.label}</a>)}
+  </nav>
+
+  <h1>Privacy</h1>
+  <p>
+    PAI is a project about keeping your AI workflows on your own hardware. This website tries to
+    hold itself to the same standard. No analytics, no cookies, no accounts — you can read every
+    page without handing over anything about yourself.
+  </p>
+
+  <section id="tldr">
+    <h2>TL;DR</h2>
+    <ul>
+      <li><strong>No analytics.</strong> No Google Analytics, Plausible, Fathom, or homegrown tracking.</li>
+      <li><strong>No cookies.</strong> This site sets zero cookies. Your browser won't carry any state from page to page that we control.</li>
+      <li><strong>No accounts, no logins, no email capture.</strong></li>
+      <li><strong>No third-party scripts, fonts, or CDNs.</strong> Everything is served from <code>pai.direct</code>.</li>
+      <li><strong>No fingerprinting.</strong> The desktop shell runs locally in your browser and doesn't phone home.</li>
+    </ul>
+  </section>
+
+  <section id="what-we-collect">
+    <h2>What this site collects</h2>
+    <p>
+      Your visit is recorded in the webserver's access log — the IP, user-agent, and URL of each
+      request. This is standard for any webserver and is needed to serve traffic and diagnose
+      abuse. Logs are rotated automatically and not used for analytics, profiling, or advertising.
+    </p>
+    <p>
+      <code>localStorage</code> and <code>sessionStorage</code> are used to remember things like
+      window positions on the desktop shell, whether you've already seen the boot animation, and
+      your reduced-motion preference. This data never leaves your browser.
+    </p>
+  </section>
+
+  <section id="what-we-dont">
+    <h2>What this site doesn't do</h2>
+    <ul>
+      <li>No user-identifying cookies — first-party or third-party.</li>
+      <li>No cross-site tracking pixels, beacons, or fingerprinting scripts.</li>
+      <li>No A/B testing or behavioral experiments run on visitors.</li>
+      <li>No ads, no ad networks, no retargeting.</li>
+      <li>No email marketing list — the changelog is an RSS feed, not a newsletter.</li>
+    </ul>
+  </section>
+
+  <section id="third-parties">
+    <h2>Third parties</h2>
+    <p>
+      Outbound links on this site (to GitHub, the graphical Rufus tool, balenaEtcher, etc.) are plain HTML links. When
+      you click them, you're going to that third party directly — their privacy policies apply there,
+      not here. We don't wrap clicks through a tracker.
+    </p>
+    <p>
+      Hosting infrastructure (DNS, CDN, server provider) can see request metadata by virtue of
+      routing traffic. We don't share that data with anyone and don't use it for analytics.
+    </p>
+  </section>
+
+  <section id="the-pai-os-itself">
+    <h2>The PAI OS itself</h2>
+    <p>
+      The operating system you flash to USB is covered in more detail on the
+      <a href="/apps/security">Security page</a>. In short: PAI runs entirely offline by default,
+      does not phone home, and does not include telemetry. Model inference happens locally via
+      Ollama — prompts never leave your machine.
+    </p>
+  </section>
+
+  <section id="contact">
+    <h2>Contact</h2>
+    <p>
+      Questions about this policy, or something on the site that looks like it violates it? Open
+      an issue at <a href="https://github.com/nirholas/pai/issues" target="_blank" rel="noopener noreferrer">github.com/nirholas/pai/issues</a>,
+      or email <code>privacy@pai.direct</code>.
+    </p>
+  </section>
+</ContentApp>
