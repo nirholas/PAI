@@ -1,0 +1,334 @@
+---
+import ContentApp from '../../layouts/ContentApp.astro'
+
+const sections = [
+  { id: 'threat-model', label: 'Threat model' },
+  { id: 'what-pai-protects', label: 'What PAI protects' },
+  { id: 'what-pai-does-not-protect', label: "What it doesn't protect" },
+  { id: 'known-limitations', label: 'Known limitations' },
+  { id: 'vulnerability-disclosure', label: 'Vulnerability disclosure' },
+]
+---
+
+<ContentApp
+  title="Security"
+  description="PAI threat model, security guarantees, and vulnerability disclosure policy."
+>
+  <nav slot="sidebar">
+    <p class="sb-brand">Security</p>
+    {sections.map((s) => <a href={`#${s.id}`} class="sb-link">{s.label}</a>)}
+    <hr class="sb-divider" />
+    <a
+      href="https://github.com/nirholas/pai/security/advisories/new"
+      class="sb-link"
+      target="_blank"
+      rel="noopener noreferrer"
+      style="font-size:0.8125rem;color:var(--pai-red)"
+    >
+      Report a vulnerability ↗
+    </a>
+  </nav>
+
+  <h1>Security</h1>
+  <p>
+    PAI's security model is based on defense-in-depth and operational security. This page documents
+    what PAI protects, what it doesn't, and how to report vulnerabilities.
+  </p>
+
+  <!-- Threat model -->
+  <section id="threat-model">
+    <h2>Threat model</h2>
+    <p>
+      PAI is designed for users who need a private, portable AI workstation — journalists,
+      researchers, security professionals, and privacy-conscious individuals. The primary threats
+      are:
+    </p>
+    <ul>
+      <li>Cloud AI providers collecting and analyzing your prompts</li>
+      <li>Network observers logging your AI usage and traffic patterns</li>
+      <li>Forensic analysis of the machine you used PAI on</li>
+      <li>Tracking across sessions via persistent identifiers</li>
+    </ul>
+  </section>
+
+  <!-- What PAI protects -->
+  <section id="what-pai-protects">
+    <h2>What PAI protects against</h2>
+    <div class="threat-grid">
+      <div class="threat-entry">
+        <div class="risk-badge risk-badge--green">Protected</div>
+        <div class="threat-content">
+          <strong>Cloud AI data harvesting</strong>
+          <p>All inference is local via Ollama. Your prompts never leave your hardware.</p>
+        </div>
+      </div>
+      <div class="threat-entry">
+        <div class="risk-badge risk-badge--green">Protected</div>
+        <div class="threat-content">
+          <strong>Forensic analysis of host machine</strong>
+          <p>
+            PAI is amnesic — no disk writes, no mount of the host drive. RAM is cleared on
+            shutdown.
+          </p>
+        </div>
+      </div>
+      <div class="threat-entry">
+        <div class="risk-badge risk-badge--green">Protected</div>
+        <div class="threat-content">
+          <strong>Network-based tracking across sessions</strong>
+          <p>
+            MAC address randomized on every boot. New identity, new device fingerprint each time.
+          </p>
+        </div>
+      </div>
+      <div class="threat-entry">
+        <div class="risk-badge risk-badge--green">Protected</div>
+        <div class="threat-content">
+          <strong>Local network attacks on AI services</strong>
+          <p>
+            UFW blocks all inbound connections. Ollama and PAI UI are localhost-only; unreachable
+            from the network.
+          </p>
+        </div>
+      </div>
+      <div class="threat-entry">
+        <div class="risk-badge risk-badge--yellow">Opt-in</div>
+        <div class="threat-content">
+          <strong>Network surveillance and traffic analysis</strong>
+          <p>
+            With <code>sudo pai-privacy on</code>, all traffic is routed through Tor. DNS resolves
+            via Tor. Without Tor, outbound traffic is protected by the firewall but not anonymized.
+          </p>
+        </div>
+      </div>
+      <div class="threat-entry">
+        <div class="risk-badge risk-badge--yellow">Opt-in</div>
+        <div class="threat-content">
+          <strong>Persistent data exposure</strong>
+          <p>
+            Without persistence: nothing survives shutdown. With persistence: data is LUKS2-encrypted
+            on the USB drive.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- What PAI does NOT protect -->
+  <section id="what-pai-does-not-protect">
+    <h2>What PAI does not protect against</h2>
+    <div class="threat-grid">
+      <div class="threat-entry">
+        <div class="risk-badge risk-badge--red">Not mitigated</div>
+        <div class="threat-content">
+          <strong>Physical hardware attacks</strong>
+          <p>
+            Keyloggers, hardware implants, or surveillance cameras on the host machine are out of
+            scope. PAI cannot protect against an adversary with physical access to the hardware.
+          </p>
+        </div>
+      </div>
+      <div class="threat-entry">
+        <div class="risk-badge risk-badge--red">Not mitigated</div>
+        <div class="threat-content">
+          <strong>Compromised BIOS/UEFI firmware</strong>
+          <p>
+            A tampered firmware can subvert the boot process before PAI loads. Verify the machine is
+            trustworthy before use.
+          </p>
+        </div>
+      </div>
+      <div class="threat-entry">
+        <div class="risk-badge risk-badge--red">Not mitigated</div>
+        <div class="threat-content">
+          <strong>Cold boot attacks</strong>
+          <p>
+            RAM retains data briefly after power-off on some hardware. Mitigated by full shutdown
+            (not sleep/hibernate) and allowing the machine to rest before physical access.
+          </p>
+        </div>
+      </div>
+      <div class="threat-entry">
+        <div class="risk-badge risk-badge--red">Not mitigated</div>
+        <div class="threat-content">
+          <strong>Compromised USB drive</strong>
+          <p>
+            Always verify the ISO checksum before flashing. A tampered ISO can contain malicious
+            code that PAI cannot detect.
+          </p>
+        </div>
+      </div>
+      <div class="threat-entry">
+        <div class="risk-badge risk-badge--yellow">Partial</div>
+        <div class="threat-content">
+          <strong>Global adversary (ISP + exit node correlation)</strong>
+          <p>
+            Tor protects against most network observers, but a global passive adversary who controls
+            both the entry and exit point of a Tor circuit can perform correlation attacks. This is a
+            known Tor limitation, not PAI-specific.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Known limitations -->
+  <section id="known-limitations">
+    <h2>Known limitations</h2>
+    <ul>
+      <li>
+        <strong>CPU-only inference</strong> — GPU drivers are stripped to keep the ISO small. This
+        reduces the attack surface but also limits speed to 5–20 tokens/sec on most hardware.
+      </li>
+      <li>
+        <strong>No Secure Boot support</strong> — PAI's bootloader is not signed. Secure Boot must
+        be disabled. Signed bootloader support is on the roadmap.
+      </li>
+      <li>
+        <strong>Tor is opt-in</strong> — by default, outbound traffic is not anonymized. Enable Tor
+        with <code>sudo pai-privacy on</code> for network anonymity.
+      </li>
+      <li>
+        <strong>Model downloads are not anonymous</strong> — unless Tor is enabled before pulling a
+        model, the download reveals your IP to the model host.
+      </li>
+      <li>
+        <strong>ISO signing</strong> — GPG-signed releases are planned; unsigned builds should be
+        verified by SHA-256 checksum until then.
+      </li>
+    </ul>
+  </section>
+
+  <!-- Vulnerability disclosure -->
+  <section id="vulnerability-disclosure">
+    <h2>Vulnerability disclosure</h2>
+    <p>
+      PAI follows responsible disclosure. If you discover a security vulnerability, please report it
+      privately before public disclosure.
+    </p>
+
+    <h3>How to report</h3>
+    <ol>
+      <li>
+        Use GitHub's private vulnerability reporting:
+        <a
+          href="https://github.com/nirholas/pai/security/advisories/new"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Report a vulnerability ↗
+        </a>
+      </li>
+      <li>
+        Or email <code>security@pai.direct</code> with "PAI Security" in the subject.
+      </li>
+    </ol>
+
+    <h3>What to include</h3>
+    <ul>
+      <li>Description of the vulnerability and affected component</li>
+      <li>Steps to reproduce</li>
+      <li>Potential impact and severity assessment</li>
+      <li>Any suggested fixes (optional but appreciated)</li>
+    </ul>
+
+    <h3>Response timeline</h3>
+    <ul>
+      <li><strong>Acknowledgment</strong>: within 48 hours</li>
+      <li><strong>Assessment</strong>: within 7 days</li>
+      <li><strong>Fix</strong>: coordinated with reporter, typically within 30–90 days</li>
+      <li><strong>Disclosure</strong>: after fix is released and users have time to update</li>
+    </ul>
+
+    <p>
+      We do not offer a bug bounty program at this time, but we credit researchers in release notes.
+    </p>
+  </section>
+</ContentApp>
+
+<style>
+  .notice {
+    background: rgba(251, 191, 36, 0.08);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    border-radius: var(--r-window);
+    padding: var(--s-3) var(--s-4);
+    margin-bottom: var(--s-6);
+    font-size: 0.875rem;
+    color: var(--fg-muted);
+    max-width: 72ch;
+  }
+
+  .notice code {
+    background: rgba(251, 191, 36, 0.15);
+    border-color: rgba(251, 191, 36, 0.2);
+    color: var(--pai-yellow);
+  }
+
+  .threat-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-3);
+    max-width: 72ch;
+    margin-bottom: var(--s-5);
+  }
+
+  .threat-entry {
+    display: flex;
+    gap: var(--s-3);
+    align-items: flex-start;
+    padding: var(--s-3) var(--s-4);
+    border-radius: var(--r-window);
+    border: 1px solid var(--border);
+    background: var(--bg-elev);
+  }
+
+  .risk-badge {
+    flex-shrink: 0;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    margin-top: 2px;
+  }
+
+  .risk-badge--green {
+    background: rgba(74, 222, 128, 0.15);
+    color: var(--pai-green);
+    border: 1px solid rgba(74, 222, 128, 0.3);
+  }
+
+  .risk-badge--yellow {
+    background: rgba(251, 191, 36, 0.15);
+    color: var(--pai-yellow);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+  }
+
+  .risk-badge--red {
+    background: rgba(248, 113, 113, 0.15);
+    color: var(--pai-red);
+    border: 1px solid rgba(248, 113, 113, 0.3);
+  }
+
+  .threat-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .threat-content strong {
+    display: block;
+    color: var(--fg);
+    font-size: 0.9375rem;
+    margin-bottom: 4px;
+  }
+
+  .threat-content p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--fg-muted);
+    line-height: 1.5;
+    max-width: none;
+  }
+</style>
