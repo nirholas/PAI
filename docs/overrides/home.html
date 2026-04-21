@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block tabs %}
+  {{ super() }}
+  <style>
+    .md-header{position:initial}
+    .md-main__inner{margin:0}
+    .md-main__inner > .md-content{display:none}
+    @media screen and (min-width:60em){.md-main__inner > .md-sidebar--secondary{display:none}}
+    @media screen and (min-width:76.25em){.md-main__inner > .md-sidebar--primary{display:none}}
+  </style>
+  <div class="mdx-parallax" data-mdx-component="parallax">
+    <section class="mdx-parallax__group" data-md-color-scheme="slate">
+      <picture class="mdx-parallax__layer" style="--md-parallax-depth: 8; --md-image-position: 70%">
+        <source type="image/avif" srcset="{{ 'assets/hero/1-landscape@4x.avif' | url }}">
+        <img src="{{ 'assets/hero/1-landscape@4x.avif' | url }}" alt="" class="mdx-parallax__image" draggable="false">
+      </picture>
+      <picture class="mdx-parallax__layer" style="--md-parallax-depth: 5; --md-image-position: 25%">
+        <source type="image/avif" srcset="{{ 'assets/hero/2-plateau@4x.avif' | url }}">
+        <img src="{{ 'assets/hero/2-plateau@4x.avif' | url }}" alt="" class="mdx-parallax__image" draggable="false">
+      </picture>
+      <picture class="mdx-parallax__layer" style="--md-parallax-depth: 2; --md-image-position: 40%">
+        <source type="image/avif" srcset="{{ 'assets/hero/5-plants-1@4x.avif' | url }}">
+        <img src="{{ 'assets/hero/5-plants-1@4x.avif' | url }}" alt="" class="mdx-parallax__image" draggable="false">
+      </picture>
+      <picture class="mdx-parallax__layer" style="--md-parallax-depth: 1; --md-image-position: 50%">
+        <source type="image/avif" srcset="{{ 'assets/hero/6-plants-2@4x.avif' | url }}">
+        <img src="{{ 'assets/hero/6-plants-2@4x.avif' | url }}" alt="" class="mdx-parallax__image" draggable="false">
+      </picture>
+      <div class="mdx-parallax__layer mdx-parallax__blend"></div>
+      <div class="mdx-hero" data-mdx-component="hero">
+        <div class="mdx-hero__scrollwrap md-grid">
+          <div class="mdx-hero__inner">
+            <div class="mdx-hero__teaser md-typeset">
+              <h1>Your AI. Your keys. Your OS.</h1>
+              <p>PAI is a full Linux desktop on a USB drive — private AI, cold-signing, encryption, all of it local. Plug into any machine, boot into your own workspace in seconds, pull the drive. No cloud, no account, nothing left behind.</p>
+              <a href="{{ 'quickstart/' | url }}" class="md-button md-button--primary">Quickstart</a>
+              <a href="{{ 'general/how-pai-works/' | url }}" class="md-button">Learn more</a>
+            </div>
+            <div class="mdx-hero__more">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M11 4h2v12l5.5-5.5 1.42 1.42L12 19.84l-7.92-7.92L5.5 10.5 11 16z"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="mdx-parallax__group mdx-pillars" data-md-color-scheme="slate">
+      <div class="mdx-pillars__inner">
+        <div class="mdx-pillar">
+          <h3 class="mdx-pillar__title">Runs in RAM, leaves no trace</h3>
+          <p class="mdx-pillar__body">Boot from USB into a full Debian + Sway desktop that lives entirely in memory. Your host disk is never touched. Pull the drive and nothing remains.</p>
+        </div>
+        <div class="mdx-pillar">
+          <h3 class="mdx-pillar__title">Local AI, any model, your hardware</h3>
+          <p class="mdx-pillar__body">Ollama and Open WebUI are preinstalled. Run Llama, Mistral, Qwen, Gemma, or your own GGUF, with GPU offload on CUDA, ROCm, or Metal. No API keys, no quotas, no telemetry.</p>
+        </div>
+        <div class="mdx-pillar">
+          <h3 class="mdx-pillar__title">Privacy by construction</h3>
+          <p class="mdx-pillar__body">Hardened defaults, optional Tor routing, MAC randomization, and a LUKS-encrypted persistence option when you want to keep work between boots. Designed to be boring to surveil.</p>
+        </div>
+      </div>
+    </section>
+    <section class="mdx-parallax__group mdx-intro" data-md-color-scheme="slate">
+      <div class="mdx-intro__inner">
+        <div class="mdx-intro__card">
+          <h2>Overview</h2>
+          <p>PAI is a bootable USB Linux distribution that runs Ollama and Open WebUI locally. A complete offline AI workstation that lives entirely in RAM and leaves zero trace on your host machine.</p>
+          <p>Debian 12 base, Sway desktop, hardened defaults. Works on any AMD64 or ARM64 hardware. No cloud, no accounts, no telemetry.</p>
+          <a href="{{ 'general/how-pai-works/' | url }}" class="md-button">How PAI works →</a>
+        </div>
+        <div class="mdx-intro__card">
+          <h2>Quickstart</h2>
+          <p>Download the ISO, flash a USB stick, and boot from it. First launch takes under two minutes from power-on to a working local AI chat.</p>
+          <ol>
+            <li>Grab the latest ISO from <a href="https://pai.direct">pai.direct</a></li>
+            <li>Flash with <code>dd</code>, Rufus, or Raspberry Pi Imager</li>
+            <li>Boot your machine from USB and pick a model</li>
+          </ol>
+          <a href="{{ 'quickstart/' | url }}" class="md-button md-button--primary">Get started →</a>
+        </div>
+      </div>
+    </section>
+  </div>
+{% endblock %}
+
+{% block content %}{% endblock %}
+{% block footer %}{{ super() }}{% endblock %}
