@@ -1,0 +1,41 @@
+#!/bin/bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+set -euo pipefail
+
+echo "[pai] Installing offline wallet toolkits..."
+
+INSTALL_DIR="/opt/pai-wallets"
+mkdir -p "$INSTALL_DIR"
+
+# ── Solana Wallet Toolkit (offline) ─────────────────────────────────────
+SOLANA_URL="https://raw.githubusercontent.com/nirholas/solana-wallet-toolkit/main/offline.html"
+echo "[pai] Downloading Solana Wallet Toolkit..."
+if curl -fSL -o "$INSTALL_DIR/solana-wallet.html" "$SOLANA_URL" 2>/dev/null; then
+    echo "[pai] Solana Wallet Toolkit installed."
+else
+    echo "[pai] WARNING: Failed to download Solana Wallet Toolkit. Skipping."
+fi
+
+# ── Ethereum Wallet Toolkit (offline) ───────────────────────────────────
+ETH_URL="https://raw.githubusercontent.com/nirholas/ethereum-wallet-toolkit/main/offline.html"
+echo "[pai] Downloading Ethereum Wallet Toolkit..."
+if curl -fSL -o "$INSTALL_DIR/ethereum-wallet.html" "$ETH_URL" 2>/dev/null; then
+    echo "[pai] Ethereum Wallet Toolkit installed."
+else
+    echo "[pai] WARNING: Failed to download Ethereum Wallet Toolkit. Skipping."
+fi
+
+# ── BIP39 Mnemonic Generator (offline) ──────────────────────────────────
+BIP39_VERSION="0.5.6"
+BIP39_URL="https://github.com/iancoleman/bip39/releases/download/${BIP39_VERSION}/bip39-standalone.html"
+echo "[pai] Downloading BIP39 Mnemonic Generator..."
+if curl -fSL -o "$INSTALL_DIR/bip39.html" "$BIP39_URL" 2>/dev/null; then
+    echo "[pai] BIP39 Mnemonic Generator installed."
+else
+    echo "[pai] WARNING: Failed to download BIP39 tool. Skipping."
+fi
+
+# Set permissions — readable by all, not executable
+chmod 644 "$INSTALL_DIR"/*.html 2>/dev/null || true
+
+echo "[pai] Wallet toolkits installed to $INSTALL_DIR"
