@@ -1,0 +1,88 @@
+---
+const year = new Date().getFullYear()
+
+const links = [
+  { href: '/apps/docs', label: 'Docs' },
+  { href: '/apps/security', label: 'Security' },
+  { href: '/apps/privacy', label: 'Privacy' },
+  { href: '/apps/changelog', label: 'Changelog' },
+  { href: '/apps/faq', label: 'FAQ' },
+  { href: '/apps/press', label: 'Press kit' },
+  { href: '/apps/verify', label: 'Verify' },
+]
+---
+
+<footer class="site-footer">
+  <nav class="footer-nav" aria-label="Footer navigation">
+    <ul role="list">
+      {
+        links.map((link) => (
+          <li>
+            <a href={link.href}>{link.label}</a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+
+  <p class="footer-copy">
+    &copy; {year} PAI project. GPL v3 licensed.
+    <a href="https://github.com/nirholas/pai" rel="noopener noreferrer">Open source on GitHub.</a
+    >
+  </p>
+
+  <p class="footer-disclaimer">
+    PAI runs entirely on your hardware. No cloud services, no telemetry, no accounts.
+  </p>
+</footer>
+
+<style>
+  .site-footer {
+    padding: var(--s-7) 0 var(--s-6);
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-4);
+  }
+
+  .footer-nav ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-2) var(--s-5);
+    list-style: none;
+  }
+
+  .footer-nav a {
+    color: var(--fg-muted);
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: color var(--motion-duration) var(--motion-easing);
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .footer-nav a:hover {
+    color: var(--fg);
+  }
+
+  .footer-copy {
+    font-size: 0.8125rem;
+    color: var(--fg-muted);
+  }
+
+  .footer-copy a {
+    color: var(--pai-blue);
+    text-decoration: none;
+  }
+
+  .footer-copy a:hover {
+    text-decoration: underline;
+  }
+
+  .footer-disclaimer {
+    font-size: 0.75rem;
+    color: color-mix(in srgb, var(--fg-muted) 70%, transparent);
+    line-height: 1.5;
+  }
+</style>
