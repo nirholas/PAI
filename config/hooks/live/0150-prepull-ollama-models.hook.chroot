@@ -1,0 +1,38 @@
+#!/bin/bash
+set -euo pipefail
+
+# Pre-pull default Ollama model into the chroot so the ISO ships with a
+# working model out of the box (zero-internet first boot).
+MODEL="${PAI_DEFAULT_MODEL:-llama3.2:1b}"
+
+echo "[pai] Pre-pulling Ollama model: $MODEL"
+
+mkdir -p /usr/share/ollama/.ollama
+chown -R ollama:ollama /usr/share/ollama
+
+# Start ollama server in the background inside the chroot
+sudo -u ollama HOME=/usr/share/ollama OLLAMA_HOST=127.0.0.1:11434 \
+    /usr/bin/ollama serve >/tmp/ollama-prepull.log 2>&1 &
+OLLAMA_PID=$!
+
+# Wait for the API to be ready (up to 30s)
+for i in $(seq 1 30); do
+    if curl -fsS http://127.0.0.1:11434/api/tags >/dev/null 2>&1; then break; fi
+    sleep 1
+done
+
+if ! curl -fsS http://127.0.0.1:11434/api/tags >/dev/null 2>&1; then
+    echo "[pai] FATAL: ollama serve never became ready"
+    cat /tmp/ollama-prepull.log || true
+    kill $OLLAMA_PID 2>/dev/null || true
+    exit 1
+fi
+
+sudo -u ollama HOME=/usr/share/ollama OLLAMA_HOST=127.0.0.1:11434 \
+    /usr/bin/ollama pull "$MODEL"
+
+kill $OLLAMA_PID 2>/dev/null || true
+wait $OLLAMA_PID 2>/dev/null || true
+
+echo "[pai] Model $MODEL baked in. Size:"
+du -sh /usr/share/ollama/.ollama/models || true
