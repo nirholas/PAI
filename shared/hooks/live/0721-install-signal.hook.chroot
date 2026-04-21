@@ -1,0 +1,31 @@
+#!/bin/bash
+# ── Install Signal Desktop ─────────────────────────────────────────────
+# Signal publishes amd64 debs only. On arm64 the install is skipped and
+# the absence is announced clearly — the sway keybinding is guarded by
+# `command -v` so the missing binary just no-ops on arm64.
+set -euo pipefail
+
+ARCH=$(dpkg --print-architecture)
+if [ "$ARCH" != "amd64" ]; then
+    echo "[pai] Signal Desktop is amd64-only — skipping on $ARCH."
+    exit 0
+fi
+
+echo "[pai] Installing Signal Desktop..."
+
+install -d -m 0755 /etc/apt/keyrings
+
+curl -fsSL https://updates.signal.org/desktop/apt/keys.asc \
+    | gpg --dearmor -o /etc/apt/keyrings/signal-desktop-keyring.gpg
+
+cat > /etc/apt/sources.list.d/signal-xenial.list <<'REPO'
+deb [arch=amd64 signed-by=/etc/apt/keyrings/signal-desktop-keyring.gpg] https://updates.signal.org/desktop/apt xenial main
+REPO
+
+apt-get update
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends signal-desktop
+
+apt-get clean
+rm -rf /var/lib/apt/lists/*
+
+echo "[pai] Signal Desktop installed."
