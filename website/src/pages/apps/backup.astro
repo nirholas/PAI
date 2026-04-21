@@ -1,0 +1,361 @@
+---
+import AppStandalone from '../../layouts/AppStandalone.astro'
+import Head from '../../components/Head.astro'
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <Head
+      title="Backup — PAI"
+      description="Export and restore your PAI desktop state as a local JSON file. No cloud, no accounts — your data stays on your device."
+      ogImage="/og/backup.png"
+    />
+    <link rel="icon" type="image/svg+xml" href="/icons/backup.svg" />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+        font-family:
+          ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          Helvetica, Arial, sans-serif;
+        background: #0f0f1a;
+        color: #e0e0e0;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      #app-root {
+        flex: 1;
+        overflow: auto;
+        padding: 24px;
+      }
+      .bk-wrap {
+        max-width: 680px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      h1 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+      }
+      p.lede {
+        font-size: 0.875rem;
+        color: #888;
+        line-height: 1.5;
+      }
+      .card {
+        background: #1a1a2e;
+        border: 1px solid #2a2a3e;
+        border-radius: 8px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .card h2 {
+        font-size: 0.9375rem;
+        font-weight: 600;
+        margin: 0;
+      }
+      .card p {
+        font-size: 0.8125rem;
+        color: #aaa;
+        line-height: 1.45;
+      }
+      .summary-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        font-size: 0.8125rem;
+      }
+      .summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 4px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      }
+      .summary-row:last-child {
+        border-bottom: 0;
+      }
+      .summary-row b {
+        color: #e0e0e0;
+        font-weight: 600;
+      }
+      .summary-row span {
+        color: #7aa2f7;
+        font-family:
+          ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, monospace;
+      }
+      .check-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .check-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 8px;
+        border-radius: 6px;
+        cursor: pointer;
+        user-select: none;
+        transition: background 120ms;
+      }
+      .check-row:hover {
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .check-row input {
+        margin-top: 2px;
+        accent-color: #7aa2f7;
+      }
+      .check-row .cr-label {
+        font-size: 0.875rem;
+        color: #e0e0e0;
+      }
+      .check-row .cr-desc {
+        font-size: 0.75rem;
+        color: #888;
+        line-height: 1.4;
+      }
+      .check-row .cr-count {
+        margin-left: auto;
+        font-size: 0.75rem;
+        color: #7aa2f7;
+        font-family: ui-monospace, monospace;
+      }
+      .btn-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .btn {
+        appearance: none;
+        border: 1px solid #2a2a3e;
+        background: #0f0f1a;
+        color: #e0e0e0;
+        border-radius: 6px;
+        padding: 10px 16px;
+        font-size: 0.875rem;
+        font-family: inherit;
+        cursor: pointer;
+        transition: background 120ms, border-color 120ms;
+      }
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: #3a3a52;
+      }
+      .btn--primary {
+        background: #7aa2f7;
+        color: #0f0f1a;
+        border-color: #7aa2f7;
+        font-weight: 600;
+      }
+      .btn--primary:hover {
+        background: #8cb3ff;
+      }
+      .btn--big {
+        padding: 14px 24px;
+        font-size: 1rem;
+      }
+      .status {
+        font-size: 0.8125rem;
+        padding: 10px 12px;
+        border-radius: 6px;
+        display: none;
+      }
+      .status.show {
+        display: block;
+      }
+      .status--ok {
+        background: rgba(74, 222, 128, 0.1);
+        border: 1px solid rgba(74, 222, 128, 0.3);
+        color: #4ade80;
+      }
+      .status--err {
+        background: rgba(248, 113, 113, 0.1);
+        border: 1px solid rgba(248, 113, 113, 0.3);
+        color: #f87171;
+      }
+      label.file-input {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      input[type='file'] {
+        display: none;
+      }
+      .opt-wipe {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.8125rem;
+        color: #aaa;
+      }
+    </style>
+  </head>
+  <body>
+    <AppStandalone appId="backup" />
+    <div id="app-root">
+      <div class="bk-wrap">
+        <div>
+          <h1>Backup &amp; restore</h1>
+          <p class="lede">
+            Export your desktop state as a local JSON file, or restore a backup
+            from a file. Everything stays on your device — no cloud, no account.
+          </p>
+        </div>
+
+        <section class="card">
+          <h2>Current state</h2>
+          <div class="summary-grid" id="summary-grid"></div>
+        </section>
+
+        <section class="card">
+          <h2>Categories</h2>
+          <p>Pick which categories to include in the export.</p>
+          <div class="check-list" id="check-list"></div>
+        </section>
+
+        <section class="card">
+          <h2>Export</h2>
+          <p>Downloads a <code>.pai-backup.json</code> file with the selected categories.</p>
+          <div class="btn-row">
+            <button class="btn btn--primary btn--big" id="export-btn">
+              Download backup
+            </button>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Import</h2>
+          <p>
+            Restores a PAI backup file. You may want to reload the page after
+            import so windows and settings re-hydrate.
+          </p>
+          <label class="opt-wipe">
+            <input type="checkbox" id="wipe-first" /> Wipe current state before
+            restoring
+          </label>
+          <div class="btn-row">
+            <label class="btn file-input" for="import-file">
+              Choose file…
+              <input type="file" id="import-file" accept=".json,application/json" />
+            </label>
+          </div>
+          <div class="status" id="status"></div>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      import { bridge } from '../../apps/_bridge.js'
+      import {
+        CATEGORIES,
+        summary,
+        exportToFile,
+        importFromFile,
+      } from '../../shell/backup.ts'
+
+      bridge.ready()
+
+      const summaryGrid = document.getElementById('summary-grid')!
+      const checkList = document.getElementById('check-list')!
+      const exportBtn = document.getElementById('export-btn') as HTMLButtonElement
+      const importInput = document.getElementById(
+        'import-file',
+      ) as HTMLInputElement
+      const wipeCheckbox = document.getElementById('wipe-first') as HTMLInputElement
+      const statusEl = document.getElementById('status')!
+
+      function formatBytes(n: number): string {
+        if (n < 1024) return `${n} B`
+        if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`
+        return `${(n / 1024 / 1024).toFixed(2)} MB`
+      }
+
+      function render(): void {
+        const s = summary()
+        summaryGrid.innerHTML = `
+          <div class="summary-row"><b>Total keys</b><span>${s.total}</span></div>
+          <div class="summary-row"><b>Size</b><span>${formatBytes(s.bytes)}</span></div>
+        `
+
+        checkList.innerHTML = ''
+        for (const cat of CATEGORIES) {
+          const count = s.byCategory[cat.id] ?? 0
+          const row = document.createElement('label')
+          row.className = 'check-row'
+          row.innerHTML = `
+            <input type="checkbox" data-cat="${cat.id}" ${count > 0 ? 'checked' : ''} />
+            <div>
+              <div class="cr-label">${cat.label}</div>
+              <div class="cr-desc">${cat.description}</div>
+            </div>
+            <div class="cr-count">${count} item${count === 1 ? '' : 's'}</div>
+          `
+          checkList.appendChild(row)
+        }
+      }
+
+      function selectedCategories(): string[] {
+        return Array.from(
+          checkList.querySelectorAll<HTMLInputElement>(
+            'input[type="checkbox"][data-cat]',
+          ),
+        )
+          .filter((cb) => cb.checked)
+          .map((cb) => cb.dataset.cat!)
+      }
+
+      function showStatus(ok: boolean, msg: string): void {
+        statusEl.textContent = msg
+        statusEl.className = `status show ${ok ? 'status--ok' : 'status--err'}`
+      }
+
+      exportBtn.addEventListener('click', () => {
+        try {
+          exportToFile(selectedCategories())
+          showStatus(true, 'Backup downloaded.')
+        } catch (e) {
+          showStatus(false, `Export failed: ${(e as Error).message}`)
+        }
+      })
+
+      importInput.addEventListener('change', async () => {
+        const file = importInput.files?.[0]
+        if (!file) return
+        try {
+          const { restored, skipped } = await importFromFile(file, {
+            wipeFirst: wipeCheckbox.checked,
+          })
+          showStatus(
+            true,
+            `Restored ${restored} key${restored === 1 ? '' : 's'}${
+              skipped ? `, skipped ${skipped}` : ''
+            }. Reload to apply fully.`,
+          )
+          render()
+        } catch (e) {
+          showStatus(false, `Import failed: ${(e as Error).message}`)
+        } finally {
+          importInput.value = ''
+        }
+      })
+
+      render()
+    </script>
+  </body>
+</html>
