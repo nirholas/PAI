@@ -1,0 +1,130 @@
+---
+import { getCollection } from 'astro:content'
+
+interface Props {
+  currentSlug?: string
+  showSearch?: boolean
+}
+
+const { currentSlug, showSearch = true } = Astro.props
+const allDocs = await getCollection('docs')
+
+// Sort by order then title, group by section
+const sorted = allDocs.sort((a, b) => {
+  const oa = a.data.order ?? 99
+  const ob = b.data.order ?? 99
+  return oa !== ob ? oa - ob : a.data.title.localeCompare(b.data.title)
+})
+
+const sections: Record<string, typeof sorted> = {}
+for (const doc of sorted) {
+  const section = doc.data.section ?? 'General'
+  if (!sections[section]) sections[section] = []
+  sections[section].push(doc)
+}
+---
+
+<p class="sb-brand">Docs</p>
+
+{
+  showSearch && (
+    <div class="sb-search-wrap" style="position:relative">
+      <div class="sb-search">
+        <span class="sb-search-icon">⌕</span>
+        <input
+          type="search"
+          id="docs-search"
+          placeholder="Search docs…"
+          aria-label="Search documentation"
+          autocomplete="off"
+        />
+      </div>
+      <div id="docs-results" class="sb-results" hidden></div>
+    </div>
+  )
+}
+
+{
+  Object.entries(sections).map(([section, docs]) => (
+    <>
+      <p class="sb-section">{section}</p>
+      {docs.map((doc) => (
+        <a
+          href={`/apps/docs/${doc.id}`}
+          class={`sb-link${doc.id === currentSlug ? ' active' : ''}`}
+        >
+          {doc.data.title}
+        </a>
+      ))}
+    </>
+  ))
+}
+
+<hr class="sb-divider" />
+<a href="/apps/about" class="sb-link" style="font-size:0.8125rem">← About PAI</a>
+
+{
+  showSearch && (
+    <script>
+      const input = document.getElementById('docs-search') as HTMLInputElement
+      const results = document.getElementById('docs-results') as HTMLElement
+      if (!input || !results) throw new Error()
+
+      let index: Array<{ slug: string; title: string; section: string; excerpt: string }> = []
+
+      async function loadIndex() {
+        if (index.length) return
+        try {
+          const res = await fetch('/search-index.json')
+          index = await res.json()
+        } catch {}
+      }
+
+      function search(q: string) {
+        const lq = q.toLowerCase().trim()
+        if (!lq) return []
+        return index
+          .map((d) => ({
+            ...d,
+            score:
+              (d.title.toLowerCase().includes(lq) ? 4 : 0) +
+              (d.section.toLowerCase().includes(lq) ? 2 : 0) +
+              (d.excerpt.toLowerCase().includes(lq) ? 1 : 0),
+          }))
+          .filter((d) => d.score > 0)
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 7)
+      }
+
+      input.addEventListener('focus', loadIndex)
+      input.addEventListener('input', async () => {
+        await loadIndex()
+        const q = input.value
+        if (!q.trim()) {
+          results.hidden = true
+          return
+        }
+        const hits = search(q)
+        if (!hits.length) {
+          results.innerHTML = '<p class="sb-no-results">No results</p>'
+        } else {
+          results.innerHTML = hits
+            .map(
+              (h) =>
+                `<a href="/apps/docs/${h.id}" class="sb-result">` +
+                `<span class="sb-result-title">${h.title}</span> ` +
+                `<span class="sb-result-section">${h.section}</span></a>`
+            )
+            .join('')
+        }
+        results.hidden = false
+      })
+
+      document.addEventListener('click', (e) => {
+        if (!input.contains(e.target as Node) && !results.contains(e.target as Node)) {
+          results.hidden = true
+        }
+      })
+    </script>
+  )
+}
