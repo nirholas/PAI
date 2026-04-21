@@ -1,0 +1,14 @@
+[Unit]
+Description=Open WebUI (PAI Chat Interface)
+After=network-online.target ollama.service
+Wants=network-online.target ollama.service
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/pai/open-webui.env
+ExecStart=/usr/local/bin/open-webui-serve
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
