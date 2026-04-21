@@ -1,0 +1,21 @@
+#!/bin/bash
+# ── Install Element Desktop (Matrix client) ────────────────────────────
+# element.io publishes both amd64 and arm64 debs.
+set -euo pipefail
+
+echo "[pai] Installing Element Desktop..."
+
+install -d -m 0755 /etc/apt/keyrings
+
+curl -fsSL https://packages.element.io/debian/element-io-archive-keyring.gpg \
+    -o /etc/apt/keyrings/element-io-archive-keyring.gpg
+
+cat > /etc/apt/sources.list.d/element-io.list <<'REPO'
+deb [signed-by=/etc/apt/keyrings/element-io-archive-keyring.gpg] https://packages.element.io/debian/ default main
+REPO
+
+apt-get update
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends element-desktop
+
+apt-get clean && rm -rf /var/lib/apt/lists/*
+echo "[pai] Element Desktop installed."
