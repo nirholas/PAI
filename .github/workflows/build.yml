@@ -1,0 +1,223 @@
+name: Build PAI ISO
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-amd64:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    outputs:
+      version: ${{ steps.vars.outputs.version }}
+      iso_name: ${{ steps.vars.outputs.iso_name }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install live-build
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y live-build
+
+      - name: Build ISO
+        run: sudo ./build.sh
+
+      - name: Rename and checksum ISO
+        id: vars
+        run: |
+          TAG=${GITHUB_REF_NAME:-dev}
+          VERSION=${TAG#v}
+          cp pai.iso pai-${VERSION}-amd64.iso
+          sha256sum pai-${VERSION}-amd64.iso > pai-${VERSION}-amd64.iso.sha256
+          printf "$(sha256sum pai-${VERSION}-amd64.iso)\n" > SHA256SUMS
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "iso_name=pai-${VERSION}-amd64.iso" >> "$GITHUB_OUTPUT"
+
+      - name: Upload amd64 artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pai-iso-amd64
+          path: |
+            pai-*-amd64.iso
+            pai-*-amd64.iso.sha256
+            SHA256SUMS
+          retention-days: 14
+
+  build-arm64:
+    # arm64 Pi image build is in progress; the job is gated so we don't fail
+    # the release pipeline while the raw-image path is being wired up. When
+    # arm64/build.sh lands, flip `continue-on-error` off and trust the job.
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 90
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y live-build xz-utils
+
+      - name: Determine version
+        id: vars
+        run: |
+          TAG=${GITHUB_REF_NAME:-dev}
+          VERSION=${TAG#v}
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Build arm64 Pi image
+        id: build
+        continue-on-error: true
+        run: |
+          if [ -x ./arm64/build.sh ]; then
+            sudo ./arm64/build.sh
+          else
+            echo "arm64 build path not yet present; skipping Pi image build."
+            echo "Tracked in docs/src/advanced/building-from-source.md."
+            exit 0
+          fi
+
+      - name: Package arm64 img.xz + sidecar
+        id: package
+        if: steps.build.outcome == 'success'
+        run: |
+          VERSION="${{ steps.vars.outputs.version }}"
+          RAW=""
+          for cand in arm64/build/pai-arm64.img build/pai-arm64.img pai-arm64.img; do
+            if [ -f "$cand" ]; then RAW="$cand"; break; fi
+          done
+          if [ -z "$RAW" ]; then
+            echo "arm64 build produced no raw .img; skipping packaging"
+            exit 0
+          fi
+          ./scripts/package-arm64-img.sh "$RAW" "$VERSION"
+
+      - name: Upload arm64 artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pai-iso-arm64
+          path: |
+            dist/pai-*-arm64.img.xz
+            dist/pai-*-arm64.img.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+  release:
+    needs: [build-amd64, build-arm64]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Download amd64 artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: pai-iso-amd64
+          path: ./_artifacts/amd64
+
+      - name: Download arm64 artifacts
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: pai-iso-arm64
+          path: ./_artifacts/arm64
+
+      - name: Stage release files
+        run: |
+          set -euo pipefail
+          VERSION=${GITHUB_REF_NAME#v}
+          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
+          echo "ISO_NAME=pai-${VERSION}-amd64.iso" >> "$GITHUB_ENV"
+
+          mkdir -p release dist
+          cp "_artifacts/amd64/pai-${VERSION}-amd64.iso"        "release/"
+          cp "_artifacts/amd64/pai-${VERSION}-amd64.iso.sha256" "release/"
+          cp "_artifacts/amd64/SHA256SUMS"                      "release/"
+
+          ARM_XZ="_artifacts/arm64/pai-${VERSION}-arm64.img.xz"
+          ARM_META="_artifacts/arm64/pai-${VERSION}-arm64.img.json"
+          ARM_XZ_EXISTS=false; ARM_META_EXISTS=false
+          [ -f "$ARM_XZ" ]    && ARM_XZ_EXISTS=true
+          [ -f "$ARM_META" ]  && ARM_META_EXISTS=true
+          if $ARM_XZ_EXISTS && $ARM_META_EXISTS; then
+            cp "$ARM_XZ"   "release/"
+            cp "$ARM_META" "release/"
+            cp "$ARM_META" "dist/"
+            echo "arm64 image assets present; regenerating manifest locally"
+            node scripts/gen-imager-manifest.mjs --local
+          elif $ARM_XZ_EXISTS || $ARM_META_EXISTS; then
+            echo "::error::arm64 artifacts are incomplete (xz=$ARM_XZ_EXISTS meta=$ARM_META_EXISTS); aborting release"
+            exit 1
+          else
+            echo "arm64 image assets not produced this run; shipping existing manifest"
+          fi
+
+          node scripts/validate-imager-manifest.mjs --no-network
+          cp website/public/imager.json release/imager.json
+
+      - name: Checksum flashers
+        run: |
+          set -euo pipefail
+          MISSING=0
+          for f in scripts/flash.sh scripts/flash.ps1 scripts/try.sh scripts/try.ps1; do
+            if [ -f "$f" ]; then
+              ( cd "$(dirname "$f")" && sha256sum "$(basename "$f")" > "$(basename "$f").sha256" )
+            else
+              echo "::error::Expected flasher not found: $f"
+              MISSING=1
+            fi
+          done
+          (( MISSING == 0 )) || exit 1
+
+      - name: Package CLI zip
+        run: |
+          mkdir -p cli-staging
+          for f in scripts/pai.ps1 scripts/pai.cmd scripts/flash.ps1 scripts/try.ps1; do
+            [ -f "$f" ] && cp "$f" cli-staging/
+          done
+          if [ -z "$(ls -A cli-staging)" ]; then
+            echo "::error::cli-staging is empty — no CLI scripts found; aborting release"
+            exit 1
+          fi
+          cd cli-staging
+          zip "../release/pai-cli-${VERSION}.zip" *
+          cd ..
+          sha256sum "release/pai-cli-${VERSION}.zip" > "release/pai-cli-${VERSION}.zip.sha256"
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/pai-${{ env.VERSION }}-amd64.iso
+            release/pai-${{ env.VERSION }}-amd64.iso.sha256
+            release/SHA256SUMS
+            scripts/flash.ps1
+            scripts/flash.ps1.sha256
+            scripts/flash.sh
+            scripts/flash.sh.sha256
+            scripts/try.sh
+            scripts/try.sh.sha256
+            scripts/try.ps1
+            scripts/try.ps1.sha256
+            release/pai-${{ env.VERSION }}-arm64.img.xz
+            release/pai-${{ env.VERSION }}-arm64.img.json
+            release/imager.json
+            release/pai-cli-${{ env.VERSION }}.zip
+            release/pai-cli-${{ env.VERSION }}.zip.sha256
+          fail_on_unmatched_files: false
+          generate_release_notes: true
