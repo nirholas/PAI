@@ -1,0 +1,13 @@
+background-color=#14141e
+text-color=#e0e0e0
+border-color=#7aa2f7
+border-size=1
+border-radius=8
+padding=10
+margin=8
+font=Noto Sans 11
+width=320
+height=100
+anchor=top-right
+layer=overlay
+default-timeout=5000
