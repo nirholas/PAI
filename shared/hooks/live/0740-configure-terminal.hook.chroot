@@ -1,0 +1,178 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "[pai] Configuring terminal environment..."
+
+# ── Starship prompt ────────────────────────────────────────────────
+# Pinned versioned download with SHA256 verification.
+# SHA256 was taken from the official per-file .sha256 asset on GitHub:
+#   https://github.com/starship/starship/releases/download/v1.24.2/starship-x86_64-unknown-linux-musl.tar.gz.sha256
+STARSHIP_VERSION="1.24.2"
+STARSHIP_SHA256="00ff3c1f8ffb59b5c15d4b44c076bcca04d92cf0055c86b916248c14f3ae714a"
+
+if curl -fsSL "https://github.com/starship/starship/releases/download/v${STARSHIP_VERSION}/starship-x86_64-unknown-linux-musl.tar.gz" \
+        -o /tmp/starship.tar.gz; then
+    echo "${STARSHIP_SHA256}  /tmp/starship.tar.gz" | sha256sum -c \
+        || { echo "[pai] ERROR: Starship SHA256 mismatch — aborting."; rm -f /tmp/starship.tar.gz; exit 1; }
+    tar xzf /tmp/starship.tar.gz -C /usr/local/bin starship
+    rm /tmp/starship.tar.gz
+else
+    echo "[pai] WARNING: Starship download failed. Using default prompt."
+fi
+
+# Configure starship
+mkdir -p /etc/skel/.config
+cat > /etc/skel/.config/starship.toml <<'TOML'
+# PAI Starship Prompt
+format = """
+[  PAI ](bg:#7aa2f7 fg:#0f0f1a bold)\
+$directory\
+$git_branch\
+$git_status\
+$nodejs\
+$python\
+$rust\
+$golang\
+$docker_context\
+$line_break\
+$character"""
+
+[directory]
+style = "fg:#7aa2f7"
+truncation_length = 3
+
+[git_branch]
+symbol = " "
+style = "fg:#4ade80"
+
+[git_status]
+style = "fg:#fbbf24"
+
+[nodejs]
+symbol = " "
+style = "fg:#4ade80"
+
+[python]
+symbol = " "
+style = "fg:#fbbf24"
+
+[rust]
+symbol = " "
+style = "fg:#f87171"
+
+[golang]
+symbol = " "
+style = "fg:#22d3ee"
+
+[docker_context]
+symbol = " "
+style = "fg:#2196f3"
+
+[character]
+success_symbol = "[❯](fg:#7aa2f7)"
+error_symbol = "[❯](fg:#f87171)"
+TOML
+
+# ── Bash configuration ──────────────────────────────────────────────
+cat > /etc/skel/.bashrc <<'BASHRC'
+# PAI Shell Configuration
+
+# History settings
+HISTSIZE=10000
+HISTFILESIZE=20000
+HISTCONTROL=ignoreboth:erasedups
+shopt -s histappend
+
+# Better defaults
+shopt -s checkwinsize
+shopt -s globstar 2>/dev/null
+shopt -s cdspell
+
+# Colors
+export CLICOLOR=1
+alias ls='ls --color=auto'
+alias ll='ls -alF --color=auto'
+alias la='ls -A --color=auto'
+alias grep='grep --color=auto'
+alias diff='diff --color=auto'
+
+# Modern tool aliases (Debian uses batcat/fdfind)
+command -v batcat &>/dev/null && alias cat='batcat --style=plain --paging=never'
+command -v fdfind &>/dev/null && alias find='fdfind'
+command -v rg &>/dev/null && alias grep='rg'
+
+# Navigation
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+
+# Quick edit
+alias edit='code'
+alias e='code .'
+
+# FZF integration
+if command -v fzf &>/dev/null; then
+    export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border --color=bg+:#1a1a2e,fg+:#e0e0e0,hl:#7aa2f7,hl+:#7aa2f7,border:#2a2a3e'
+    if command -v fdfind &>/dev/null; then
+        export FZF_DEFAULT_COMMAND='fdfind --type f --hidden --follow --exclude .git'
+    fi
+fi
+
+# Starship prompt
+eval "$(starship init bash)"
+
+# Welcome message on first terminal
+if [[ -z "$PAI_WELCOMED" ]]; then
+    export PAI_WELCOMED=1
+    echo ""
+    neofetch --ascii_distro debian_small 2>/dev/null || true
+    echo ""
+fi
+
+# Source additional configs
+for f in /etc/profile.d/pai-*.sh; do
+    [[ -f "$f" ]] && source "$f"
+done
+BASHRC
+
+echo "[pai] Bash configured."
+
+# ── Tmux configuration ─────────────────────────────────────────────
+cat > /etc/skel/.tmux.conf <<'TMUX'
+# PAI Tmux Config
+
+# Better prefix (Ctrl+A instead of Ctrl+B)
+unbind C-b
+set-option -g prefix C-a
+bind-key C-a send-prefix
+
+# Mouse support
+set -g mouse on
+
+# Start windows at 1 not 0
+set -g base-index 1
+setw -g pane-base-index 1
+
+# Better splits
+bind | split-window -h -c "#{pane_current_path}"
+bind - split-window -v -c "#{pane_current_path}"
+
+# Vi mode
+setw -g mode-keys vi
+
+# Quick reload
+bind r source-file ~/.tmux.conf \; display "Config reloaded"
+
+# Colors (match PAI theme)
+set -g default-terminal "tmux-256color"
+set -g status-style 'bg=#1a1a2e fg=#e0e0e0'
+set -g status-left '#[fg=#7aa2f7,bold] PAI '
+set -g status-right '#[fg=#888888] %H:%M '
+set -g pane-border-style 'fg=#2a2a3e'
+set -g pane-active-border-style 'fg=#7aa2f7'
+set -g window-status-current-style 'fg=#7aa2f7 bold'
+TMUX
+
+echo "[pai] Tmux configured."
+echo "[pai] Starship prompt installed."
+echo "[pai] Terminal environment ready."
