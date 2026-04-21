@@ -1,0 +1,113 @@
+#!/bin/bash
+set -euo pipefail
+
+# Find the live-build generated grub.cfg
+GRUB_CFG=$(find binary/boot/grub -name "grub.cfg" 2>/dev/null | head -1)
+if [ -z "$GRUB_CFG" ]; then
+    echo "[pai] WARNING: grub.cfg not found, skipping GRUB customisation"
+    exit 0
+fi
+
+# Extract kernel/initrd paths and base boot params from generated config
+VMLINUZ=$(grep -oP '(?<=linux )/[^ ]+' "$GRUB_CFG" | head -1)
+INITRD=$(grep -oP '(?<=initrd )/[^ ]+' "$GRUB_CFG" | head -1)
+BASE_PARAMS=$(grep -oP 'boot=live.*?(?= quiet| splash|$)' "$GRUB_CFG" | head -1)
+
+echo "[pai] Writing GRUB theme and menu (kernel: $VMLINUZ)"
+
+# ── PAI GRUB theme ────────────────────────────────────────────────────────────
+mkdir -p binary/boot/grub/theme
+
+cat > binary/boot/grub/theme/theme.txt <<'THEME'
+# PAI GRUB theme  —  #0f0f1a background, #7aa2f7 accent
+desktop-color: "#0f0f1a"
+title-text: ""
+
++ label {
+    top = 15%
+    left = 0
+    width = 100%
+    align = "center"
+    text = "PAI"
+    color = "#7aa2f7"
+    font = "Unknown Regular 16"
+}
+
++ label {
+    top = 22%
+    left = 0
+    width = 100%
+    align = "center"
+    text = "private AI  *  offline by design"
+    color = "#565f89"
+    font = "Unknown Regular 16"
+}
+
++ boot_menu {
+    left = 15%
+    top = 32%
+    width = 70%
+    height = 42%
+    item_color = "#8892a4"
+    selected_item_color = "#c0caf5"
+    item_height = 26
+    item_padding = 14
+    item_spacing = 2
+    icon_width = 0
+    icon_height = 0
+    scrollbar_width = 0
+}
+
++ label {
+    top = 78%
+    left = 0
+    width = 100%
+    align = "center"
+    text = "Free and open-source  *  github.com/nhuds/pai"
+    color = "#2a3050"
+    font = "Unknown Regular 16"
+}
+THEME
+
+# ── grub.cfg ──────────────────────────────────────────────────────────────────
+cat > "$GRUB_CFG" <<GRUBEOF
+set default=0
+set timeout=8
+
+insmod all_video
+insmod gfxterm
+insmod gfxmenu
+terminal_output gfxterm
+set theme=(\$root)/boot/grub/theme/theme.txt
+
+menuentry "  Start PAI" {
+    linux  $VMLINUZ $BASE_PARAMS quiet splash pai.profile=full
+    initrd $INITRD
+}
+
+submenu "  Profiles  >  press Enter to expand" {
+    menuentry "  AI Only  (Ollama + Chat, fastest boot)" {
+        linux  $VMLINUZ $BASE_PARAMS quiet splash pai.profile=ai
+        initrd $INITRD
+    }
+    menuentry "  Developer  (AI + Dev tools)" {
+        linux  $VMLINUZ $BASE_PARAMS quiet splash pai.profile=dev
+        initrd $INITRD
+    }
+    menuentry "  Crypto  (AI + Wallets + Privacy)" {
+        linux  $VMLINUZ $BASE_PARAMS quiet splash pai.profile=crypto
+        initrd $INITRD
+    }
+    menuentry "  Privacy Mode  (AI + Tor, all traffic routed)" {
+        linux  $VMLINUZ $BASE_PARAMS quiet splash pai.profile=privacy
+        initrd $INITRD
+    }
+}
+
+menuentry "  Safe Mode  (no splash, verbose boot)" {
+    linux  $VMLINUZ $BASE_PARAMS pai.profile=full
+    initrd $INITRD
+}
+GRUBEOF
+
+echo "[pai] GRUB theme and menu written."
