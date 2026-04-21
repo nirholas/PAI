@@ -1,0 +1,40 @@
+# Maintainer: PAI Team <team@pai.direct>
+pkgname=pai-cli-git
+pkgver=0.2.0.r0.g0000000
+pkgrel=1
+pkgdesc="Flash, verify, and try PAI — bleeding-edge development version"
+arch=('any')
+url="https://pai.direct"
+license=('GPL3')
+depends=('bash' 'coreutils' 'curl')
+optdepends=(
+    'qemu-full: for `pai try`'
+    'ovmf: UEFI firmware for QEMU'
+    'util-linux: lsblk used by `pai flash`'
+)
+makedepends=('git')
+provides=("pai-cli=${pkgver}")
+conflicts=('pai-cli')
+source=("git+https://github.com/nirholas/pai.git")
+sha256sums=('SKIP')
+
+pkgver() {
+    cd "${srcdir}/pai"
+    # Format: latest-tag.revcount.gshorthash
+    git describe --long --tags --abbrev=7 2>/dev/null | \
+        sed 's/^v//;s/\([^-]*-\)g/r\1/;s/-/./g' || \
+        printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+package() {
+    cd "${srcdir}/pai"
+
+    install -Dm755 scripts/pai       "${pkgdir}/usr/bin/pai"
+    install -Dm755 scripts/flash.sh  "${pkgdir}/usr/lib/pai/flash.sh"
+    install -Dm755 scripts/try.sh    "${pkgdir}/usr/lib/pai/try.sh"
+
+    sed -i 's|__LIBEXEC__|/usr/lib/pai|' "${pkgdir}/usr/bin/pai"
+
+    install -Dm644 LICENSE  "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+    install -Dm644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
+}
