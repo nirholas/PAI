@@ -1,5 +1,8 @@
 # 🔒 PAI — PAI
 
+![header](branding/readme-header.svg)
+
+
 <p align="center">
   <a href="https://github.com/nirholas/pai/actions/workflows/build.yml"><img src="https://github.com/nirholas/pai/actions/workflows/build.yml/badge.svg" alt="Build"></a>
   <a href="https://github.com/nirholas/pai/releases/latest"><img src="https://img.shields.io/github/v/release/nirholas/pai" alt="Latest release"></a>
