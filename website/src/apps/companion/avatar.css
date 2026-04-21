@@ -1,0 +1,68 @@
+/* PAI Companion avatar animations — pure CSS, no JS needed for the
+   idle bob + blink. Mood classes tweak the mouth and eye shape. */
+
+.cmp-avatar {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 4px 12px rgba(159, 122, 234, 0.35));
+  animation: cmp-bob 3.2s ease-in-out infinite;
+}
+
+@keyframes cmp-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.cmp-eye {
+  transform-origin: center;
+  animation: cmp-blink 4.2s ease-in-out infinite;
+}
+
+.cmp-eye--right {
+  animation-delay: 0.05s;
+}
+
+@keyframes cmp-blink {
+  0%,
+  94%,
+  100% {
+    transform: scaleY(1);
+  }
+  96% {
+    transform: scaleY(0.1);
+  }
+}
+
+/* Mood variants — tweak mouth path via CSS variables is tricky with
+   SVG `d` at runtime, so we animate with transforms / opacity instead. */
+
+.cmp-mouth {
+  transition: transform 220ms ease;
+  transform-origin: 48px 58px;
+}
+.cmp-happy .cmp-mouth {
+  transform: scaleY(1);
+}
+.cmp-proud .cmp-mouth {
+  transform: scaleY(1.15);
+}
+.cmp-curious .cmp-mouth {
+  transform: scaleY(0.6);
+}
+.cmp-thinking .cmp-mouth {
+  transform: scaleY(0.2) translateX(-4px);
+  opacity: 0.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cmp-avatar,
+  .cmp-eye {
+    animation: none;
+  }
+}
