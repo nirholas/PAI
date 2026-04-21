@@ -1,0 +1,178 @@
+# ── PAI Base Packages (shared across all editions) ──
+
+# Core system
+firmware-linux-free
+
+# Browser
+firefox-esr
+
+# Networking
+network-manager
+network-manager-gnome
+wireless-tools
+wpasupplicant
+wireguard-tools
+
+# Privacy / Security
+ufw
+tor
+torsocks
+macchanger
+cryptsetup
+
+# Git tools
+git
+git-lfs
+openssh-client
+openssh-server
+
+# Utilities
+curl
+wget
+unzip
+htop
+pcmanfm
+mousepad
+
+# Python (for chat server)
+python3
+
+# Audio
+pipewire
+pipewire-pulse
+wireplumber
+
+# Theming
+adwaita-icon-theme
+
+# Fonts
+fonts-noto-core
+
+# Boot splash
+plymouth
+fonts-noto-color-emoji
+
+# AI utilities
+jq
+alsa-utils
+
+# Media
+ffmpeg
+playerctl
+
+# Cryptocurrency
+electrum  # also hook-configured by 0600-configure-electrum.hook.chroot
+
+# Terminal enhancements
+tmux
+fzf
+ripgrep
+fd-find
+bat
+tree
+neofetch
+
+# Developer tools
+make
+pkg-config
+libssl-dev
+python3-pip
+python3-venv
+
+# Networking & Privacy
+onionshare
+
+# Encryption
+gnupg
+
+# Settings launcher dependencies
+wofi
+zenity
+polkitd
+swayidle
+xdg-utils
+xdg-user-dirs
+wdisplays
+pavucontrol
+nm-connection-editor
+blueman
+bluez
+gnome-disk-utility
+system-config-printer
+cups
+cups-pdf
+lxappearance
+lxtask
+galculator
+foot
+thunar
+thunar-archive-plugin
+keepassxc
+kleopatra
+mat2
+mako-notifier
+wl-clipboard
+grim
+slurp
+brightnessctl
+
+# Productivity (Wave 2)
+libreoffice
+libreoffice-gtk3
+libreoffice-style-colibre
+libreoffice-help-en-us
+hunspell-en-us
+hunspell-en-gb
+geany
+geany-plugins-common
+thunderbird
+thunderbird-l10n-en-us
+gnome-calendar
+gnome-contacts
+evolution-data-server
+hexchat
+
+# Creative (Wave 3)
+gimp
+gimp-data-extras
+krita
+krita-l10n
+inkscape
+kdenlive
+shotcut
+audacity
+audacity-data
+strawberry
+shotwell
+blender
+celluloid
+okular
+xournalpp
+darktable
+dcraw
+libopenraw11
+libavcodec-extra
+poppler-utils
+
+# Fonts (Wave 3)
+fonts-liberation2
+fonts-dejavu
+fonts-noto
+fonts-noto-cjk
+fonts-firacode
+
+# Crypto & privacy (Wave 5)
+wireshark
+tshark
+nmap
+mtr-tiny
+tcpdump
+iperf3
+dnsutils
+whois
+libusb-1.0-0
+age
+magic-wormhole
+secure-delete
+exiftool
+torbrowser-launcher
