@@ -1,0 +1,35 @@
+#!/bin/bash
+# ── Install SimpleX Chat Desktop ───────────────────────────────────────
+# SimpleX publishes amd64 debs. arm64 builds exist but layout varies —
+# fall back to skip-and-document on arm64.
+set -euo pipefail
+
+SIMPLEX_VERSION="v6.1.1"
+ARCH=$(dpkg --print-architecture)
+if [ "$ARCH" != "amd64" ]; then
+    echo "[pai] SimpleX Chat: no stable arm64 .deb — skipping on $ARCH."
+    exit 0
+fi
+
+echo "[pai] Installing SimpleX Chat Desktop ${SIMPLEX_VERSION}..."
+
+# SHA2-512 checksum from the official GitHub release page for v6.1.1:
+#   https://github.com/simplex-chat/simplex-chat/releases/tag/v6.1.1
+# Hash covers: simplex-desktop-x86_64.deb (Ubuntu 22.04 build)
+SIMPLEX_SHA512="38ff1db76127217aeafe7fc73568be16e28e7ca7825c4dbdfbf7a4a4e2e87801d2ee377bc8dba080115c19d181dce9807d4a30c677ca8fbdbbdb28c2c33a5b23"
+
+curl -fsSL -o /tmp/simplex.deb \
+    "https://github.com/simplex-chat/simplex-chat/releases/download/${SIMPLEX_VERSION}/simplex-desktop-x86_64.deb" \
+    || { echo "[pai] SimpleX download failed — skipping."; exit 0; }
+
+echo "${SIMPLEX_SHA512}  /tmp/simplex.deb" | sha512sum -c \
+    || { echo "[pai] ERROR: SimpleX SHA512 mismatch — refusing to install."; rm -f /tmp/simplex.deb; exit 1; }
+
+DEBIAN_FRONTEND=noninteractive apt-get install -y /tmp/simplex.deb \
+    || echo "[pai] SimpleX install failed — non-fatal."
+rm -f /tmp/simplex.deb
+
+apt-get clean
+rm -rf /var/lib/apt/lists/*
+
+echo "[pai] SimpleX Chat installed."
