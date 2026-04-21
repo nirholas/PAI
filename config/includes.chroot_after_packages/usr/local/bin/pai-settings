@@ -1,0 +1,29 @@
+#!/bin/bash
+# PAI Settings — unified settings launcher via wofi
+
+CHOICE=$(printf \
+    "⌨️  Terminal\n\
+🔊  Audio\n\
+🖥️  Display\n\
+📶  Network\n\
+🔵  Bluetooth\n\
+💾  Disks\n\
+🎨  Appearance\n\
+⚙️  Processes\n\
+🔒  Passwords\n\
+🗂️  Files" \
+    | wofi --dmenu --prompt "Settings" --lines 10 --width 260 --height 370 \
+           --style /etc/pai/wofi-shutdown.css 2>/dev/null)
+
+case "$CHOICE" in
+    *Terminal*)   foot ;;
+    *Audio*)      pavucontrol ;;
+    *Display*)    wdisplays 2>/dev/null || foot -e wlr-randr ;;
+    *Network*)    nm-connection-editor ;;
+    *Bluetooth*)  blueman-manager ;;
+    *Disks*)      gnome-disks ;;
+    *Appearance*) lxappearance ;;
+    *Processes*)  lxtask ;;
+    *Passwords*)  keepassxc ;;
+    *Files*)      thunar ;;
+esac
