@@ -1,0 +1,60 @@
+---
+import AppStandalone from '../../layouts/AppStandalone.astro'
+import Head from '../../components/Head.astro'
+import '../../shell/tokens.css'
+import '../../apps/taskmanager/taskmanager.css'
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <Head
+      title="Task Manager — PAI"
+      description="Inspect open windows, simulated system metrics, and PAI services."
+      ogImage="/og/taskmanager.png"
+    />
+    <link rel="icon" type="image/svg+xml" href="/icons/taskmanager.svg" />
+  </head>
+  <body>
+    <AppStandalone appId="taskmanager" />
+    <main class="tm-root" id="tm-root">
+      <div class="tm-tabs" role="tablist">
+        <button class="tm-tab" role="tab" aria-selected="true" data-tab="windows">Windows</button>
+        <button class="tm-tab" role="tab" aria-selected="false" data-tab="metrics">Performance</button>
+        <button class="tm-tab" role="tab" aria-selected="false" data-tab="services">Services</button>
+      </div>
+
+      <section class="tm-panel active" data-panel="windows" role="tabpanel">
+        <table class="tm-table">
+          <thead>
+            <tr><th>Name</th><th>App ID</th><th>State</th><th>Actions</th></tr>
+          </thead>
+          <tbody class="tm-win-body"></tbody>
+        </table>
+      </section>
+
+      <section class="tm-panel" data-panel="metrics" role="tabpanel">
+        <p style="color:var(--fg-muted);font-size:0.8rem;margin-bottom:var(--s-3);">
+          Simulated metrics for this demo — the real PAI shows live system data.
+        </p>
+        <div class="tm-metrics"></div>
+      </section>
+
+      <section class="tm-panel" data-panel="services" role="tabpanel">
+        <table class="tm-table">
+          <thead>
+            <tr><th>Service</th><th>Status</th><th>Description</th></tr>
+          </thead>
+          <tbody class="tm-svc-body"></tbody>
+        </table>
+      </section>
+    </main>
+
+    <script>
+      import { bridge } from '../../apps/_bridge.js'
+      import { mountTaskManager } from '../../apps/taskmanager/taskmanager.ts'
+      bridge.ready()
+      mountTaskManager(document.getElementById('tm-root')!)
+    </script>
+  </body>
+</html>
