@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=PAI Launcher
+Comment=Unified launcher for Chat, Files, Models, Terminal, and Status
+Exec=pai-launcher
+Icon=preferences-system
+Type=Application
+Categories=System;Utility;
+Keywords=pai;launcher;chat;status;models;
