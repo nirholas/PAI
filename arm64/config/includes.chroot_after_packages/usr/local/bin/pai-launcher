@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# pai-launcher — unified launcher for PAI's core apps and tools.
+#
+# Scaffold (v0.2): a wofi --dmenu list of the most-used PAI actions.
+# Later phases will extend this into a full home-screen landing page.
+#
+# Bind to a keybinding in ~/.config/sway/config (Alt+Shift+Space in the
+# default PAI config). Also registered as a .desktop file so it appears
+# in wofi --show drun.
+set -euo pipefail
+
+ICON_CHAT="💬"
+ICON_FILES="📁"
+ICON_MODELS="🤖"
+ICON_TERMINAL="💻"
+ICON_STATUS="🛡"
+ICON_PRIVACY="🧅"
+ICON_DOCS="📖"
+ICON_APPS="📦"
+
+entries=$(cat <<EOF
+${ICON_CHAT}  Chat — talk to your local AI
+${ICON_FILES}  Files — browse your home directory
+${ICON_MODELS}  Models — manage installed Ollama models
+${ICON_TERMINAL}  Terminal — open a shell
+${ICON_STATUS}  Status — privacy + health dashboard
+${ICON_PRIVACY}  Privacy — toggle Tor routing
+${ICON_APPS}  Apps — install more from the PAI App Store
+${ICON_DOCS}  Docs — open the PAI documentation
+EOF
+)
+
+choice=$(printf '%s\n' "$entries" | wofi --dmenu --prompt "PAI Launcher" --width 480 --height 360 2>/dev/null || true)
+
+[ -z "$choice" ] && exit 0
+
+case "$choice" in
+    "${ICON_CHAT}"*)     exec firefox-esr http://localhost:8080 ;;
+    "${ICON_FILES}"*)    exec thunar "$HOME" ;;
+    "${ICON_MODELS}"*)   exec foot -e pai-models ;;
+    "${ICON_TERMINAL}"*) exec foot ;;
+    "${ICON_STATUS}"*)   exec foot -e sh -c 'pai-status; echo; read -rp "Press Enter to close..." _' ;;
+    "${ICON_PRIVACY}"*)  exec foot -e sudo pai-privacy ;;
+    "${ICON_APPS}"*)     exec firefox-esr http://localhost:8080/apps.html ;;
+    "${ICON_DOCS}"*)     exec firefox-esr https://pai.dev/docs/ ;;
+esac
