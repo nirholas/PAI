@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<actions>
+  <action>
+    <icon>edit-clear</icon>
+    <name>Strip metadata (mat2)</name>
+    <submenu></submenu>
+    <unique-id>pai-mat2</unique-id>
+    <command>mat2 --inplace %F</command>
+    <description>Remove metadata from selected files using mat2.</description>
+    <range>*</range>
+    <patterns>*</patterns>
+    <startup-notify/>
+    <image-files/>
+    <video-files/>
+    <audio-files/>
+    <other-files/>
+  </action>
+  <action>
+    <icon>network-vpn</icon>
+    <name>Send via magic-wormhole</name>
+    <submenu></submenu>
+    <unique-id>pai-wormhole</unique-id>
+    <command>foot -e sh -c "wormhole send %F; read -rp 'Press Enter...' _"</command>
+    <description>Send the selected file through magic-wormhole.</description>
+    <range>*</range>
+    <patterns>*</patterns>
+    <startup-notify/>
+    <other-files/>
+  </action>
+  <action>
+    <icon>security-high</icon>
+    <name>Encrypt with age</name>
+    <submenu></submenu>
+    <unique-id>pai-age-encrypt</unique-id>
+    <command>foot -e sh -c "read -rp 'Recipient age pubkey: ' r; age -r \"$r\" -o \"%F.age\" \"%F\" &amp;&amp; echo 'Wrote %F.age'; read -rp 'Press Enter...' _"</command>
+    <description>Encrypt the file using age.</description>
+    <range>*</range>
+    <patterns>*</patterns>
+    <startup-notify/>
+    <other-files/>
+  </action>
+</actions>
