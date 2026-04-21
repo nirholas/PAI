@@ -1,0 +1,192 @@
+site_name: PAI Documentation
+site_description: Private AI on a bootable USB drive — Debian + Sway + Ollama.
+site_url: https://docs.pai.direct
+repo_url: https://github.com/nirholas/pai
+repo_name: nirholas/pai
+edit_uri: edit/main/docs/src/
+
+docs_dir: src
+site_dir: _site
+
+theme:
+  name: material
+  custom_dir: overrides
+  language: en
+  logo: assets/pai-logo-white.png
+  palette:
+    - scheme: slate
+      primary: custom
+      accent: custom
+  font:
+    text: Inter
+    code: JetBrains Mono
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.instant
+    - navigation.tracking
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+    - toc.follow
+
+extra_css:
+  - assets/pai-theme.css
+  - assets/stylesheets/home.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/x-twitter
+      link: https://x.com/nichxbt
+      name: nichxbt on X
+    - icon: fontawesome/brands/github
+      link: https://github.com/nirholas
+      name: nirholas on GitHub
+
+plugins:
+  - search
+
+nav:
+  - Home: index.md
+  - Overview:
+      - How PAI works: general/how-pai-works.md
+      - Features included: general/features-included.md
+      - System requirements: general/system-requirements.md
+      - Warnings and limitations: general/warnings-and-limitations.md
+  - Getting started:
+      - Try in a VM: first-steps/try-in-a-vm.md
+      - Quickstart: quickstart.md
+      - Installation: installation.md
+      - Getting started: getting-started.md
+      - USB flashing: USB-FLASHING.md
+      - Starting on Mac: first-steps/starting-on-mac.md
+      - Starting on Windows: first-steps/starting-on-windows.md
+      - Installing and booting: first-steps/installing-and-booting.md
+      - Raspberry Pi Imager: first-steps/using-raspberry-pi-imager.md
+      - Using Ventoy: first-steps/using-ventoy.md
+      - First boot walkthrough: first-steps/first-boot-walkthrough.md
+      - Desktop basics: first-steps/desktop-basics.md
+      - Browser installer: first-steps/browser-installer.md
+      - Shutting down: first-steps/shutting-down.md
+  - Guides:
+      - Using PAI: using-pai.md
+      - Basic usage: usage/basic.md
+      - Advanced usage: usage/advanced.md
+      - Command line: usage/cli.md
+      - Models: models.md
+      - Persistence:
+          - Introduction: persistence/introduction.md
+          - Creating persistence: persistence/creating-persistence.md
+          - Unlocking: persistence/unlocking.md
+          - Backing up: persistence/backing-up.md
+      - Configuration: configuration.md
+      - Deployment: deployment.md
+      - Build in cloud: build-in-cloud.md
+      - Building from source: advanced/building-from-source.md
+      - Upgrading: UPGRADING.md
+      - Migration: MIGRATION.md
+      - Troubleshooting: advanced/troubleshooting.md
+  - AI:
+      - Choosing a model: ai/choosing-a-model.md
+      - Managing models: ai/managing-models.md
+      - Using Ollama: ai/using-ollama.md
+      - Using Open WebUI: ai/using-open-webui.md
+  - Apps:
+      - Password management: apps/password-management.md
+      - Encrypting files (GPG): apps/encrypting-files-gpg.md
+      - Secure delete: apps/secure-delete.md
+  - Advanced:
+      - GPU setup: advanced/gpu-setup.md
+      - GPU passthrough (VMs): advanced/gpu-passthrough.md
+      - Running in a VM: advanced/running-in-a-vm.md
+      - Boot options: advanced/boot-options.md
+      - Windows package managers: advanced/windows-package-managers.md
+      - Arch Linux (AUR): advanced/arch-linux.md
+      - Homebrew (macOS/Linux): advanced/homebrew.md
+  - Privacy:
+      - Introduction: privacy/introduction-to-privacy.md
+      - Privacy mode (Tor): privacy/privacy-mode-tor.md
+      - MAC address anonymization: privacy/mac-address-anonymization.md
+      - Offline mode: privacy/offline-mode.md
+      - Tor Browser: privacy/tor-browser.md
+  - Examples:
+      - Getting started example: examples/getting-started.md
+      - Local AI assistant: examples/local-ai-assistant.md
+      - Crypto cold signing: examples/crypto-cold-signing.md
+      - Travel and network hardening: examples/travel-and-network-hardening.md
+      - Real-world use cases: examples/real-world-use-cases.md
+      - Tutorials: tutorials/index.md
+  - Development:
+      - Setup: development/setup.md
+      - Guidelines: development/guidelines.md
+      - Testing: development/testing.md
+      - Debugging: development/debugging.md
+      - CI/CD: development/ci-cd.md
+      - Cloud builders runbook: ops-cloud-builders.md
+      - Agents overview: agents/overview.md
+      - Agent registry: agents/agent-registry.md
+      - Skill catalog: agents/skill-catalog.md
+  - Reference:
+      - Architecture:
+          - Overview: architecture/overview.md
+          - Components: architecture/components.md
+          - Data flow: architecture/data-flow.md
+          - Diagrams: architecture/diagrams.md
+      - Editions: editions.md
+      - Skills: skills.md
+      - Tools: TOOLS.md
+      - Keyboard shortcuts: reference/keyboard-shortcuts.md
+      - FAQ: reference/faq.md
+      - Glossary: reference/glossary.md
+      - API:
+          - Reference: api/reference.md
+          - Endpoints: api/endpoints.md
+          - SDK: api/sdk.md
+          - CLI JSON shapes: api/cli-json-shapes.md
+  - About:
+      - Philosophy: PHILOSOPHY.md
+      - Vision: VISION.md
+      - Values: VALUES.md
+      - Strategy: STRATEGY.md
+      - Comparison: COMPARISON.md
+      - Roadmap: roadmap.md
+      - Changelog: CHANGELOG.md
+      - Ethics: ETHICS.md
+      - Privacy: PRIVACY.md
+      - Security: security.md
+      - Accessibility: ACCESSIBILITY.md
+      - Governance: governance.md
+      - Internationalization: INTERNATIONALIZATION.md
+      - Known issues: KNOWN_ISSUES.md
+      - Release: RELEASE.md
+      - Maintainers: MAINTAINERS.md
+      - Authors: AUTHORS.md
+      - Citation: CITATION.md
+      - Acknowledgments: ACKNOWLEDGMENTS.md
+      - Contributing to docs: contributing-to-docs.md
