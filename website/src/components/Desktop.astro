@@ -1,0 +1,62 @@
+---
+// Desktop — wallpaper, icons, marquee, context menus
+---
+
+<div
+  class="desktop"
+  id="pai-desktop"
+  tabindex="0"
+  role="region"
+  aria-label="Desktop"
+>
+  <!-- Centred watermark logo -->
+  <div class="desktop__watermark" aria-hidden="true">
+    <img src="/logo/pai-logo.png" alt="" />
+  </div>
+
+  <!-- Icon grid layer (populated by desktop.js) -->
+  <div class="desktop__icons" id="desktop-icons" aria-label="Desktop icons"></div>
+
+  <!-- Marquee selection rect -->
+  <div class="desktop__marquee" id="desktop-marquee" aria-hidden="true"></div>
+</div>
+
+<!-- Icon properties dialog (shown on right-click → Properties) -->
+<dialog
+  class="icon-properties"
+  id="icon-properties"
+  aria-labelledby="icon-props-title"
+>
+  <div class="icon-properties__header">
+    <span class="icon-properties__title" id="icon-props-title">Properties</span>
+    <button class="icon-properties__close" aria-label="Close">&#x2715;</button>
+  </div>
+  <div class="icon-properties__body">
+    <dl class="icon-properties__meta">
+      <dt>Name</dt>
+      <dd id="icon-props-name">—</dd>
+      <dt>Type</dt>
+      <dd id="icon-props-kind">—</dd>
+      <dt>Opens</dt>
+      <dd id="icon-props-target">—</dd>
+      <dt>Location</dt>
+      <dd id="icon-props-location">—</dd>
+    </dl>
+    <p class="icon-properties__note">
+      This is a web demo of the PAI desktop environment. The real PAI OS runs
+      as a bootable live-USB — no installation required.
+    </p>
+  </div>
+</dialog>
+
+<script>
+  import { initWallpaper } from '../shell/wallpaper.js';
+  import { initDesktop } from '../shell/desktop.js';
+  import { initContextMenu } from '../shell/context-menu.js';
+  import { initDesktopUserIcons } from '../shell/desktop-files.ts';
+
+  const iconPositions = initDesktop() ?? {};
+  initWallpaper();
+  initContextMenu(iconPositions);
+  initDesktopUserIcons();
+</script>
