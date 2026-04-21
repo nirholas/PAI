@@ -1,0 +1,30 @@
+# Maintainer: PAI Team <team@pai.direct>
+pkgname=pai-cli
+pkgver=0.2.0
+pkgrel=1
+pkgdesc="Flash, verify, and try PAI — private offline AI on a bootable USB"
+arch=('any')
+url="https://pai.direct"
+license=('GPL3')
+depends=('bash' 'coreutils' 'curl')
+optdepends=(
+    'qemu-full: for `pai try` to launch PAI in a VM'
+    'ovmf: UEFI firmware for QEMU'
+    'util-linux: lsblk used by `pai flash`'
+)
+source=("pai-${pkgver}.tar.gz::https://github.com/nirholas/pai/archive/refs/tags/v${pkgver}.tar.gz")
+sha256sums=('SKIP')
+
+package() {
+    cd "${srcdir}/pai-${pkgver}"
+
+    install -Dm755 scripts/pai       "${pkgdir}/usr/bin/pai"
+    install -Dm755 scripts/flash.sh  "${pkgdir}/usr/lib/pai/flash.sh"
+    install -Dm755 scripts/try.sh    "${pkgdir}/usr/lib/pai/try.sh"
+
+    # Patch the installed `pai` to resolve libexec path
+    sed -i 's|__LIBEXEC__|/usr/lib/pai|' "${pkgdir}/usr/bin/pai"
+
+    install -Dm644 LICENSE  "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+    install -Dm644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
+}
