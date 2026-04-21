@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Monero Wallet
+Comment=Feather Wallet — Monero (XMR)
+Exec=feather-wallet
+Icon=monero
+Type=Application
+Categories=Finance;
+Keywords=monero;xmr;wallet;crypto;privacy;
