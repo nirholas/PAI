@@ -1,0 +1,241 @@
+#!/bin/bash
+# pai-persistence-setup — guided wizard to create an encrypted persistence
+# partition on a USB stick for PAI (Debian live-build).
+#
+# Creates a LUKS2/argon2id-encrypted ext4 partition labelled "persistence"
+# on the free space of a non-boot USB drive and writes persistence.conf
+# so that live-boot activates the bind-mounts on next boot.
+#
+# SAFETY CONTRACT (enforced at every step):
+#   1. Never write to /run/live/medium's parent device (the boot USB).
+#   2. Never operate on a mounted filesystem.
+#   3. Never touch devices smaller than 1 GiB.
+#   4. Never run without zenity available (avoid headless accidents).
+#   5. Require the user to TYPE the target device path to confirm.
+#
+# Exit codes:
+#   0  success, partition created and persistence.conf written
+#   1  user cancelled or aborted
+#   2  precondition failed (no zenity, no USB, unsupported environment)
+#   3  safety check rejected the selected device
+
+set -euo pipefail
+
+readonly PERSIST_LABEL="persistence"
+readonly PERSIST_MAPPER="pai-persist-setup"
+readonly PERSIST_MOUNT="/mnt/pai-persist-setup"
+readonly CONF_EXAMPLE="/etc/pai/persistence.conf.example"
+readonly MIN_SIZE_BYTES=$((1024 * 1024 * 1024))  # 1 GiB
+
+log()  { printf '[pai-persistence-setup] %s\n' "$*" >&2; }
+die()  {
+    log "ERROR: $*"
+    if command -v zenity >/dev/null 2>&1; then
+        zenity --error --title="PAI Persistence Setup" \
+            --text="$*" --width=460 2>/dev/null || true
+    fi
+    exit "${2:-1}"
+}
+
+require_root() {
+    if [[ $EUID -ne 0 ]]; then
+        log "re-executing with sudo..."
+        exec sudo --preserve-env=DISPLAY,WAYLAND_DISPLAY,DBUS_SESSION_BUS_ADDRESS,XAUTHORITY \
+            "$0" "$@"
+    fi
+}
+
+require_zenity() {
+    command -v zenity >/dev/null 2>&1 \
+        || die "zenity is required (graphical session only)." 2
+    [[ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]] \
+        || die "No display detected. Run this wizard from the PAI desktop." 2
+}
+
+require_tools() {
+    local t
+    for t in lsblk parted cryptsetup mkfs.ext4 findmnt partprobe udevadm blockdev; do
+        command -v "$t" >/dev/null 2>&1 \
+            || die "Required tool missing: $t" 2
+    done
+}
+
+# Return the block device the running live system was booted from.
+detect_boot_device() {
+    local part parent
+    part=$(findmnt -n -o SOURCE /run/live/medium 2>/dev/null \
+        || findmnt -n -o SOURCE /lib/live/mount/medium 2>/dev/null \
+        || true)
+    [[ -n "$part" ]] || return 1
+    parent=$(lsblk -nrpo PKNAME "$part" 2>/dev/null | head -1)
+    [[ -n "$parent" ]] || return 1
+    printf '/dev/%s\n' "$parent"
+}
+
+# Emit TAB-separated NAME\tSIZE\tMOUNTPOINT for each whole-disk candidate.
+list_candidates() {
+    lsblk -nrpo NAME,SIZE,TYPE,MOUNTPOINT \
+        | awk '$3 == "disk" { printf "%s\t%s\t%s\n", $1, $2, ($4=="" ? "-" : $4) }'
+}
+
+check_device_safety() {
+    local dev="$1" boot_dev="$2"
+    [[ -b "$dev" ]] || { log "safety: $dev is not a block device"; return 1; }
+    if [[ "$dev" == "$boot_dev" ]]; then
+        log "safety: refusing boot device ($dev)"; return 1
+    fi
+    local mounted
+    mounted=$(lsblk -nrpo MOUNTPOINT "$dev" | awk 'NF' | head -1)
+    if [[ -n "$mounted" ]]; then
+        log "safety: $dev has a mounted partition ($mounted)"; return 1
+    fi
+    local size_bytes
+    size_bytes=$(blockdev --getsize64 "$dev" 2>/dev/null || echo 0)
+    if (( size_bytes < MIN_SIZE_BYTES )); then
+        log "safety: $dev < 1 GiB"; return 1
+    fi
+    local ro
+    ro=$(blockdev --getro "$dev" 2>/dev/null || echo 1)
+    if [[ "$ro" != "0" ]]; then
+        log "safety: $dev is read-only"; return 1
+    fi
+    return 0
+}
+
+main() {
+    require_zenity
+    require_root "$@"
+    require_tools
+
+    local boot_dev
+    boot_dev=$(detect_boot_device) \
+        || die "Cannot detect the PAI live-boot device. Are you running from a live USB?" 2
+    log "boot device: $boot_dev"
+
+    zenity --question \
+        --title="PAI — Persistence Setup (1/5)" \
+        --text="This wizard creates an <b>encrypted</b> persistence partition on a USB drive.\n\nYour boot USB is: <tt>${boot_dev}</tt>\n\nThe wizard will <b>refuse</b> to target the boot USB to protect it.\n\nContinue?" \
+        --ok-label="Continue" --cancel-label="Cancel" \
+        --width=520 2>/dev/null || { log "user cancelled at intro"; exit 1; }
+
+    local -a zen_rows=()
+    local dev size mp
+    while IFS=$'\t' read -r dev size mp; do
+        [[ -z "$dev" ]] && continue
+        if check_device_safety "$dev" "$boot_dev"; then
+            zen_rows+=("$dev" "$size" "${mp:--}")
+        else
+            log "excluding: $dev ($size, $mp)"
+        fi
+    done < <(list_candidates)
+
+    if (( ${#zen_rows[@]} == 0 )); then
+        die "No eligible target devices found.\n\nInsert a second USB stick (not the boot USB) at least 1 GiB in size." 3
+    fi
+
+    local selected
+    selected=$(zenity --list \
+        --title="PAI — Persistence Setup (2/5)" \
+        --text="Choose the device to receive the persistence partition.\n\nThe boot USB (<tt>${boot_dev}</tt>) is excluded from this list." \
+        --column="Device" --column="Size" --column="Mounted at" \
+        "${zen_rows[@]}" \
+        --width=620 --height=360 2>/dev/null) \
+        || { log "user cancelled at device selection"; exit 1; }
+    [[ -n "$selected" ]] || die "No device selected." 1
+
+    check_device_safety "$selected" "$boot_dev" \
+        || die "Device ${selected} failed safety checks. Aborting." 3
+
+    zenity --warning \
+        --title="PAI — Persistence Setup (3/5): DESTRUCTIVE" \
+        --text="<b>WARNING</b>\n\nThis will create a new partition on <tt>${selected}</tt> and <b>ERASE</b> any data in the free space used.\n\n<b>Back up anything important on that drive before proceeding.</b>" \
+        --width=520 2>/dev/null || true
+
+    zenity --question \
+        --title="PAI — Persistence Setup (3/5): DESTRUCTIVE" \
+        --text="Target: <tt>${selected}</tt>\nBoot USB (protected): <tt>${boot_dev}</tt>\n\nProceed with partition creation and LUKS format?" \
+        --ok-label="Yes, I have a backup" --cancel-label="Cancel" \
+        --width=520 2>/dev/null || { log "user cancelled at warning"; exit 1; }
+
+    local typed
+    typed=$(zenity --entry \
+        --title="PAI — Persistence Setup (4/5): Type to confirm" \
+        --text="To confirm, type the full device path below:\n\n<tt>${selected}</tt>" \
+        --width=520 2>/dev/null) \
+        || { log "user cancelled at type-confirm"; exit 1; }
+    [[ "$typed" == "$selected" ]] || die "Typed value did not match. Aborting to keep you safe." 1
+
+    local pass1 pass2
+    pass1=$(zenity --password --title="PAI — Set passphrase (5/5)" 2>/dev/null) \
+        || die "No passphrase entered." 1
+    [[ ${#pass1} -ge 8 ]] || die "Passphrase must be at least 8 characters." 1
+    pass2=$(zenity --password --title="PAI — Confirm passphrase (5/5)" 2>/dev/null) \
+        || die "Confirmation cancelled." 1
+    [[ "$pass1" == "$pass2" ]] || die "Passphrases did not match." 1
+
+    # Final safety reverification before doing anything destructive.
+    if [[ "$selected" == "$boot_dev" ]]; then
+        die "Refusing to operate on the boot device. This should be unreachable." 3
+    fi
+    check_device_safety "$selected" "$boot_dev" \
+        || die "Final safety check failed. Aborting." 3
+
+    log "creating partition on $selected ..."
+    local last_end
+    last_end=$(parted -s "$selected" unit MiB print 2>/dev/null \
+        | awk '/^ +[0-9]/{gsub(/MiB/,"",$3); last=$3} END{print (last+0 > 0) ? last : 1}')
+    parted -s -a optimal "$selected" -- \
+        unit MiB mkpart primary "${last_end}MiB" 100% \
+        || die "parted failed on ${selected}" 1
+    partprobe "$selected" 2>/dev/null || true
+    udevadm settle 2>/dev/null || true
+    sleep 1
+
+    local new_part
+    new_part=$(lsblk -nrpo NAME "$selected" | tail -1)
+    [[ -n "$new_part" && "$new_part" != "$selected" ]] \
+        || die "Could not locate the new partition." 1
+
+    log "LUKS formatting $new_part ..."
+    printf '%s' "$pass1" | cryptsetup luksFormat \
+        --type luks2 --pbkdf argon2id --sector-size 4096 --batch-mode \
+        "$new_part" || die "cryptsetup luksFormat failed" 1
+
+    printf '%s' "$pass1" | cryptsetup luksOpen "$new_part" "$PERSIST_MAPPER" \
+        || die "cryptsetup luksOpen failed" 1
+
+    trap 'cryptsetup status "$PERSIST_MAPPER" &>/dev/null && cryptsetup luksClose "$PERSIST_MAPPER" || true
+          mountpoint -q "$PERSIST_MOUNT" && umount "$PERSIST_MOUNT" || true' EXIT
+
+    mkfs.ext4 -L "$PERSIST_LABEL" -q "/dev/mapper/${PERSIST_MAPPER}" \
+        || die "mkfs.ext4 failed" 1
+
+    mkdir -p "$PERSIST_MOUNT"
+    mount "/dev/mapper/${PERSIST_MAPPER}" "$PERSIST_MOUNT"
+
+    if [[ -r "$CONF_EXAMPLE" ]]; then
+        grep -vE '^[[:space:]]*(#|$)' "$CONF_EXAMPLE" \
+            > "${PERSIST_MOUNT}/persistence.conf"
+    else
+        cat > "${PERSIST_MOUNT}/persistence.conf" <<'CONF'
+/var/lib/ollama source=ollama-models
+/var/lib/open-webui source=webui-data
+/etc/NetworkManager/system-connections source=wifi-creds
+CONF
+    fi
+
+    awk '{print $1, $2}' "${PERSIST_MOUNT}/persistence.conf" \
+        | while read -r _target src; do
+            src=${src#source=}
+            [[ -n "$src" ]] && mkdir -p "${PERSIST_MOUNT}/${src}"
+        done
+
+    sync
+
+    zenity --info \
+        --title="PAI — Persistence Ready" \
+        --text="<b>Encrypted persistence created on ${selected}.</b>\n\nReboot to activate. You will be prompted for your passphrase at boot." \
+        --width=460 2>/dev/null || true
+}
+
+main "$@"
