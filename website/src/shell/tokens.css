@@ -1,0 +1,83 @@
+/* PAI design tokens — sourced from waybar/style.css and sway/config */
+
+:root {
+  /* ── Brand palette (derived from logo: red P / blue-purple A / yellow I / pink-blue ribbon) */
+  --pai-red: #f87171; /* waybar danger/down */
+  --pai-blue: #7aa2f7; /* waybar primary accent */
+  --pai-purple: #9f7aea; /* between blue and pink in logo ribbon */
+  --pai-yellow: #fbbf24; /* waybar idle/warning */
+  --pai-pink: #f472b6; /* ribbon checker color A */
+  --pai-checker-a: #f472b6; /* ribbon pink */
+  --pai-checker-b: #7aa2f7; /* ribbon blue */
+  --pai-green: #4ade80; /* waybar success/active */
+
+  /* ── Grays / surfaces (from sway config + wofi CSS) */
+  --bg: #0f0f1a; /* sway bg fill, wofi outer bg */
+  --bg-elev: #1a1a2e; /* wofi entry/input bg */
+  --bg-chrome: rgba(20, 20, 30, 0.92); /* waybar window bg */
+  --fg: #e0e0e0; /* waybar default text */
+  --fg-muted: #888888; /* waybar disabled/loading */
+  --border: #2a2a3e; /* wofi border */
+
+  /* ── Spacing scale (4-base) */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+  --s-8: 64px;
+
+  /* ── Radii */
+  --r-window: 8px;
+  --r-dock: 12px; /* matches waybar border-radius */
+  --r-icon: 6px;
+
+  /* ── Z-index layers */
+  --z-desktop: 0;
+  --z-window: 10;
+  --z-window-focus: 20;
+  --z-dock: 30;
+  --z-topbar: 40;
+  --z-modal: 50;
+
+  /* ── Context menu */
+  --ctx-bg: rgba(12, 12, 22, 0.97);
+  --ctx-border: #2a2a3e;
+  --ctx-hover: rgba(122, 162, 247, 0.14);
+
+  /* ── Selection / marquee */
+  --selection-bg: rgba(122, 162, 247, 0.12);
+  --selection-border: rgba(122, 162, 247, 0.5);
+
+  /* ── Desktop icons */
+  --icon-selected: rgba(122, 162, 247, 0.2);
+
+  /* ── Typography */
+  --font-ui:
+    ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+  --font-pixel: 'PixelOperator', 'Courier New', monospace;
+  --font-mono:
+    ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas,
+    'DejaVu Sans Mono', monospace;
+
+  /* ── Motion */
+  --motion-duration: 200ms;
+  --motion-duration-slow: 400ms;
+  --motion-easing: cubic-bezier(0.4, 0, 0.2, 1);
+  --motion-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-duration: 0ms;
+    --motion-duration-slow: 0ms;
+  }
+}
+
+html[data-reduced-motion] {
+  --motion-duration: 0ms !important;
+  --motion-duration-slow: 0ms !important;
+}
