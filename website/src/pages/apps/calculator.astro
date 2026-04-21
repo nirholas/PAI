@@ -1,0 +1,63 @@
+---
+import AppStandalone from '../../layouts/AppStandalone.astro'
+import Head from '../../components/Head.astro'
+import '../../shell/tokens.css'
+import '../../apps/calculator/calculator.css'
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <Head
+      title="Calculator — PAI"
+      description="A calculator app for PAI — basic arithmetic with keyboard support."
+      ogImage="/og/calculator.png"
+    />
+    <link rel="icon" type="image/svg+xml" href="/icons/calculator.svg" />
+  </head>
+  <body>
+    <AppStandalone appId="calculator" />
+    <main class="calc-root" id="calc-root">
+      <div class="calc-display">
+        <div class="calc-prev" aria-live="polite"></div>
+        <div class="calc-current" aria-live="polite">0</div>
+      </div>
+      <div class="calc-keys" role="group" aria-label="Calculator keys">
+        <button class="calc-key fn" data-action="clear" aria-label="Clear">AC</button>
+        <button class="calc-key fn" data-action="sign" aria-label="Toggle sign">±</button>
+        <button class="calc-key fn" data-action="percent" aria-label="Percent">%</button>
+        <button class="calc-key op" data-action="append" data-value="/" aria-label="Divide">÷</button>
+
+        <button class="calc-key" data-action="append" data-value="7">7</button>
+        <button class="calc-key" data-action="append" data-value="8">8</button>
+        <button class="calc-key" data-action="append" data-value="9">9</button>
+        <button class="calc-key op" data-action="append" data-value="*" aria-label="Multiply">×</button>
+
+        <button class="calc-key" data-action="append" data-value="4">4</button>
+        <button class="calc-key" data-action="append" data-value="5">5</button>
+        <button class="calc-key" data-action="append" data-value="6">6</button>
+        <button class="calc-key op" data-action="append" data-value="-" aria-label="Subtract">−</button>
+
+        <button class="calc-key" data-action="append" data-value="1">1</button>
+        <button class="calc-key" data-action="append" data-value="2">2</button>
+        <button class="calc-key" data-action="append" data-value="3">3</button>
+        <button class="calc-key op" data-action="append" data-value="+" aria-label="Add">+</button>
+
+        <button class="calc-key fn" data-action="append" data-value="(">(</button>
+        <button class="calc-key fn" data-action="append" data-value=")">)</button>
+        <button class="calc-key fn" data-action="back" aria-label="Backspace">⌫</button>
+        <button class="calc-key op" data-action="append" data-value=".">.</button>
+
+        <button class="calc-key wide" data-action="append" data-value="0">0</button>
+        <button class="calc-key eq wide" data-action="equals" aria-label="Equals">=</button>
+      </div>
+    </main>
+
+    <script>
+      import { bridge } from '../../apps/_bridge.js'
+      import { mountCalculator } from '../../apps/calculator/calculator.ts'
+      bridge.ready()
+      mountCalculator(document.getElementById('calc-root')!)
+    </script>
+  </body>
+</html>
