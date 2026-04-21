@@ -1,0 +1,60 @@
+#!/bin/bash
+set -euo pipefail
+
+# ── Auto-Login + Live User Setup (Web Edition) ──────────────────────
+# Runs inside the chroot during ISO build.
+# Configures tty1 auto-login → cage/sway kiosk (no display manager).
+# ──────────────────────────────────────────────────────────────────────
+
+echo "[pai-web] Configuring auto-login for kiosk..."
+
+# ── 1. Ensure the 'user' account exists
+useradd -m -s /bin/bash -G sudo,video,render,audio user 2>/dev/null || true
+
+# Scoped NOPASSWD sudo — allow live-USB convenience (power, network, PAI
+# tooling, self-password-set) without granting passwordless root for
+# arbitrary commands. Unprivileged RCE or a malicious site no longer implies
+# instant root. Users who want full NOPASSWD: ALL can drop it in later.
+cat > /etc/sudoers.d/user <<'SUDOERS'
+Cmnd_Alias PAI_POWER = /usr/sbin/reboot, /usr/sbin/poweroff, /usr/sbin/halt, \
+    /usr/sbin/shutdown, /usr/bin/systemctl suspend, \
+    /usr/bin/systemctl hibernate, /usr/bin/systemctl poweroff, \
+    /usr/bin/systemctl reboot
+Cmnd_Alias PAI_NETWORK = /usr/sbin/ufw, /usr/bin/nmcli, /usr/bin/nmtui
+Cmnd_Alias PAI_TOOLS = /usr/local/bin/pai-memory-wipe, \
+    /usr/local/bin/pai-persistence
+Cmnd_Alias PAI_IDENTITY = /usr/bin/passwd user
+Cmnd_Alias PAI_STORAGE = /usr/bin/mount, /usr/bin/umount
+user ALL=(ALL) NOPASSWD: PAI_POWER, PAI_NETWORK, PAI_TOOLS, PAI_IDENTITY, PAI_STORAGE
+SUDOERS
+chmod 0440 /etc/sudoers.d/user
+passwd -d user
+
+# ── 2. Getty auto-login on tty1
+mkdir -p /etc/systemd/system/getty@tty1.service.d
+cat > /etc/systemd/system/getty@tty1.service.d/override.conf <<'EOF'
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin user --noclear %I $TERM
+EOF
+
+# ── 3. Auto-start kiosk from tty1
+cat > /etc/skel/.bash_profile <<'PROFILE'
+# Source .bashrc if it exists
+if [ -f "$HOME/.bashrc" ]; then
+    . "$HOME/.bashrc"
+fi
+
+# Auto-start kiosk on tty1
+if [ -z "$WAYLAND_DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
+    if command -v cage >/dev/null 2>&1; then
+        # Cage kiosk mode — single fullscreen app
+        exec cage -- /usr/local/bin/pai-kiosk
+    else
+        # Sway kiosk fallback
+        exec sway
+    fi
+fi
+PROFILE
+
+echo "[pai-web] Auto-login configured: tty1 → user → kiosk"
