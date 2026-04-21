@@ -1,0 +1,34 @@
+#!/bin/bash
+set -euo pipefail
+
+# ── First-boot model pull ─────────────────────────────────────────────
+# If no model is bundled in the ISO, pull a small one on first boot.
+# Runs as a oneshot service after Ollama is up.
+# ──────────────────────────────────────────────────────────────────────
+
+MAX_WAIT=30
+WAITED=0
+
+# Wait for Ollama to be ready
+while ! curl -sf http://localhost:11434/api/version &>/dev/null; do
+    if [[ $WAITED -ge $MAX_WAIT ]]; then
+        echo "[pai] Ollama not responding after ${MAX_WAIT}s, skipping model pull."
+        exit 0
+    fi
+    WAITED=$((WAITED + 2))
+    sleep 2
+done
+
+# Check if any model is already available
+MODELS=$(curl -sf http://localhost:11434/api/tags | python3 -c "import sys,json; print(len(json.load(sys.stdin).get('models',[])))" 2>/dev/null || echo "0")
+
+if [[ "$MODELS" -eq 0 ]]; then
+    echo "[pai] No models found. Pulling default model (phi3:mini)..."
+    curl -sf http://localhost:11434/api/pull -d '{"name":"phi3:mini"}' | while read -r line; do
+        STATUS=$(echo "$line" | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))" 2>/dev/null || true)
+        [[ -n "$STATUS" ]] && echo "[pai] $STATUS"
+    done
+    echo "[pai] Model ready."
+else
+    echo "[pai] Models already available ($MODELS found)."
+fi
