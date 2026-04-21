@@ -1,0 +1,60 @@
+---
+import AppStandalone from '../../layouts/AppStandalone.astro'
+import Head from '../../components/Head.astro'
+import '../../shell/tokens.css'
+import '../../apps/text/text.css'
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <Head
+      title="Text — PAI"
+      description="A simple text editor for PAI with open/save, line numbers, word wrap, and find/replace."
+      ogImage="/og/text.png"
+    />
+    <link rel="icon" type="image/svg+xml" href="/icons/text.svg" />
+  </head>
+  <body>
+    <AppStandalone appId="text" />
+    <main class="txt-root" id="txt-root">
+      <div class="txt-toolbar" role="toolbar" aria-label="Text editor toolbar">
+        <button class="txt-btn" data-action="new" title="New (Ctrl+N)">New</button>
+        <button class="txt-btn" data-action="open" title="Open (Ctrl+O)">Open</button>
+        <button class="txt-btn" data-action="save" title="Save (Ctrl+S)">Save</button>
+        <span class="txt-sep" aria-hidden="true"></span>
+        <button class="txt-btn toggle" data-action="wrap" aria-pressed="false" title="Word wrap">Wrap</button>
+        <button class="txt-btn toggle" data-action="lines" aria-pressed="false" title="Line numbers">Lines</button>
+        <button class="txt-btn" data-action="find" title="Find/Replace (Ctrl+F)">Find</button>
+        <span class="txt-spacer"></span>
+        <span class="txt-status" aria-live="polite"></span>
+      </div>
+      <div class="txt-body">
+        <pre class="txt-gutter" aria-hidden="true"></pre>
+        <textarea
+          class="txt-area wrap"
+          spellcheck="false"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          aria-label="Document"
+        ></textarea>
+        <div class="txt-findbar" role="region" aria-label="Find and replace">
+          <input class="txt-find-input" placeholder="Find" aria-label="Find" />
+          <input class="txt-replace-input" placeholder="Replace" aria-label="Replace" />
+          <button class="txt-btn" data-find="next">Next</button>
+          <button class="txt-btn" data-find="replace">Replace</button>
+          <button class="txt-btn" data-find="replace-all">All</button>
+          <button class="txt-btn" data-find="close" aria-label="Close">✕</button>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      import { bridge } from '../../apps/_bridge.js'
+      import { mountEditor } from '../../apps/text/text.ts'
+      bridge.ready()
+      mountEditor(document.getElementById('txt-root')!)
+    </script>
+  </body>
+</html>
