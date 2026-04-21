@@ -1,0 +1,36 @@
+FROM --platform=linux/arm64 debian:bookworm-slim
+
+# Force fresh apt state (avoids stale GPG signature errors in Docker layer cache)
+RUN rm -rf /var/lib/apt/lists/* && \
+    apt-get update && apt-get install -y --no-install-recommends \
+    live-build \
+    debootstrap \
+    debian-archive-keyring \
+    squashfs-tools \
+    xorriso \
+    grub-efi-arm64-bin \
+    mtools \
+    dosfstools \
+    ca-certificates \
+    curl \
+    python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /pai
+
+# Copy everything
+COPY . .
+
+RUN chmod +x build.sh config/hooks/live/*.hook.chroot \
+    config/includes.chroot_after_packages/usr/local/bin/pai-setup \
+    config/includes.chroot_after_packages/usr/local/bin/pai-mac-spoof \
+    config/includes.chroot_after_packages/usr/local/bin/pai-persistence \
+    config/includes.chroot_after_packages/usr/local/bin/pai-privacy \
+    config/includes.chroot_after_packages/usr/local/bin/pai-waybar-privacy \
+    config/includes.chroot_after_packages/usr/local/bin/pai-waybar-crypto \
+    config/includes.chroot_after_packages/usr/local/bin/pai-transcribe \
+    config/includes.chroot_after_packages/usr/local/bin/pai-ssh-setup \
+    scripts/flash-usb.sh scripts/flash.sh
+
+# Must run with: docker run --privileged
+CMD ["bash", "build.sh"]
