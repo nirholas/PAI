@@ -1,0 +1,61 @@
+#!/bin/bash
+# PAI Settings — accessibility toggles.
+set -euo pipefail
+
+STYLE=/etc/pai/wofi-shutdown.css
+WOFI=(wofi --dmenu --cache-file=/dev/null)
+[ -r "$STYLE" ] && WOFI+=(--style "$STYLE")
+
+GTK_INI="$HOME/.config/gtk-3.0/settings.ini"
+SWAY_CFG="$HOME/.config/sway/config.d/40-accessibility.conf"
+mkdir -p "$(dirname "$GTK_INI")" "$(dirname "$SWAY_CFG")"
+
+choice=$(printf '%s\n' \
+    "🔍  Cursor size" \
+    "🌓  High contrast theme" \
+    "🔎  Toggle magnifier (wl-present)" \
+    "⌨️  Sticky keys (hint)" \
+    | "${WOFI[@]}" --prompt "Accessibility" --lines 4 --width 340 --height 240 2>/dev/null)
+
+write_gtk_key() {
+    local key="$1" value="$2"
+    if [ ! -f "$GTK_INI" ]; then
+        printf '[Settings]\n' > "$GTK_INI"
+    fi
+    if grep -q "^$key=" "$GTK_INI" 2>/dev/null; then
+        sed -i "s|^$key=.*|$key=$value|" "$GTK_INI"
+    else
+        printf '%s=%s\n' "$key" "$value" >> "$GTK_INI"
+    fi
+}
+
+case "$choice" in
+    *Cursor\ size*)
+        size=$(printf '24\n32\n48\n64\n96\n' | "${WOFI[@]}" --prompt "Cursor size" --lines 5 --width 260 --height 240)
+        [ -n "$size" ] && {
+            write_gtk_key gtk-cursor-theme-size "$size"
+            echo "seat seat0 xcursor_theme Adwaita $size" > "$SWAY_CFG"
+            if command -v swaymsg >/dev/null 2>&1; then
+                swaymsg reload >/dev/null 2>&1 || true
+            fi
+        }
+        ;;
+    *High\ contrast*)
+        mode=$(printf 'Enable\nDisable\n' | "${WOFI[@]}" --prompt "High contrast" --lines 2 --width 260 --height 140)
+        case "$mode" in
+            Enable)  write_gtk_key gtk-theme-name HighContrast; write_gtk_key gtk-application-prefer-dark-theme false ;;
+            Disable) write_gtk_key gtk-theme-name Adwaita-dark; write_gtk_key gtk-application-prefer-dark-theme true ;;
+        esac
+        ;;
+    *magnifier*)
+        if command -v wl-present >/dev/null 2>&1; then
+            wl-present --mode zoom &
+        else
+            zenity --info --title="Magnifier" --text="wl-present is not installed.\nInstall 'wl-mirror' for zoom support." 2>/dev/null &
+        fi
+        ;;
+    *Sticky*)
+        zenity --info --title="Sticky keys" \
+            --text="Sway does not provide sticky keys natively.\nUse: <tt>swaymsg bindsym --no-repeat ...</tt> for sticky modifiers,\nor see the docs for the 'xkb_options' grp:sticky option." 2>/dev/null &
+        ;;
+esac
