@@ -1,0 +1,131 @@
+#!/bin/bash
+# pai-persistence — PAI encrypted persistence partition manager
+#
+# Subcommands:
+#   setup   — interactive wizard to create the encrypted persistence partition
+#             (delegates to pai-persistence-setup, which owns the destructive
+#             steps, safety checks, and typed-path confirmation)
+#   unlock  — verify live-boot mounted the persistence overlays; write the
+#             /run/pai-persistence-active state marker read by waybar, the
+#             MOTD, and pai-save.  Invoked at boot by pai-persistence.service.
+#   status  — human-readable persistence state
+#   prompt  — first-boot dialog offering to set up persistence
+#
+# live-boot handles the actual LUKS unlock in the initramfs when the kernel
+# cmdline contains `persistence persistence-encryption=luks`.  This script
+# dispatches the setup wizard and reports whether persistence is active;
+# it does not itself open or close the LUKS device at runtime.
+
+set -euo pipefail
+
+PERSIST_LABEL="persistence"
+STATE_ACTIVE="/run/pai-persistence-active"
+
+# True when a graphical session is available
+gui() { [[ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]]; }
+
+die() {
+    echo "ERROR: $*" >&2
+    gui && zenity --error --title="PAI Persistence" --text="$*" --width=420 2>/dev/null || true
+    exit 1
+}
+
+# ── setup ─────────────────────────────────────────────────────────────────────
+cmd_setup() {
+    command -v pai-persistence-setup >/dev/null 2>&1 \
+        || die "pai-persistence-setup is not installed — reinstall from the PAI ISO or reflash."
+    exec pai-persistence-setup "$@"
+}
+
+# ── unlock ────────────────────────────────────────────────────────────────────
+# live-boot performs the actual LUKS unlock in the initramfs.  This command
+# checks that the expected overlay mounts are present and writes the state
+# marker used by waybar, the MOTD, and pai-save.
+cmd_unlock() {
+    if findmnt /var/lib/ollama &>/dev/null \
+    || findmnt /etc/NetworkManager/system-connections &>/dev/null \
+    || findmnt /var/lib/open-webui &>/dev/null; then
+        : > "$STATE_ACTIVE"
+        echo "Persistence: active"
+    else
+        echo "Persistence: not mounted (ephemeral session)"
+        exit 1
+    fi
+}
+
+# ── status ────────────────────────────────────────────────────────────────────
+cmd_status() {
+    if [[ -f "$STATE_ACTIVE" ]]; then
+        echo "Persistence: ACTIVE"
+        for mnt in /var/lib/ollama /var/lib/open-webui \
+                   /etc/NetworkManager/system-connections /home/pai; do
+            findmnt "$mnt" &>/dev/null && echo "  ${mnt}: persisted" || true
+        done
+    else
+        echo "Persistence: OFF (session is ephemeral)"
+        if lsblk -lno LABEL 2>/dev/null | grep -qx "$PERSIST_LABEL"; then
+            echo "  Note: a persistence partition exists but was not mounted at boot."
+            echo "  Ensure the kernel cmdline includes: persistence persistence-encryption=luks"
+        fi
+    fi
+}
+
+# ── prompt ────────────────────────────────────────────────────────────────────
+# Called from pai-welcome on first GUI login.  Shows the setup offer once per
+# session unless a persistence partition already exists or the user declined.
+cmd_prompt() {
+    # Already active — nothing to do
+    [[ -f "$STATE_ACTIVE" ]] && return 0
+
+    # Partition already exists (prior setup, not yet unlocked this boot)
+    lsblk -lno LABEL 2>/dev/null | grep -qx "$PERSIST_LABEL" && return 0
+
+    # Already declined this session
+    [[ -f /tmp/.pai-persistence-declined ]] && return 0
+
+    local choice
+    choice=$(
+        zenity --list \
+            --title="PAI — Enable Persistence?" \
+            --text="<big><b>Would you like to enable persistence?</b></big>\n\nBy default PAI forgets everything on reboot.\nPersistence saves AI models, WiFi passwords, and chat\nhistory to an encrypted partition on your USB drive.\n" \
+            --radiolist \
+            --column="" --column="Option" --column="What happens" \
+            TRUE  "Yes — set up now"     "Launch setup wizard (takes ~2 minutes)" \
+            FALSE "Later"                "Ask again next boot" \
+            FALSE "No — stay ephemeral"  "Keep this session temporary" \
+            --width=560 --height=360 \
+            2>/dev/null
+    ) || { touch /tmp/.pai-persistence-declined; return 0; }
+
+    case "$choice" in
+        "Yes — set up now")
+            exec "$0" setup
+            ;;
+        *)
+            touch /tmp/.pai-persistence-declined
+            ;;
+    esac
+}
+
+# ── dispatch ───────────────────────────────────────────────────────────────────
+case "${1:-help}" in
+    setup)   shift; cmd_setup   "$@" ;;
+    unlock)  shift; cmd_unlock  "$@" ;;
+    status)  shift; cmd_status  "$@" ;;
+    prompt)  shift; cmd_prompt  "$@" ;;
+    -h|--help|help|*)
+        cat <<'EOF'
+pai-persistence — PAI encrypted persistence manager
+
+Usage:
+  pai-persistence setup    interactive wizard: create encrypted persistence partition
+  pai-persistence unlock   verify persistence mounts are active (boot-time)
+  pai-persistence status   show persistence state
+  pai-persistence prompt   first-boot dialog: offer to set up persistence
+
+To end a persisted session, reboot (pai-shutdown).  live-boot holds the
+persistence bind-mounts through live services; there is no safe in-session
+"lock" — rebooting returns to a clean ephemeral state by design.
+EOF
+        ;;
+esac
