@@ -1,0 +1,7 @@
+#!/bin/bash
+# ── Refresh the font cache so Wave 3 creative fonts are indexed ────────
+set -euo pipefail
+
+echo "[pai] Refreshing font cache..."
+fc-cache -fr 2>/dev/null || true
+echo "[pai] Font cache refreshed."
