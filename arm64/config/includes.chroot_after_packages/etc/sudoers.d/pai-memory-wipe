@@ -1,0 +1,2 @@
+# Allow PAI live user to wipe memory without a password prompt
+user ALL=(root) NOPASSWD: /usr/local/bin/pai-memory-wipe
