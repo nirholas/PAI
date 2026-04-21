@@ -1,0 +1,16 @@
+[Unit]
+Description=ComfyUI (local Stable Diffusion)
+After=default.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/comfyui
+ExecStart=/opt/comfyui/venv/bin/python /opt/comfyui/main.py --listen 127.0.0.1 --port 8188
+Restart=on-failure
+RestartSec=5
+# Lazy — enable via `systemctl --user enable comfyui.service` only if
+# the user wants it always on. Default is off; `pai-comfyui` launches
+# on demand instead.
+
+[Install]
+WantedBy=default.target
