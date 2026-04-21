@@ -1,0 +1,42 @@
+#!/bin/bash
+# ── Install monerod (opt-in full node) ─────────────────────────────────
+# Downloads the official Monero CLI tarball. NOT enabled on boot. Users
+# opt in via Settings → Privacy & Security → Monero full node.
+set -euo pipefail
+
+MONERO_VERSION="v0.18.3.4"
+ARCH=$(dpkg --print-architecture)
+case "$ARCH" in
+    amd64)
+        MTAR="monero-linux-x64-${MONERO_VERSION}.tar.bz2"
+        MONERO_SHA256="51ba03928d189c1c11b5379cab17dd9ae8d2230056dc05c872d0f8dba4a87f1d"
+        ;;
+    arm64)
+        MTAR="monero-linux-armv8-${MONERO_VERSION}.tar.bz2"
+        MONERO_SHA256="33ca2f0055529d225b61314c56370e35606b40edad61c91c859f873ed67a1ea7"
+        ;;
+    *) echo "[pai] monerod: unsupported arch $ARCH"; exit 0 ;;
+esac
+
+echo "[pai] Installing monerod ${MONERO_VERSION}..."
+
+install -d -m 0755 /opt/monero
+curl -fsSL -o /tmp/monero.tbz \
+    "https://downloads.getmonero.org/cli/${MTAR}" \
+    || { echo "[pai] Monero download failed — skipping."; exit 0; }
+
+echo "${MONERO_SHA256}  /tmp/monero.tbz" | sha256sum -c - || {
+    echo "[pai] WARNING: Monero SHA256 mismatch — aborting install."
+    rm -f /tmp/monero.tbz
+    exit 0
+}
+
+tar --strip-components=1 -xjf /tmp/monero.tbz -C /opt/monero \
+    || { echo "[pai] Monero unpack failed — skipping."; rm -f /tmp/monero.tbz; exit 0; }
+rm -f /tmp/monero.tbz
+
+for b in monerod monero-wallet-cli monero-wallet-rpc monero-blockchain-import; do
+    [ -x "/opt/monero/$b" ] && ln -sf "/opt/monero/$b" "/usr/local/bin/$b"
+done
+
+echo "[pai] monerod installed (not enabled)."
