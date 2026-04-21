@@ -1,0 +1,95 @@
+#!/usr/bin/env python3
+"""Waybar custom module — aggregated AI stack status.
+
+Emits a single-line JSON with:
+    Ollama: presence + running model
+    ComfyUI: up/down
+    GPU: VRAM used/total if nvidia-smi or rocm-smi present
+"""
+from __future__ import annotations
+import json
+import shutil
+import subprocess
+import urllib.request
+
+
+def http_get(url: str, timeout: float = 1.5) -> dict | None:
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as r:
+            return json.loads(r.read().decode() or "null")
+    except Exception:
+        return None
+
+
+def ollama_status() -> tuple[str, str]:
+    if http_get("http://localhost:11434/api/version") is None:
+        return "down", ""
+    ps = http_get("http://localhost:11434/api/ps")
+    if ps and ps.get("models"):
+        return "active", ps["models"][0].get("name", "")
+    return "idle", ""
+
+
+def comfyui_up() -> bool:
+    return http_get("http://127.0.0.1:8188/system_stats") is not None
+
+
+def gpu_vram() -> str:
+    if shutil.which("nvidia-smi"):
+        try:
+            out = subprocess.check_output([
+                "nvidia-smi", "--query-gpu=memory.used,memory.total",
+                "--format=csv,noheader,nounits",
+            ], text=True, timeout=1).strip().splitlines()[0]
+            used, total = (int(x.strip()) for x in out.split(","))
+            return f"{used//1024}/{total//1024}G"
+        except Exception:
+            return ""
+    if shutil.which("rocm-smi"):
+        try:
+            out = subprocess.check_output(
+                ["rocm-smi", "--showmeminfo", "vram", "--json"],
+                text=True, timeout=1,
+            )
+            obj = json.loads(out)
+            for v in obj.values():
+                used = int(v.get("VRAM Total Used Memory (B)", 0))
+                total = int(v.get("VRAM Total Memory (B)", 0))
+                if total:
+                    return f"{used//2**30}/{total//2**30}G"
+        except Exception:
+            return ""
+    return ""
+
+
+def main() -> None:
+    oll, model = ollama_status()
+    comfy = comfyui_up()
+    vram = gpu_vram()
+
+    parts: list[str] = []
+    if oll == "active":
+        parts.append(f"🟢 {model or 'ollama'}")
+        cls = "active"
+    elif oll == "idle":
+        parts.append("🟡 ollama")
+        cls = "idle"
+    else:
+        parts.append("⚫ ollama")
+        cls = "down"
+
+    if comfy:
+        parts.append("🎨")
+    if vram:
+        parts.append(f"GPU {vram}")
+
+    tooltip = (
+        f"Ollama:  {oll}" + (f" ({model})" if model else "") + "\n"
+        f"ComfyUI: {'up' if comfy else 'down'}\n"
+        f"GPU:     {vram or 'none'}"
+    )
+    print(json.dumps({"text": " · ".join(parts), "tooltip": tooltip, "class": cls}))
+
+
+if __name__ == "__main__":
+    main()
