@@ -1,0 +1,64 @@
+name: Update PAI formula
+on:
+  repository_dispatch:
+    types: [pai-release]
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update formula
+        run: |
+          VERSION="${{ github.event.client_payload.version }}"
+          URL="${{ github.event.client_payload.url }}"
+          SHA="${{ github.event.client_payload.sha256 }}"
+
+          sed -i "s|url \".*\"|url \"${URL}\"|" Formula/pai.rb
+          sed -i "s|sha256 \".*\"|sha256 \"${SHA}\"|" Formula/pai.rb
+          sed -i "s|version \".*\"|version \"${VERSION}\"|" Formula/pai.rb
+
+          # Verify all three replacements landed
+          grep -q "url \"${URL}\"" Formula/pai.rb     || { echo "url replacement failed"; exit 1; }
+          grep -q "sha256 \"${SHA}\"" Formula/pai.rb  || { echo "sha256 replacement failed"; exit 1; }
+          grep -q "version \"${VERSION}\"" Formula/pai.rb || { echo "version replacement failed"; exit 1; }
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Update pai to v${{ github.event.client_payload.version }}"
+          title: "Update pai to v${{ github.event.client_payload.version }}"
+          body: |
+            Automated formula bump triggered by a new PAI release.
+
+            - Version: `${{ github.event.client_payload.version }}`
+            - Source: `${{ github.event.client_payload.url }}`
+            - SHA256: `${{ github.event.client_payload.sha256 }}`
+          branch: "update-pai-${{ github.event.client_payload.version }}"
+          delete-branch: true
+
+  test:
+    needs: update
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: "update-pai-${{ github.event.client_payload.version }}"
+
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Audit formula
+        run: brew audit --strict Formula/pai.rb
+
+      - name: Install formula
+        run: |
+          brew install --build-from-source Formula/pai.rb
+
+      - name: Test formula
+        run: brew test pai
