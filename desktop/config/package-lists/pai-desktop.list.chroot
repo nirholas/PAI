@@ -1,0 +1,19 @@
+# ── PAI Desktop Edition — Additional Packages ──
+
+# Kernel
+linux-image-amd64
+
+# Wayland desktop
+sway
+waybar
+swaybg
+swaylock
+swayidle
+wlr-randr
+xwayland
+dbus-x11
+
+# Desktop apps
+file-roller
+audacious
+audacious-plugins
