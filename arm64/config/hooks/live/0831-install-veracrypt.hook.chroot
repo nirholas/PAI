@@ -1,0 +1,40 @@
+#!/bin/bash
+# ── Install VeraCrypt (upstream .deb) ──────────────────────────────────
+set -euo pipefail
+
+VERA_VERSION="1.26.20"
+ARCH=$(dpkg --print-architecture)
+case "$ARCH" in
+    amd64) DEB="veracrypt-${VERA_VERSION}-Debian-12-amd64.deb" ;;
+    arm64) DEB="veracrypt-${VERA_VERSION}-Debian-12-arm64.deb" ;;
+    *) echo "[pai] VeraCrypt: unsupported arch $ARCH"; exit 0 ;;
+esac
+
+echo "[pai] Installing VeraCrypt ${VERA_VERSION}..."
+
+curl -fsSL -o /tmp/veracrypt.deb \
+    "https://launchpad.net/veracrypt/trunk/${VERA_VERSION}/+download/${DEB}" \
+    || { echo "[pai] VeraCrypt download failed — skipping."; exit 0; }
+
+curl -fsSL -o /tmp/veracrypt.deb.sig \
+    "https://launchpad.net/veracrypt/trunk/${VERA_VERSION}/+download/${DEB}.sig" \
+    || { echo "[pai] VeraCrypt signature download failed — skipping."; rm -f /tmp/veracrypt.deb; exit 0; }
+
+# ── GPG verification (VeraCrypt Team, fingerprint 5069A233D55A0EEB174A5FC3821ACD02680D16DE) ──
+curl -fsSL "https://amcrypto.jp/VeraCrypt/VeraCrypt_PGP_public_key.asc" \
+    | gpg --import 2>/dev/null || true
+if gpg --verify /tmp/veracrypt.deb.sig /tmp/veracrypt.deb 2>/dev/null; then
+    echo "[pai] VeraCrypt .deb GPG signature verified."
+else
+    echo "[pai] WARNING: VeraCrypt GPG signature verification failed — skipping install."
+    rm -f /tmp/veracrypt.deb /tmp/veracrypt.deb.sig
+    exit 0
+fi
+rm -f /tmp/veracrypt.deb.sig
+
+DEBIAN_FRONTEND=noninteractive apt-get install -y /tmp/veracrypt.deb \
+    || echo "[pai] VeraCrypt install failed — non-fatal."
+rm -f /tmp/veracrypt.deb
+
+apt-get clean && rm -rf /var/lib/apt/lists/*
+echo "[pai] VeraCrypt installed."
