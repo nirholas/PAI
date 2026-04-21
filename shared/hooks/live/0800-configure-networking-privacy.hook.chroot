@@ -1,0 +1,76 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "[pai] Configuring networking & privacy tools..."
+
+# ── Tor Browser Launcher config ──────────────────────────────────
+# torbrowser-launcher downloads the real Tor Browser on first run
+# Pre-create the config directory so it doesn't prompt
+mkdir -p /etc/skel/.config/torbrowser
+mkdir -p /etc/skel/.local/share/torbrowser
+
+# Create a desktop entry override for sway app launcher
+mkdir -p /etc/skel/.local/share/applications
+cat > /etc/skel/.local/share/applications/torbrowser.desktop <<'EOF'
+[Desktop Entry]
+Name=Tor Browser
+Comment=Browse the web anonymously
+Exec=torbrowser-launcher
+Icon=torbrowser
+Terminal=false
+Type=Application
+Categories=Network;WebBrowser;Security;
+Keywords=tor;anonymous;privacy;onion;
+EOF
+
+echo "[pai] Tor Browser launcher configured."
+
+# ── OnionShare config ────────────────────────────────────────────
+mkdir -p /etc/skel/.config/onionshare
+
+echo "[pai] OnionShare ready."
+
+
+
+# ── Firefox extensions via policies (NoScript + uBlock Origin) ───
+mkdir -p /usr/lib/firefox-esr/distribution
+
+cat > /usr/lib/firefox-esr/distribution/policies.json <<'POLICIES'
+{
+  "policies": {
+    "DisableTelemetry": true,
+    "DisableFirefoxStudies": true,
+    "DisablePocket": true,
+    "DontCheckDefaultBrowser": true,
+    "NoDefaultBookmarks": false,
+    "OverrideFirstRunPage": "",
+    "OverridePostUpdatePage": "",
+    "Homepage": {
+      "URL": "http://localhost:8080",
+      "Locked": false,
+      "StartPage": "homepage"
+    },
+    "ExtensionSettings": {
+      "uBlock0@raymondhill.net": {
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi",
+        "installation_mode": "force_installed"
+      },
+      "{73a6fe31-595d-460b-a920-fcc0f8843232}": {
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/noscript/latest.xpi",
+        "installation_mode": "force_installed"
+      }
+    },
+    "Bookmarks": [
+      {
+        "Title": "PAI Chat",
+        "URL": "http://localhost:8080",
+        "Placement": "toolbar",
+        "Folder": "PAI"
+      }
+    ]
+  }
+}
+POLICIES
+
+echo "[pai] Firefox NoScript + uBlock Origin extensions configured."
+echo "[pai] Networking & privacy tools ready."
