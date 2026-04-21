@@ -1,0 +1,64 @@
+#!/bin/bash
+set -euo pipefail
+
+# ── Auto-Login + Live User Setup ──────────────────────────────────────
+# Runs inside the chroot during ISO build.
+# Configures tty1 auto-login → sway (no display manager).
+# ──────────────────────────────────────────────────────────────────────
+
+echo "[pai] Configuring auto-login..."
+
+# ── 1. Ensure the 'user' account exists (live-build creates it, but be safe)
+useradd -m -s /bin/bash -G sudo,video,render,audio user 2>/dev/null || true
+
+# Scoped NOPASSWD sudo — allow live-USB convenience (power, network, PAI
+# tooling, self-password-set) without granting passwordless root for
+# arbitrary commands. Unprivileged RCE or a malicious site no longer implies
+# instant root. Users who want full NOPASSWD: ALL can drop it in later.
+cat > /etc/sudoers.d/user <<'SUDOERS'
+Cmnd_Alias PAI_POWER = /usr/sbin/reboot, /usr/sbin/poweroff, /usr/sbin/halt, \
+    /usr/sbin/shutdown, /usr/bin/systemctl suspend, \
+    /usr/bin/systemctl hibernate, /usr/bin/systemctl poweroff, \
+    /usr/bin/systemctl reboot
+Cmnd_Alias PAI_NETWORK = /usr/sbin/ufw, /usr/bin/nmcli, /usr/bin/nmtui
+Cmnd_Alias PAI_TOOLS = /usr/local/bin/pai-memory-wipe, \
+    /usr/local/bin/pai-persistence
+Cmnd_Alias PAI_IDENTITY = /usr/bin/passwd user
+Cmnd_Alias PAI_STORAGE = /usr/bin/mount, /usr/bin/umount
+user ALL=(ALL) NOPASSWD: PAI_POWER, PAI_NETWORK, PAI_TOOLS, PAI_IDENTITY, PAI_STORAGE
+SUDOERS
+chmod 0440 /etc/sudoers.d/user
+passwd -d user
+
+# ── 2. Create sway Wayland session entry
+mkdir -p /usr/share/wayland-sessions
+cat > /usr/share/wayland-sessions/sway.desktop <<'EOF'
+[Desktop Entry]
+Name=Sway
+Comment=An i3-compatible Wayland compositor
+Exec=sway
+Type=Application
+EOF
+
+# ── 3. Getty auto-login on tty1 (no greeter)
+mkdir -p /etc/systemd/system/getty@tty1.service.d
+cat > /etc/systemd/system/getty@tty1.service.d/override.conf <<'EOF'
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin user --noclear %I $TERM
+EOF
+
+# ── 4. Auto-start sway from tty1
+cat > /etc/skel/.bash_profile <<'EOF'
+# Source .bashrc if it exists
+if [ -f "$HOME/.bashrc" ]; then
+    . "$HOME/.bashrc"
+fi
+
+# Auto-start sway on tty1 (no display manager)
+if [ -z "$WAYLAND_DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
+    exec sway
+fi
+EOF
+
+echo "[pai] Auto-login configured: tty1 → user → sway"
