@@ -1,0 +1,63 @@
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: no-referrer
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), usb=(self)
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  Content-Security-Policy: default-src 'self'; img-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; frame-src 'self' https://docs.pai.direct; connect-src 'self' https://api.github.com; form-action 'self'; frame-ancestors 'self'; base-uri 'self'
+
+/flash.ps1
+  Content-Type: text/plain; charset=utf-8
+  Content-Disposition: inline
+  X-Content-Type-Options: nosniff
+  Cache-Control: public, max-age=300
+
+/flash.sh
+  Content-Type: text/plain; charset=utf-8
+  Content-Disposition: inline
+  X-Content-Type-Options: nosniff
+  Cache-Control: public, max-age=300
+
+/flash.ps1.sha256
+  Content-Type: text/plain; charset=utf-8
+  X-Content-Type-Options: nosniff
+  Cache-Control: public, max-age=300
+
+/flash.sh.sha256
+  Content-Type: text/plain; charset=utf-8
+  X-Content-Type-Options: nosniff
+  Cache-Control: public, max-age=300
+
+/try.sh
+  Content-Type: text/plain; charset=utf-8
+  Content-Disposition: inline
+  X-Content-Type-Options: nosniff
+  Cache-Control: public, max-age=300
+
+/try.ps1
+  Content-Type: text/plain; charset=utf-8
+  Content-Disposition: inline
+  X-Content-Type-Options: nosniff
+  Cache-Control: public, max-age=300
+
+/try.sh.sha256
+  Content-Type: text/plain; charset=utf-8
+  X-Content-Type-Options: nosniff
+  Cache-Control: public, max-age=300
+
+/try.ps1.sha256
+  Content-Type: text/plain; charset=utf-8
+  X-Content-Type-Options: nosniff
+  Cache-Control: public, max-age=300
+
+/imager.json
+  Content-Type: application/json; charset=utf-8
+  X-Content-Type-Options: nosniff
+  Cache-Control: public, max-age=300, must-revalidate
+  Access-Control-Allow-Origin: *
+
+/imager/pai-icon.png
+  Content-Type: image/png
+  X-Content-Type-Options: nosniff
+  Cache-Control: public, max-age=300, must-revalidate
+  Access-Control-Allow-Origin: *
