@@ -1,0 +1,307 @@
+---
+import ContentApp from '../../layouts/ContentApp.astro'
+
+const sections = [
+  { id: 'leave-no-trace', label: 'Leave no trace on the computer' },
+  { id: 'amnesia', label: 'Amnesia' },
+  { id: 'persistence', label: 'Encrypted persistence' },
+  { id: 'private-ai', label: 'Private AI, offline' },
+  { id: 'hardened-network', label: 'Hardened networking' },
+  { id: 'digital-toolbox', label: 'Digital toolbox' },
+  { id: 'free-software', label: 'Software for freedom' },
+  { id: 'top-security-free', label: 'Top security for free' },
+]
+---
+
+<ContentApp
+  title="How PAI works"
+  description="How PAI works: amnesic live USB, offline AI, hardened networking, and free software — explained."
+>
+  <nav slot="sidebar">
+    <p class="sb-brand">How PAI works</p>
+    {sections.map((s) => <a href={`#${s.id}`} class="sb-link">{s.label}</a>)}
+    <hr class="sb-divider" />
+    <a href="/apps/about" class="sb-link" style="font-size:0.8125rem">About PAI →</a>
+    <a href="/apps/security" class="sb-link" style="font-size:0.8125rem">Security model →</a>
+    <a href="/apps/flash" class="sb-link" style="font-size:0.8125rem">Download PAI →</a>
+  </nav>
+
+  <h1>How PAI works</h1>
+  <p class="lede">
+    PAI is a bootable USB operating system that turns any x86-64 computer into a private AI
+    workstation — offline, amnesic, and leaving nothing behind.
+  </p>
+
+  <!-- ──────────────────────────────────────────── Pillar 1 -->
+  <h2 class="pillar">Leave no trace on the computer</h2>
+
+  <section id="leave-no-trace">
+    <h3>Your private AI workstation, anywhere</h3>
+    <p>
+      To use PAI, shut down the computer and start it from your PAI USB stick instead of booting
+      Windows, macOS, or Linux. You can temporarily turn any computer into a private AI machine, or
+      safely use a computer that isn't yours.
+    </p>
+    <p>
+      PAI is a ~2 GB download and takes a few minutes to flash. It boots on most x86-64 machines
+      made in the last ten years and runs entirely in RAM. You can start again on the host operating
+      system after shutting PAI down.
+    </p>
+    <p>
+      You don't have to worry about the host having viruses, because PAI runs independently from
+      the installed operating system and never uses the internal hard disk. PAI cannot, however,
+      protect you if you install it from a compromised computer, or if the hardware itself is
+      malicious (for example a hardware keylogger).
+    </p>
+    <ul class="see-also">
+      <li><a href="/apps/security">Warnings: PAI is safe but not magic</a></li>
+      <li><a href="/apps/flash">Download and flash PAI</a></li>
+      <li><a href="/apps/hardware">System requirements and recommended hardware</a></li>
+    </ul>
+  </section>
+
+  <section id="amnesia">
+    <h3>Amnesia</h3>
+    <p>
+      PAI always starts from the same clean state, and <strong>everything you do disappears
+      automatically when you shut down PAI</strong>.
+    </p>
+    <p>Without PAI, almost everything you do on a computer leaves traces:</p>
+    <ul>
+      <li>Chat prompts and AI responses, saved in cloud history</li>
+      <li>Files you opened or created, even after you deleted them</li>
+      <li>Passwords, even if you use a password manager</li>
+      <li>Every device and Wi-Fi network you connected to</li>
+    </ul>
+    <p>
+      PAI never writes anything to the host hard disk and only runs from the memory of the computer.
+      Memory is fully cleared when you shut down, erasing all possible traces — including AI
+      conversations, which exist only in RAM while PAI is running.
+    </p>
+  </section>
+
+  <section id="persistence">
+    <h3>Encrypted persistence (opt-in)</h3>
+    <p>
+      You can choose to save some of your files and configuration to an encrypted partition on the
+      USB stick: your AI model weights, chat history, SSH keys, Wi-Fi passwords, wallets, and
+      additional software. The persistent partition is optional, LUKS2-encrypted, and you always
+      decide what is persistent — everything else stays amnesic.
+    </p>
+    <ul class="see-also">
+      <li><a href="/apps/docs">Set up encrypted persistence</a></li>
+      <li><a href="/apps/docs">Install additional software</a></li>
+    </ul>
+  </section>
+
+  <!-- ──────────────────────────────────────────── Pillar 2 -->
+  <h2 class="pillar">Private AI, offline</h2>
+
+  <section id="private-ai">
+    <h3>Local models, no cloud</h3>
+    <p>
+      Every major AI service — ChatGPT, Claude, Gemini — sends your prompts to remote servers where
+      you have no control over who reads them, how long they are stored, or who they are shared
+      with.
+    </p>
+    <p>
+      PAI eliminates that trust chain. All inference happens locally via
+      <a href="https://ollama.com" target="_blank" rel="noopener noreferrer">Ollama</a>, which runs
+      Llama, Mistral, Phi, Gemma, and 100+ other open-weight models entirely on your hardware. No
+      API keys, no accounts, no prompts leaving the machine.
+    </p>
+    <p>
+      The built-in Chat app talks to Ollama over localhost only. The firewall blocks every inbound
+      connection, and Ollama is not reachable from the network. When you shut PAI down, the model
+      is unloaded from RAM along with every conversation you had with it.
+    </p>
+    <ul class="see-also">
+      <li><a href="/apps/chat">Try the Chat app</a></li>
+      <li><a href="/apps/docs">Download and run models with Ollama</a></li>
+    </ul>
+  </section>
+
+  <!-- ──────────────────────────────────────────── Pillar 3 -->
+  <h2 class="pillar">Leave no trace on the network</h2>
+
+  <section id="hardened-network">
+    <h3>Hardened by default</h3>
+    <p>
+      PAI ships with a restrictive default posture. Your network identity and outbound traffic are
+      protected by several layers you don't have to configure:
+    </p>
+    <ul>
+      <li>
+        <strong>MAC address randomized on every boot</strong> — the host machine presents a fresh
+        hardware identity each session, so Wi-Fi operators can't link you across visits.
+      </li>
+      <li>
+        <strong>UFW firewall, default-deny inbound</strong> — nothing on the local network can reach
+        services running on PAI, including Ollama and the PAI UI.
+      </li>
+      <li>
+        <strong>No telemetry, no analytics, no auto-updates phoning home</strong> — PAI does not
+        make a single network call unless you initiate it.
+      </li>
+    </ul>
+    <h3>Tor for everything (opt-in)</h3>
+    <p>
+      Run <code>sudo pai-privacy on</code> and all outbound traffic — including DNS — is routed
+      through the Tor network. This hides your IP from whatever server you're talking to, and hides
+      what you're doing on the network from your ISP or local observer.
+    </p>
+    <p>
+      Unlike Tails, PAI does not force Tor by default. PAI's focus is <em>private AI</em>, and most
+      AI inference never needs the network at all. Tor is one command away when you do need it.
+    </p>
+  </section>
+
+  <!-- ──────────────────────────────────────────── Pillar 4 -->
+  <h2 class="pillar">A full workstation</h2>
+
+  <section id="digital-toolbox">
+    <h3>Digital toolbox</h3>
+    <p>
+      PAI includes a curated selection of applications to work on sensitive material and communicate
+      securely — ready to use and configured with safe defaults:
+    </p>
+    <ul>
+      <li><strong>Chat</strong> — local LLM chat UI, talks to Ollama over localhost only</li>
+      <li><strong>Ollama</strong> — run and manage 100+ open-weight models offline</li>
+      <li><strong>Firefox ESR</strong> — with uBlock Origin and hardened defaults</li>
+      <li><strong>Terminal (foot)</strong> — zsh, tmux, and common dev tools pre-installed</li>
+      <li><strong>Electrum & Monero wallets</strong> — pre-configured with sane privacy defaults</li>
+      <li><strong>Sway + Waybar</strong> — a keyboard-first Wayland tiling desktop</li>
+    </ul>
+    <p>
+      Applications that try to reach the internet without going through Tor are blocked when
+      Tor-only mode is on. The firewall enforces the policy; individual apps cannot opt out.
+    </p>
+  </section>
+
+  <!-- ──────────────────────────────────────────── Pillar 5 -->
+  <h2 class="pillar">Software for freedom</h2>
+
+  <section id="free-software">
+    <h3>Transparency to build trust</h3>
+    <p>
+      All the source code, build scripts, and configuration for PAI is public, so independent
+      researchers can verify that PAI really works the way we say it does. PAI is built on Debian
+      12, which itself is scrutinized by a global community of maintainers.
+    </p>
+    <p>
+      PAI is released under the <strong>GNU General Public License v3.0</strong>. You can audit the
+      code, modify it, redistribute it, or fork the whole project.
+    </p>
+    <ul class="see-also">
+      <li>
+        <a href="https://github.com/nirholas/pai" target="_blank" rel="noopener noreferrer">
+          Source code on GitHub ↗
+        </a>
+      </li>
+      <li><a href="/apps/verify">Verify your ISO against signed checksums</a></li>
+      <li><a href="/apps/security">Full security model and threat model</a></li>
+    </ul>
+  </section>
+
+  <section id="top-security-free">
+    <h3>Top security for free</h3>
+    <p>
+      Nobody should have to pay to use AI privately. PAI is free software, free to download, and
+      free to share. It is built and maintained by volunteers; if you want to help, contribute
+      code, documentation, translations, or a donation on GitHub.
+    </p>
+    <div class="cta-row">
+      <button class="btn btn--primary" data-open-app="Flash">Download PAI</button>
+      <a href="/apps/about" class="btn">About PAI</a>
+      <a href="https://github.com/nirholas/pai" class="btn" target="_blank" rel="noopener noreferrer"
+        >View on GitHub ↗</a
+      >
+    </div>
+  </section>
+</ContentApp>
+
+<style>
+  .lede {
+    font-size: 1.0625rem;
+    color: var(--fg-muted);
+    line-height: 1.55;
+    max-width: 62ch;
+    margin: 0 0 var(--s-6);
+  }
+
+  h2.pillar {
+    margin-top: var(--s-8);
+    padding-top: var(--s-5);
+    border-top: 1px solid var(--border);
+    color: var(--pai-blue);
+    font-size: 1.375rem;
+  }
+
+  h2.pillar:first-of-type {
+    border-top: none;
+    padding-top: 0;
+    margin-top: var(--s-6);
+  }
+
+  section {
+    max-width: 72ch;
+    margin-bottom: var(--s-6);
+  }
+
+  section h3 {
+    margin-top: var(--s-5);
+    font-size: 1.0625rem;
+  }
+
+  .see-also {
+    margin-top: var(--s-3);
+    padding-left: var(--s-4);
+    font-size: 0.9375rem;
+  }
+
+  .see-also li {
+    margin: 2px 0;
+  }
+
+  .cta-row {
+    display: flex;
+    gap: var(--s-3);
+    flex-wrap: wrap;
+    margin-top: var(--s-4);
+  }
+
+  .btn {
+    padding: 7px var(--s-5);
+    border-radius: var(--r-icon);
+    border: 1px solid var(--border);
+    background: var(--bg-elev);
+    color: var(--fg);
+    cursor: pointer;
+    font-size: 0.9375rem;
+    font-family: var(--font-ui);
+    text-decoration: none;
+    display: inline-block;
+    white-space: nowrap;
+    transition:
+      background 0.1s,
+      color 0.1s,
+      border-color 0.1s;
+  }
+
+  .btn:hover {
+    background: var(--border);
+  }
+
+  .btn--primary {
+    background: var(--pai-blue);
+    color: #0f0f1a;
+    border-color: transparent;
+    font-weight: 600;
+  }
+
+  .btn--primary:hover {
+    background: var(--pai-yellow);
+    color: #0f0f1a;
+  }
+</style>
