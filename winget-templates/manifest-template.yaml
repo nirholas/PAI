@@ -1,0 +1,41 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
+
+# PAI.PAI winget manifest template
+# This is a template — the update-winget workflow fills in version + hash.
+# Submitted to microsoft/winget-pkgs at manifests/p/PAI/PAI/<version>/
+
+---
+# PAI.PAI.yaml (singleton manifest, v1.6)
+PackageIdentifier: PAI.PAI
+PackageVersion: "0.2.0"
+PackageName: PAI
+Publisher: PAI Project
+PublisherUrl: https://pai.direct
+PublisherSupportUrl: https://github.com/nirholas/pai/issues
+License: GPL-3.0-or-later
+LicenseUrl: https://github.com/nirholas/pai/blob/main/LICENSE
+ShortDescription: Flash, verify, and try PAI — private offline AI on a bootable USB
+Description: |-
+  PAI is a bootable USB Linux distribution for private, offline AI.
+  This package installs the PAI CLI which provides commands to flash
+  PAI to USB drives, verify downloaded ISOs, and launch PAI in a VM.
+Tags:
+  - ai
+  - privacy
+  - linux
+  - usb
+  - offline
+  - bootable
+Moniker: pai
+PackageUrl: https://github.com/nirholas/pai
+Installers:
+  - Architecture: x64
+    InstallerType: zip
+    InstallerUrl: https://github.com/nirholas/pai/releases/download/v0.2.0/pai-cli-0.2.0.zip
+    InstallerSha256: <SHA256>
+    NestedInstallerType: portable
+    NestedInstallerFiles:
+      - RelativeFilePath: pai.cmd
+        PortableCommandAlias: pai
+ManifestType: singleton
+ManifestVersion: 1.6.0
