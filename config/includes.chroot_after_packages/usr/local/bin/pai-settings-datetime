@@ -1,0 +1,44 @@
+#!/bin/bash
+# PAI Settings — date, time, and timezone.
+set -euo pipefail
+
+STYLE=/etc/pai/wofi-shutdown.css
+WOFI=(wofi --dmenu --cache-file=/dev/null)
+[ -r "$STYLE" ] && WOFI+=(--style "$STYLE")
+
+if ! command -v timedatectl >/dev/null 2>&1; then
+    zenity --error --text="timedatectl is not available on this system." 2>/dev/null || \
+        foot -e sh -c "echo 'timedatectl missing'; read -rp 'Press Enter...' _"
+    exit 1
+fi
+
+choice=$(printf '%s\n' \
+    "🌍  Change timezone" \
+    "🔄  Toggle NTP (auto time sync)" \
+    "⏰  Set time manually" \
+    "📋  Show current status" \
+    | "${WOFI[@]}" --prompt "Date & Time" --lines 4 --width 320 --height 220 2>/dev/null)
+
+case "$choice" in
+    *timezone*)
+        tz=$(timedatectl list-timezones | "${WOFI[@]}" --prompt "Timezone" --lines 15 --width 420 --height 500)
+        [ -n "$tz" ] && pkexec timedatectl set-timezone "$tz"
+        ;;
+    *NTP*)
+        current=$(timedatectl show -p NTP --value)
+        new="no"
+        [ "$current" = "no" ] && new="yes"
+        pkexec timedatectl set-ntp "$new"
+        zenity --info --text="NTP is now: $new" 2>/dev/null &
+        ;;
+    *manually*)
+        ts=$(zenity --entry --title="Set time" \
+            --text="Enter time as YYYY-MM-DD HH:MM:SS" \
+            --entry-text="$(date '+%Y-%m-%d %H:%M:%S')" 2>/dev/null) || exit 0
+        pkexec timedatectl set-ntp no
+        pkexec timedatectl set-time "$ts"
+        ;;
+    *status*)
+        foot -e sh -c 'timedatectl status; echo; read -rp "Press Enter..." _' &
+        ;;
+esac
