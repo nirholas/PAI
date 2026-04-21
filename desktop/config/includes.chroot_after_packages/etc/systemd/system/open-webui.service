@@ -1,0 +1,21 @@
+[Unit]
+Description=PAI Chat UI (custom HTML/JS frontend served by Python http.server; not Open-WebUI)
+After=network-online.target ollama.service
+Wants=network-online.target ollama.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/pai-chat
+ExecStart=/usr/bin/python3 -m http.server 8080 --bind 127.0.0.1
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=yes
+ProtectSystem=strict
+PrivateTmp=yes
+ProtectHome=yes
+ReadWritePaths=/opt/pai-chat
+
+[Install]
+WantedBy=multi-user.target
