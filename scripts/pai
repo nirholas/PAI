@@ -1,0 +1,276 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-3.0-or-later
+# pai — CLI wrapper for PAI (Private AI)
+# https://pai.direct
+
+PAI_CLI_VERSION="0.1.0"
+PAI_LIBEXEC="__LIBEXEC__"
+PAI_REPO="nirholas/pai"
+PAI_CACHE_DIR="${HOME}/.cache/pai"
+PAI_CACHE_TTL=86400  # 24 hours
+
+# Resolve libexec: if placeholder was not patched (running from git checkout),
+# fall back to sibling directory structure.
+if [ "$PAI_LIBEXEC" = "__LIBEXEC__" ]; then
+  PAI_LIBEXEC="$(dirname "$0")/../libexec/pai"
+  # If that doesn't exist either, try same directory as the script
+  if [ ! -d "$PAI_LIBEXEC" ]; then
+    PAI_LIBEXEC="$(dirname "$0")"
+  fi
+fi
+
+# --- Helpers ---
+
+die() {
+  printf 'pai: error: %s\n' "$1" >&2
+  exit 1
+}
+
+need_cmd() {
+  command -v "$1" >/dev/null 2>&1 || die "required command not found: $1"
+}
+
+is_homebrew_install() {
+  case "$(command -v pai 2>/dev/null)" in
+    */Cellar/*|*/homebrew/*|*/linuxbrew/*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# Fetch latest release version from GitHub API with 24h cache.
+# Only call this when the user explicitly requests network activity.
+fetch_latest_version() {
+  mkdir -p "$PAI_CACHE_DIR"
+  _cache_file="${PAI_CACHE_DIR}/latest.json"
+
+  # Check cache freshness
+  if [ -f "$_cache_file" ]; then
+    _now=$(date +%s)
+    _mtime=$(stat -c %Y "$_cache_file" 2>/dev/null || stat -f %m "$_cache_file" 2>/dev/null || echo 0)
+    _age=$(( _now - _mtime ))
+    if [ "$_age" -lt "$PAI_CACHE_TTL" ]; then
+      _cached_ver=$(sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$_cache_file" | head -1)
+      if [ -n "$_cached_ver" ]; then
+        printf '%s' "${_cached_ver#v}"
+        return 0
+      fi
+    fi
+  fi
+
+  # Fetch from API
+  need_cmd curl
+  _url="https://api.github.com/repos/${PAI_REPO}/releases/latest"
+  if curl -fsSL "$_url" -o "$_cache_file" 2>/dev/null; then
+    _ver=$(sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$_cache_file" | head -1)
+    if [ -n "$_ver" ]; then
+      printf '%s' "${_ver#v}"
+      return 0
+    fi
+  fi
+
+  printf 'unknown (could not reach GitHub API)'
+  return 1
+}
+
+# --- Subcommands ---
+
+cmd_help() {
+  cat <<EOF
+Usage: pai <command> [options]
+
+Commands:
+  flash         Flash PAI to a USB drive (interactive)
+  try           Launch PAI in a local VM (QEMU)
+  verify <iso>  Verify an ISO's SHA256 against SHA256SUMS
+  update        Check for a newer PAI release
+  version       Print CLI and latest PAI release versions
+  doctor        Check prerequisites for PAI
+  help          Show this help message
+
+Options:
+  --version     Same as 'pai version'
+  --help        Same as 'pai help'
+
+Documentation: https://docs.pai.direct/advanced/homebrew
+EOF
+}
+
+cmd_version() {
+  if [ "${1-}" = "--help" ]; then
+    printf 'Usage: pai version\n\nPrint the installed CLI version and latest PAI release.\n'
+    return 0
+  fi
+  printf 'pai CLI version: %s\n' "$PAI_CLI_VERSION"
+  printf 'Latest PAI release: %s\n' "$(fetch_latest_version)"
+}
+
+cmd_flash() {
+  if [ "${1-}" = "--help" ]; then
+    printf 'Usage: pai flash\n\nFlash PAI to a USB drive interactively.\n'
+    return 0
+  fi
+  _flash_script="${PAI_LIBEXEC}/flash.sh"
+  if [ ! -f "$_flash_script" ]; then
+    die "flash.sh not found at ${_flash_script}"
+  fi
+  exec sh "$_flash_script" "$@"
+}
+
+cmd_try() {
+  if [ "${1-}" = "--help" ]; then
+    printf 'Usage: pai try\n\nLaunch PAI in a local VM using QEMU.\n'
+    return 0
+  fi
+  _try_script="${PAI_LIBEXEC}/try.sh"
+  if [ ! -f "$_try_script" ]; then
+    die "try.sh not found at ${_try_script}"
+  fi
+  exec sh "$_try_script" "$@"
+}
+
+cmd_verify() {
+  if [ "${1-}" = "--help" ] || [ $# -eq 0 ]; then
+    printf 'Usage: pai verify <iso-file>\n\nVerify a downloaded ISO against SHA256SUMS from the release.\n'
+    [ "${1-}" = "--help" ] && return 0
+    return 1
+  fi
+
+  _iso="$1"
+  [ -f "$_iso" ] || die "file not found: $_iso"
+
+  need_cmd curl
+
+  # Determine sha256sum command (macOS coreutils vs native)
+  if command -v sha256sum >/dev/null 2>&1; then
+    _sha_cmd="sha256sum"
+    _sha_args=""
+  elif command -v gsha256sum >/dev/null 2>&1; then
+    _sha_cmd="gsha256sum"
+    _sha_args=""
+  elif command -v shasum >/dev/null 2>&1; then
+    _sha_cmd="shasum"
+    _sha_args="-a 256"
+  else
+    die "no sha256sum command found — install coreutils"
+  fi
+
+  printf 'Fetching SHA256SUMS from latest release...\n'
+  _sums_url="https://github.com/${PAI_REPO}/releases/latest/download/SHA256SUMS"
+  _sums=$(curl -fsSL "$_sums_url") || die "could not download SHA256SUMS"
+
+  _basename=$(basename "$_iso")
+  _expected=$(printf '%s' "$_sums" | grep -F "$_basename" | cut -d' ' -f1)
+  [ -n "$_expected" ] || die "no checksum found for $_basename in SHA256SUMS"
+
+  printf 'Computing SHA256 of %s...\n' "$_basename"
+  # shellcheck disable=SC2086
+  _actual=$("$_sha_cmd" $_sha_args "$_iso" | cut -d' ' -f1)
+
+  if [ "$_actual" = "$_expected" ]; then
+    printf '✓ SHA256 verified: %s\n' "$_actual"
+    return 0
+  else
+    printf '✗ SHA256 mismatch!\n  expected: %s\n  got:      %s\n' "$_expected" "$_actual" >&2
+    return 1
+  fi
+}
+
+cmd_update() {
+  if [ "${1-}" = "--help" ]; then
+    printf 'Usage: pai update\n\nCheck for a newer PAI release and print upgrade instructions.\n'
+    return 0
+  fi
+
+  printf 'Checking for updates...\n'
+  _latest=$(fetch_latest_version)
+
+  printf 'Installed CLI: %s\n' "$PAI_CLI_VERSION"
+  printf 'Latest PAI release: %s\n' "$_latest"
+
+  if is_homebrew_install; then
+    printf '\nTo upgrade, run:\n  brew upgrade pai\n'
+  else
+    printf '\nTo upgrade, download the latest release:\n  https://github.com/%s/releases/latest\n' "$PAI_REPO"
+  fi
+}
+
+cmd_doctor() {
+  if [ "${1-}" = "--help" ]; then
+    printf 'Usage: pai doctor\n\nCheck that prerequisites for PAI are installed.\n'
+    return 0
+  fi
+
+  _ok=0
+  _warn=0
+
+  printf 'PAI Doctor\n'
+  printf '==========\n\n'
+
+  # Install source
+  if is_homebrew_install; then
+    printf 'Install method: Homebrew\n'
+    if command -v brew >/dev/null 2>&1; then
+      _brew_info=$(brew info pai 2>/dev/null | head -1)
+      [ -n "$_brew_info" ] && printf '  %s\n' "$_brew_info"
+    fi
+  else
+    printf 'Install method: manual / git\n'
+  fi
+  printf '\n'
+
+  # Check commands
+  for _cmd in curl qemu-system-x86_64 qemu-system-aarch64; do
+    if command -v "$_cmd" >/dev/null 2>&1; then
+      printf '  ✓ %s\n' "$_cmd"
+      _ok=$(( _ok + 1 ))
+    else
+      printf '  ✗ %s (not found)\n' "$_cmd"
+      _warn=$(( _warn + 1 ))
+    fi
+  done
+
+  # sha256sum
+  if command -v sha256sum >/dev/null 2>&1; then
+    printf '  ✓ sha256sum\n'
+    _ok=$(( _ok + 1 ))
+  elif command -v gsha256sum >/dev/null 2>&1; then
+    printf '  ✓ gsha256sum (coreutils)\n'
+    _ok=$(( _ok + 1 ))
+  elif command -v shasum >/dev/null 2>&1; then
+    printf '  ✓ shasum (fallback)\n'
+    _ok=$(( _ok + 1 ))
+  else
+    printf '  ✗ sha256sum / gsha256sum / shasum (not found)\n'
+    _warn=$(( _warn + 1 ))
+  fi
+
+  # Virtualization support
+  printf '\n'
+  if [ -e /dev/kvm ]; then
+    printf '  ✓ KVM available (/dev/kvm)\n'
+    _ok=$(( _ok + 1 ))
+  elif sysctl -n kern.hv_support 2>/dev/null | grep -q 1; then
+    printf '  ✓ HVF available (macOS Hypervisor.framework)\n'
+    _ok=$(( _ok + 1 ))
+  else
+    printf '  ⚠ No hardware virtualization detected (VMs will be slow)\n'
+    _warn=$(( _warn + 1 ))
+  fi
+
+  printf '\n%d OK, %d warnings\n' "$_ok" "$_warn"
+  [ "$_warn" -eq 0 ] && return 0 || return 1
+}
+
+# --- Main dispatch ---
+
+case "${1-}" in
+  flash)   shift; cmd_flash "$@" ;;
+  try)     shift; cmd_try "$@" ;;
+  verify)  shift; cmd_verify "$@" ;;
+  update)  shift; cmd_update "$@" ;;
+  version|--version) shift; cmd_version "$@" ;;
+  doctor)  shift; cmd_doctor "$@" ;;
+  help|--help|-h) cmd_help ;;
+  "")      cmd_help ;;
+  *)       printf 'pai: unknown command: %s\n\n' "$1" >&2; cmd_help >&2; exit 1 ;;
+esac
