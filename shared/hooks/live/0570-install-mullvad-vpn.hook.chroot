@@ -1,0 +1,22 @@
+#!/bin/bash
+# ── Install Mullvad VPN client (opt-in; no autostart) ──────────────────
+# Mullvad publishes amd64 + arm64 debs.
+set -euo pipefail
+
+echo "[pai] Installing Mullvad VPN client..."
+
+install -d -m 0755 /etc/apt/keyrings
+if [ ! -f /etc/apt/keyrings/mullvad-keyring.gpg ]; then
+    curl -fsSL https://repository.mullvad.net/deb/mullvad-keyring.asc \
+        | gpg --dearmor -o /etc/apt/keyrings/mullvad-keyring.gpg
+fi
+
+# The browser repo already points at bookworm main which includes mullvad-vpn.
+apt-get update
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends mullvad-vpn \
+    || echo "[pai] Mullvad VPN install failed — non-fatal."
+
+# Disable autostart on boot — PAI is opt-in VPN.
+systemctl disable mullvad-daemon.service 2>/dev/null || true
+
+echo "[pai] Mullvad VPN client installed."
