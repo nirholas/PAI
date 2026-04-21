@@ -1,0 +1,94 @@
+---
+/**
+ * Step 3 — Choose Method
+ * Quick (one-liner), Experimental WebUSB, or Manual.
+ */
+---
+
+<section
+  class="step-panel"
+  id="step-panel-3"
+  role="tabpanel"
+  aria-labelledby="step-tab-3"
+>
+  <h2>Choose Method</h2>
+  <p class="step-desc">How would you like to write PAI to your USB drive?</p>
+
+  <div class="method-grid">
+    <button class="method-card method-card--recommended" id="method-quick" data-method="quick">
+      <span class="method-badge">Recommended</span>
+      <h3>Quick — Copy &amp; Run</h3>
+      <p>Get a single command tailored to your OS. Paste it in your terminal and you're done.</p>
+    </button>
+
+    <button class="method-card method-card--experimental" id="method-webusb" data-method="webusb" hidden>
+      <span class="method-badge method-badge--experimental">Experimental</span>
+      <h3>In-Browser WebUSB Write</h3>
+      <p>Write directly from your browser — no terminal needed. Chromium only, Linux works best.</p>
+    </button>
+
+    <button class="method-card" id="method-manual" data-method="manual">
+      <h3>Manual Instructions</h3>
+      <p>Follow the full documentation for your platform with step-by-step details.</p>
+    </button>
+  </div>
+
+  <div class="step-actions">
+    <button class="btn btn--secondary" id="btn-back-to-download">← Back</button>
+  </div>
+</section>
+
+<style>
+  .method-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin-bottom: 2rem;
+  }
+  .method-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    color: #e0e0e0;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .method-card:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+  .method-card:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: 2px;
+  }
+  .method-card--recommended {
+    border-color: rgba(56, 189, 248, 0.3);
+  }
+  .method-card--experimental {
+    border-color: rgba(234, 179, 8, 0.3);
+  }
+  .method-card h3 { margin: 0; font-size: 1.05rem; }
+  .method-card p { margin: 0; font-size: 0.85rem; color: #aaa; }
+  .method-badge {
+    position: absolute;
+    top: -10px;
+    right: 16px;
+    padding: 2px 10px;
+    border-radius: 10px;
+    background: #38bdf8;
+    color: #0b0b12;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .method-badge--experimental {
+    background: #eab308;
+  }
+</style>
