@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=ComfyUI (Stable Diffusion)
+Comment=Local, offline image generation
+Exec=pai-comfyui
+Icon=applications-graphics
+Terminal=false
+Categories=Graphics;AI;
+Keywords=ai;stable-diffusion;image;sdxl;
