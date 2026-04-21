@@ -1,0 +1,14 @@
+[Unit]
+Description=PAI First-Boot Model Setup
+After=ollama.service network-online.target
+Wants=ollama.service network-online.target
+ConditionPathExists=!/tmp/.pai-setup-done
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/pai-setup
+ExecStartPost=/usr/bin/touch /tmp/.pai-setup-done
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
