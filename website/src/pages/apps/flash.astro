@@ -1,0 +1,319 @@
+---
+import AppStandalone from '../../layouts/AppStandalone.astro'
+import Head from '../../components/Head.astro'
+import release from '../../data/release.json'
+
+const hasRelease = release.sha256 && release.sha256 !== 'not-yet-released' && release.sizeBytes > 0
+const shortSha = hasRelease ? release.sha256.slice(0, 16) + '…' : ''
+const sizeFmt = hasRelease ? (release.sizeMB / 1024).toFixed(1) + ' GB' : ''
+
+const SITE_URL = 'https://pai.direct'
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'PAI', item: `${SITE_URL}/` },
+    { '@type': 'ListItem', position: 2, name: 'Flash', item: `${SITE_URL}/apps/flash/` },
+  ],
+}
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <Head
+      title="Flash — PAI"
+      description="Flash the PAI live-USB image to a drive directly from your browser — step-by-step, verified, and ready to boot."
+      ogImage="/og/flash.png"
+      structuredData={structuredData}
+    />
+    <link rel="icon" type="image/svg+xml" href="/icons/flash.svg" />
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { height: 100%; background: #0f0f1a; color: #e0e0e0; font-family: system-ui, sans-serif; font-size: 13px; }
+      body { display: flex; flex-direction: column; overflow: hidden; }
+      #app-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+      .flash-app { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+      .flash-header { background: #1a1a2e; border-bottom: 1px solid #2a2a3e; padding: 10px 14px; flex-shrink: 0; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+      .iso-name { font-family: ui-monospace, monospace; color: #7aa2f7; font-size: 12px; font-weight: 600; }
+      .iso-meta { color: #888; font-size: 11px; display: flex; gap: 10px; align-items: center; }
+      .sha-btn { background: none; border: 1px solid #2a2a3e; border-radius: 4px; color: #888; font-family: ui-monospace, monospace; font-size: 10px; padding: 2px 6px; cursor: pointer; transition: border-color 0.15s; }
+      .sha-btn:hover { border-color: #7aa2f7; color: #7aa2f7; }
+      .sha-btn.copied { color: #4ade80; border-color: #4ade80; }
+      .header-links { margin-left: auto; display: flex; gap: 10px; flex-shrink: 0; }
+      .hdr-link { color: #7aa2f7; text-decoration: none; font-size: 11px; padding: 2px 0; background: none; border: none; cursor: pointer; font-family: inherit; }
+      .hdr-link:hover { text-decoration: underline; }
+
+      .dl-hero { padding: 22px 20px 6px; }
+      .dl-title { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+      .dl-sub { color: #a0a0b0; font-size: 12px; margin-bottom: 14px; }
+      .dl-btn { display: inline-flex; align-items: center; gap: 8px; background: #7aa2f7; color: #0f0f1a; border: none; border-radius: 6px; padding: 10px 18px; font-weight: 700; font-size: 13px; cursor: pointer; text-decoration: none; }
+      .dl-btn:hover { opacity: 0.9; }
+
+      .tab-bar { display: flex; background: #12121f; border-top: 1px solid #2a2a3e; border-bottom: 1px solid #2a2a3e; margin-top: 16px; flex-shrink: 0; }
+      .tab-btn { background: none; border: none; border-bottom: 2px solid transparent; color: #888; cursor: pointer; font-size: 12px; font-family: inherit; padding: 8px 14px; transition: color 0.15s; }
+      .tab-btn:hover { color: #e0e0e0; }
+      .tab-btn.active { color: #7aa2f7; border-bottom-color: #7aa2f7; }
+
+      .tab-panels { flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #2a2a3e transparent; }
+      .tab-panel { display: none; padding: 16px 18px; }
+      .tab-panel.active { display: block; }
+
+      h3 { font-size: 13px; color: #e0e0e0; margin-bottom: 10px; font-weight: 600; }
+
+      .warn-box { background: #2a1800; border: 1px solid #5c3600; border-radius: 5px; color: #fbbf24; font-size: 11px; padding: 8px 12px; margin-bottom: 12px; }
+
+      .code-wrap { background: #12121f; border: 1px solid #2a2a3e; border-radius: 5px; margin: 8px 0; position: relative; }
+      .code-wrap pre { font-family: ui-monospace, monospace; font-size: 11.5px; padding: 10px 40px 10px 12px; overflow-x: auto; line-height: 1.6; color: #c0d0f0; white-space: pre; }
+      .copy-btn { position: absolute; top: 6px; right: 6px; background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 4px; color: #888; cursor: pointer; font-size: 10px; padding: 3px 7px; font-family: inherit; }
+      .copy-btn:hover { color: #7aa2f7; border-color: #7aa2f7; }
+      .copy-btn.copied { color: #4ade80; border-color: #4ade80; }
+
+      .sub-tabs { display: flex; gap: 2px; margin-bottom: 12px; }
+      .sub-tab { background: #12121f; border: 1px solid #2a2a3e; border-radius: 4px; color: #888; cursor: pointer; font-family: inherit; font-size: 11px; padding: 4px 10px; transition: all 0.15s; }
+      .sub-tab.active { background: #1a2a4a; color: #7aa2f7; border-color: #7aa2f7; }
+      .sub-panel { display: none; }
+      .sub-panel.active { display: block; }
+
+      .gui-tool { margin-bottom: 24px; }
+      .gui-tool h4 { color: #7aa2f7; margin-bottom: 8px; font-size: 13px; }
+      .gui-step { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; font-size: 12px; line-height: 1.5; }
+      .gui-step .sn { color: #7aa2f7; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+
+      .soon-wrap { padding: 32px 20px; display: flex; justify-content: center; flex-shrink: 0; }
+      .soon-card { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 8px; padding: 22px 26px; max-width: 480px; width: 100%; text-align: center; }
+      .soon-title { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+      .soon-body { color: #a0a0b0; font-size: 12px; line-height: 1.6; margin-bottom: 14px; }
+      .soon-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+      .soon-link { display: inline-flex; align-items: center; gap: 6px; background: #7aa2f7; color: #0f0f1a; border-radius: 6px; padding: 8px 14px; font-weight: 700; font-size: 12px; text-decoration: none; }
+      .soon-link:hover { opacity: 0.9; }
+      .soon-link--ghost { background: transparent; color: #7aa2f7; border: 1px solid #2a2a3e; }
+      .soon-link--ghost:hover { border-color: #7aa2f7; opacity: 1; }
+    </style>
+  </head>
+  <body>
+    <AppStandalone appId="flash" />
+    <main id="app-content">
+      <div class="flash-app">
+
+        {hasRelease ? (
+          <>
+            <div class="flash-header">
+              <span class="iso-name">{release.isoName}</span>
+              <div class="iso-meta">
+                <span>v{release.version}</span>
+                <span>{sizeFmt}</span>
+                <span>{release.buildDate}</span>
+              </div>
+              <button class="sha-btn" id="sha-btn" title="Click to copy full SHA256">
+                SHA256: {shortSha}
+              </button>
+              <div class="header-links">
+                <a class="hdr-link" href={release.signatureUrl} target="_blank" rel="noopener noreferrer">GPG signature</a>
+                <button class="hdr-link" id="open-verify-btn">Verify before flashing →</button>
+              </div>
+            </div>
+
+            <div class="dl-hero">
+              <div class="dl-title">Download PAI</div>
+              <div class="dl-sub">Grab the ISO, then flash it to a USB drive with the tool for your OS.</div>
+              <a class="dl-btn" href={release.downloadUrl} download target="_blank" rel="noopener noreferrer">
+                ⬇ Download {release.isoName} ({sizeFmt})
+              </a>
+            </div>
+          </>
+        ) : (
+          <div class="soon-wrap">
+            <div class="soon-card">
+              <div class="soon-title">PAI v{release.version} — coming soon</div>
+              <div class="soon-body">
+                Public downloads aren't posted yet. Subscribe to get notified the moment
+                the ISO and signature drop — no email required.
+              </div>
+              <div class="soon-actions">
+                <a class="soon-link" href="/changelog.xml">
+                  Subscribe (RSS)
+                </a>
+                <a class="soon-link soon-link--ghost" href="https://github.com/nirholas/pai" target="_blank" rel="noreferrer">
+                  Watch on GitHub ↗
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div class="tab-bar" role="tablist">
+          <button class="tab-btn" data-tab="windows" role="tab" aria-selected="false">
+            Windows (PowerShell)
+          </button>
+          <button class="tab-btn" data-tab="gui" role="tab" aria-selected="false">
+            GUI (Balena / Rufus alternative)
+          </button>
+          <button class="tab-btn" data-tab="cli" role="tab" aria-selected="false">
+            Command line
+          </button>
+        </div>
+
+        <div class="tab-panels">
+
+          <div class="tab-panel" id="panel-windows" role="tabpanel">
+            <div class="gui-tool">
+              <h4>PowerShell one-liner (recommended)</h4>
+              <div class="gui-step"><span class="sn">1.</span><span>Open <strong>PowerShell as Administrator</strong>.</span></div>
+              <div class="gui-step"><span class="sn">2.</span><span>Run:</span></div>
+              <div class="code-wrap">
+                <pre>irm https://pai.direct/flash.ps1 | iex</pre>
+                <button class="copy-btn" data-copy="irm https://pai.direct/flash.ps1 | iex">copy</button>
+              </div>
+              <div class="gui-step"><span class="sn">3.</span><span>The script downloads the latest ISO, verifies its SHA256, lets you pick a USB drive, and writes it raw.</span></div>
+              <div class="gui-step"><span class="sn">4.</span><span>Reboot → at the BIOS splash press <strong>F12</strong> / <strong>F2</strong> / <strong>DEL</strong> → pick the USB drive.</span></div>
+            </div>
+
+            <div class="gui-tool">
+              <h4>Verify before run (advanced)</h4>
+              <div class="gui-step"><span class="sn">1.</span><span>Fetch the script and its SHA256 sidecar, compare hashes, then run locally.</span></div>
+              <div class="code-wrap">
+                <pre>{`$url = 'https://pai.direct/flash.ps1'
+irm "$url.sha256" -OutFile flash.ps1.sha256
+irm $url -OutFile flash.ps1
+Get-FileHash flash.ps1 -Algorithm SHA256
+powershell -ExecutionPolicy Bypass -File .\\flash.ps1`}</pre>
+                <button class="copy-btn" data-copy={`$url = 'https://pai.direct/flash.ps1'\nirm "$url.sha256" -OutFile flash.ps1.sha256\nirm $url -OutFile flash.ps1\nGet-FileHash flash.ps1 -Algorithm SHA256\npowershell -ExecutionPolicy Bypass -File .\\flash.ps1`}>copy</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-panel" id="panel-gui" role="tabpanel">
+            <div class="gui-tool">
+              <h4>balenaEtcher (Windows, macOS, Linux)</h4>
+              <div class="gui-step"><span class="sn">1.</span><span><a href="https://etcher.balena.io" class="hdr-link" target="_blank" rel="noreferrer">Download balenaEtcher</a>.</span></div>
+              <div class="gui-step"><span class="sn">2.</span><span>Open Etcher → <strong>Flash from file</strong> → select the ISO you just downloaded.</span></div>
+              <div class="gui-step"><span class="sn">3.</span><span>Click <strong>Select target</strong> → choose your USB drive.</span></div>
+              <div class="gui-step"><span class="sn">4.</span><span>Click <strong>Flash!</strong> Etcher writes + verifies automatically (~5 min).</span></div>
+              <div class="gui-step"><span class="sn">5.</span><span>Reboot → at the BIOS splash press <strong>F12</strong> / <strong>F2</strong> / <strong>DEL</strong> → pick the USB drive.</span></div>
+            </div>
+
+            <div class="gui-tool">
+              <h4>Rufus (Windows graphical alternative)</h4>
+              <p style="font-size:11px;color:#888;margin:-4px 0 10px">
+                On Windows, <code style="color:#7aa2f7">flash.ps1</code> (see the Windows tab) is recommended. Use the Rufus graphical tool if you prefer a GUI.
+              </p>
+              <div class="gui-step"><span class="sn">1.</span><span><a href="https://rufus.ie" class="hdr-link" target="_blank" rel="noreferrer">Download the Rufus graphical tool</a> — portable, no install.</span></div>
+              <div class="gui-step"><span class="sn">2.</span><span>Open the Rufus graphical tool. Under <strong>Device</strong>, select your USB drive.</span></div>
+              <div class="gui-step"><span class="sn">3.</span><span>Click <strong>SELECT</strong> → pick the ISO. When asked, choose <strong>Write in DD Image mode</strong>.</span></div>
+              <div class="gui-step"><span class="sn">4.</span><span>Click <strong>START</strong>, confirm the warning, wait (~5 min), reboot.</span></div>
+            </div>
+          </div>
+
+          <div class="tab-panel" id="panel-cli" role="tabpanel">
+            <div class="warn-box">
+              <strong>⚠ Double-check the device path</strong> — using the wrong path will permanently destroy data on that drive.
+            </div>
+
+            <div class="sub-tabs">
+              <button class="sub-tab active" data-sub="linux">Linux</button>
+              <button class="sub-tab" data-sub="macos">macOS</button>
+            </div>
+
+            <div class="sub-panel active" id="sub-linux">
+              <h3>Find your USB drive</h3>
+              <div class="code-wrap">
+                <pre>lsblk</pre>
+                <button class="copy-btn" data-copy="lsblk">copy</button>
+              </div>
+              <p style="font-size:11px;color:#888;margin:10px 0">
+                Replace <code style="color:#7aa2f7">/dev/sdX</code> with your drive (e.g. <code style="color:#7aa2f7">/dev/sdb</code>).
+              </p>
+              <h3>Flash</h3>
+              <div class="code-wrap">
+                <pre>sudo dd if={release.isoName} of=/dev/sdX bs=4M status=progress conv=fsync</pre>
+                <button class="copy-btn" data-copy={`sudo dd if=${release.isoName} of=/dev/sdX bs=4M status=progress conv=fsync`}>copy</button>
+              </div>
+            </div>
+
+            <div class="sub-panel" id="sub-macos">
+              <h3>Find your USB drive</h3>
+              <div class="code-wrap">
+                <pre>diskutil list</pre>
+                <button class="copy-btn" data-copy="diskutil list">copy</button>
+              </div>
+              <p style="font-size:11px;color:#888;margin:10px 0">
+                Use <code style="color:#7aa2f7">/dev/rdiskN</code> (the <code style="color:#7aa2f7">r</code> prefix is much faster).
+              </p>
+              <h3>Flash</h3>
+              <div class="code-wrap">
+                <pre>sudo dd if={release.isoName} of=/dev/rdiskN bs=4m</pre>
+                <button class="copy-btn" data-copy={`sudo dd if=${release.isoName} of=/dev/rdiskN bs=4m`}>copy</button>
+              </div>
+              <p style="font-size:11px;color:#888;margin-top:8px">
+                No progress output by default — press Ctrl+T in the terminal to get a status update.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
+
+<script>
+  import { bridge } from '../../apps/_bridge.js'
+  import release from '../../data/release.json'
+  bridge.ready()
+
+  const tabBtns = document.querySelectorAll<HTMLButtonElement>('.tab-btn')
+  const tabPanels = document.querySelectorAll<HTMLElement>('.tab-panel')
+
+  function switchTab(id: string) {
+    tabBtns.forEach(b => {
+      const active = b.dataset.tab === id
+      b.classList.toggle('active', active)
+      b.setAttribute('aria-selected', String(active))
+    })
+    tabPanels.forEach(p => p.classList.toggle('active', p.id === `panel-${id}`))
+  }
+  tabBtns.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab!)))
+
+  switchTab(
+    /Windows/i.test(navigator.userAgent)
+      ? 'windows'
+      : /Linux/i.test(navigator.userAgent)
+        ? 'cli'
+        : 'gui'
+  )
+
+  document.getElementById('sha-btn')?.addEventListener('click', async () => {
+    await navigator.clipboard.writeText(release.sha256).catch(() => {})
+    const btn = document.getElementById('sha-btn')!
+    btn.textContent = 'Copied!'
+    btn.classList.add('copied')
+    setTimeout(() => {
+      btn.textContent = `SHA256: ${release.sha256.slice(0, 16)}…`
+      btn.classList.remove('copied')
+    }, 1800)
+  })
+
+  document.getElementById('open-verify-btn')?.addEventListener('click', () => {
+    bridge.openApp('verify')
+  })
+
+  document.querySelectorAll<HTMLButtonElement>('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await navigator.clipboard.writeText(btn.dataset.copy!).catch(() => {})
+      btn.textContent = 'copied!'
+      btn.classList.add('copied')
+      setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied') }, 1800)
+    })
+  })
+
+  document.querySelectorAll<HTMLButtonElement>('.sub-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'))
+      document.querySelectorAll('.sub-panel').forEach(p => p.classList.remove('active'))
+      btn.classList.add('active')
+      document.getElementById(`sub-${btn.dataset.sub}`)!.classList.add('active')
+    })
+  })
+</script>
