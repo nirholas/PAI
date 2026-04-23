@@ -2,7 +2,6 @@
 
 ![header](branding/readme-header.svg)
 
-
 <p align="center">
   <a href="https://github.com/nirholas/pai/releases/latest"><img src="https://img.shields.io/github/v/release/nirholas/pai" alt="Latest release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL%20v3-blue.svg" alt="GPL v3"></a>
