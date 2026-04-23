@@ -27,8 +27,8 @@ Check your running version with `cat /etc/pai-release`.
 
 **Do not open a public GitHub issue for security vulnerabilities.**
 
-- **Email:** `security@pai-os.org` (monitored by the maintainers)
-- **PGP fingerprint:** published at <https://pai-os.org/.well-known/security.txt> once the domain is live; until then, contact `nichxbt@gmail.com` directly.
+- **Email:** `support@pai.direct` (monitored by the maintainers)
+- **PGP fingerprint:** published at <https://pai-os.org/.well-known/security.txt> once the domain is live; until then, contact `support@pai.direct` directly.
 - **Acknowledgement window:** within **72 hours**
 - **Coordinated disclosure window:** **90 days** from acknowledgement,
   extendable by mutual agreement if a fix requires more time
