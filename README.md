@@ -777,4 +777,5 @@ You are free to use, modify, and distribute PAI. All included software retains i
   <a href="https://github.com/nirholas/pai">GitHub</a> ·
   <a href="https://github.com/nirholas/pai/issues">Issues</a> ·
   <a href="https://github.com/nirholas/pai/releases">Releases</a>
+  <a href="https://x.com/nichxbt">X</a>
 </p>
