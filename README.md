@@ -782,3 +782,7 @@ Full documentation site: **https://nirholas.github.io/PAI/**
 
 - [Getting started](docs/getting-started.md) covers install and first run.
 - [Examples](docs/examples.md) has copy-paste snippets.
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=nirholas/PAI&type=Date)](https://www.star-history.com/#nirholas/PAI&Date)
