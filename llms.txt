@@ -1,0 +1,28 @@
+# PAI
+
+> A complete private computer on a USB stick. PAI is a bootable Debian 12 Linux distro that runs Ollama locally on any x86_64 or ARM64 machine: full desktop, local AI, hardened networking, all in RAM. Plug in, boot in seconds, work anywhere, pull the stick and nothing stays behind. Your AI on your hardware, no cloud, no accounts. https://pai.direct
+
+PAI is an open-source repository by nirholas, part of the three.ws ecosystem.
+
+## Docs
+
+- [README](https://github.com/nirholas/PAI/blob/HEAD/README.md): install, usage and reference
+- [Quick Start](https://github.com/nirholas/PAI/blob/HEAD/README.md#quick-start)
+- [What is PAI?](https://github.com/nirholas/PAI/blob/HEAD/README.md#what-is-pai)
+- [How It Works](https://github.com/nirholas/PAI/blob/HEAD/README.md#how-it-works)
+- [Architecture](https://github.com/nirholas/PAI/blob/HEAD/README.md#architecture)
+- [Privacy & Security Model](https://github.com/nirholas/PAI/blob/HEAD/README.md#privacy-security-model)
+- [Included Software](https://github.com/nirholas/PAI/blob/HEAD/README.md#included-software)
+- [Try in a VM](https://github.com/nirholas/PAI/blob/HEAD/README.md#try-in-a-vm)
+- [Flash to USB](https://github.com/nirholas/PAI/blob/HEAD/README.md#flash-to-usb)
+- [AGENTS.md](https://github.com/nirholas/PAI/blob/HEAD/AGENTS.md): guidance for coding agents
+- [Full text for LLMs](https://github.com/nirholas/PAI/blob/HEAD/llms-full.txt): the README inlined
+
+## Project
+
+- [Source](https://github.com/nirholas/PAI)
+- [Issues](https://github.com/nirholas/PAI/issues)
+- [Discussions](https://github.com/nirholas/PAI/discussions)
+- [Homepage](https://pai.direct)
+- [three.ws](https://three.ws): the platform this is part of
+- [All repositories by nirholas](https://github.com/nirholas/nirholas#readme)
