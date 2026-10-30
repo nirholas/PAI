@@ -19,12 +19,12 @@
     "imager:test": "node ../scripts/test-imager-manifest.mjs"
   },
   "dependencies": {
-    "@astrojs/mdx": "^5.0.3",
+    "@astrojs/mdx": "^8.1.2",
     "@astrojs/rss": "^4.0.18",
     "@astrojs/sitemap": "^3.7.2",
     "@tailwindcss/vite": "^4.2.2",
     "@vercel/og": "^0.11.1",
-    "astro": "^6.1.7",
+    "astro": "^7.4.4",
     "tailwindcss": "^4.2.2"
   },
   "devDependencies": {
