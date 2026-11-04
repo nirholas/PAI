@@ -36,6 +36,7 @@
     "prettier-plugin-astro": "^0.14.1"
   },
   "overrides": {
-    "minimatch@^10": "^11.0.4"
+    "minimatch@^10": "^11.0.4",
+    "fflate@0.7": "^0.7.5"
   }
 }
