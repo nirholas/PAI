@@ -106,7 +106,7 @@ export function kitRoutes<E extends KitEnv>(router: Router<E>, opts: KitOptions)
     })
     .post('/api/auth/verify', async (req, env) => {
       const b = await readJson<{ nonce?: string; signature?: string }>(req);
-      const nonce = str(b.nonce, 'nonce', 64);
+      const nonce = str(b.nonce, 'nonce', 128);
       const signature = str(b.signature, 'signature', 4000);
       const row = await env.DB.prepare('DELETE FROM nonces WHERE nonce = ? AND expires_at > ? RETURNING chain, address, chain_id, message')
         .bind(nonce, Date.now())
