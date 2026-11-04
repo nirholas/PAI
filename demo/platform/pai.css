@@ -1,0 +1,27 @@
+:root { --accent: #4d74ee; --accent-2: #bb9af7; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme='light']) { --accent: #7aa2f7; } }
+:root[data-theme='dark'] { --accent: #7aa2f7; }
+.logo-mark { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; font: 800 0.8rem var(--mono); }
+.ticker { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); }
+.ticker .card { padding: 16px 18px; }
+.delta.up { color: var(--ok); }
+.delta.down { color: var(--bad); }
+.hash { font-family: var(--mono); font-size: 0.8rem; word-break: break-all; color: var(--ink-2); }
+.drop { border: 2px dashed var(--line); border-radius: var(--radius); padding: 28px; text-align: center; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+.drop:hover, .drop:focus-visible, .drop.over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 6%, transparent); outline: none; }
+.progress { height: 8px; border-radius: 99px; background: var(--bg-2); overflow: hidden; }
+.progress > i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width 0.2s; }
+.form-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); align-items: end; }
+.meter { display: flex; gap: 8px; align-items: center; font-size: 0.85rem; }
+.meter .bar { flex: 1; height: 6px; border-radius: 99px; background: var(--bg-2); overflow: hidden; }
+.meter .bar > i { display: block; height: 100%; background: var(--ok); }
+.meter.over .bar > i { background: var(--bad); }
+.sats { font-variant-numeric: tabular-nums; }
+.mt { margin-top: 18px; }
+.sk-sm { height: 14px; width: 45%; }
+.sk-lg { height: 26px; width: 70%; margin-top: 10px; }
+.ticker-note { grid-column: 1 / -1; margin: 0; font-size: 0.85rem; }
+.sk-row { height: 38px; }
+.callout.ok { border-color: var(--ok); }
+.callout.bad { border-color: var(--bad); }
+.callout h3 { margin-top: 0; }

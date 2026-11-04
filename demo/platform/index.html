@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PAI Cloud — verify, plan and track your private AI workstation</title>
+<meta name="description" content="PAI Cloud is the companion platform for PAI, the bootable private AI workstation. Verify ISO downloads, plan offline model loadouts, track Bitcoin and Monero, and share hardware reports — signed in with your wallet.">
+<link rel="icon" href="/favicon.svg">
+<link rel="stylesheet" href="/kit/kit.css">
+<link rel="stylesheet" href="/platform/pai.css">
+</head>
+<body>
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="/platform/"><span class="logo-mark">PAI</span> PAI Cloud</a>
+    <nav class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#live">Live data</a>
+      <a href="#api">API</a>
+      <a href="#pricing">Pricing</a>
+      <a href="/">PAI desktop</a>
+    </nav>
+    <div data-kit-auth></div>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <span class="eyebrow">Companion platform for PAI v<span id="hero-ver">0.1</span></span>
+      <h1>Your private AI workstation,<br><span class="grad">verified before it boots.</span></h1>
+      <p class="lede">PAI boots from a USB stick into an offline AI desktop with Ollama, a Bitcoin and Monero wallet, and no telemetry. PAI Cloud is the online half: check your ISO against the published release hashes, plan which models fit your RAM, watch your Bitcoin addresses, and see which laptops other people have booted it on.</p>
+      <div class="row">
+        <a class="btn btn-primary btn-lg" href="/platform/app/">Open the dashboard</a>
+        <a class="btn btn-lg" href="/apps/flash">Flash a USB</a>
+        <a class="btn btn-ghost btn-lg" href="https://github.com/nirholas/PAI" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="live">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Live from the chains and the release</h2>
+        <p>Every number on this page is fetched from public sources by the PAI Cloud API: Kraken, mempool.space, xmrchain.net and GitHub Releases.</p>
+      </div>
+      <div class="ticker" id="ticker" aria-live="polite"></div>
+      <div class="card mt" id="release-card"></div>
+    </div>
+  </section>
+
+  <section class="section section-alt" id="features">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Everything you do before and after you boot PAI</h2>
+        <p>Sign in with an Ethereum or Solana wallet. No email, no password, no tracking beyond your own activity log.</p>
+      </div>
+      <div class="grid">
+        <div class="card feature"><div class="ico">✓</div><h3>ISO verification</h3><p class="muted">Drop the 8 GB ISO into your browser. It is hashed locally with SHA-256 in a web worker and compared against the GitHub release checksums. The file never leaves your machine.</p></div>
+        <div class="card feature"><div class="ico">₿</div><h3>Bitcoin watchlist</h3><p class="muted">Track up to 20 addresses: confirmed and pending balance plus recent transactions from mempool.space. Watch-only, so no keys are needed.</p></div>
+        <div class="card feature"><div class="ico">ɱ</div><h3>Monero network</h3><p class="muted">Height, hash rate, difficulty and fee per kB from xmrchain, next to live XMR and BTC prices, so you know what the wallets in PAI will see.</p></div>
+        <div class="card feature"><div class="ico">◎</div><h3>Model loadouts</h3><p class="muted">Pick Ollama models, see their real download size from the registry and the estimated RAM they need, and get a ready-to-run <code>ollama pull</code> script for offline use.</p></div>
+        <div class="card feature"><div class="ico">⌨</div><h3>Hardware reports</h3><p class="muted">A shared compatibility list: device, architecture, boot mode, and whether PAI works. Add your own laptop after you boot it.</p></div>
+        <div class="card feature"><div class="ico">⚿</div><h3>API keys</h3><p class="muted">Every dashboard action is also an HTTP endpoint. Create a key and script verifications, watchlists and loadouts from your own tools.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head"><h2>Three steps</h2></div>
+      <div class="steps">
+        <div class="card"><h3>Sign in with a wallet</h3><p class="muted">MetaMask, Rabby, Coinbase Wallet, Phantom, Solflare or Backpack. You sign a one-time message; nothing is sent on-chain.</p></div>
+        <div class="card"><h3>Verify and plan</h3><p class="muted">Hash your download against the release, then build a model loadout that fits your machine's RAM.</p></div>
+        <div class="card"><h3>Boot and report</h3><p class="muted">Flash the USB, boot offline, then add a hardware report so the next person knows what works.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt" id="api">
+    <div class="wrap grid-2">
+      <div>
+        <h2>Same features, over HTTP</h2>
+        <p class="muted">Create an API key in the dashboard and call any endpoint with a Bearer token. Public endpoints such as release, market, models and hardware need no key.</p>
+        <ul class="muted">
+          <li><code>GET /api/v1/release</code>: latest release and checksums</li>
+          <li><code>GET /api/v1/market</code>: BTC/XMR prices, fees and network stats</li>
+          <li><code>GET /api/v1/models/llama3.2:3b</code>: size and RAM estimate</li>
+          <li><code>POST /api/v1/verify</code>: check a SHA-256 and log it</li>
+          <li><code>GET /api/v1/btc/address/:addr</code>: address summary</li>
+        </ul>
+      </div>
+      <pre class="code"><span class="c"># Check a hash you computed with sha256sum</span>
+curl -s https://pai.ninabrekkerese.workers.dev/api/v1/verify \
+  -H "Authorization: Bearer $PAI_KEY" \
+  -H 'content-type: application/json' \
+  -d '{"sha256":"'"$(sha256sum pai-amd64.iso | cut -d' ' -f1)"'"}'
+
+<span class="c"># Which models fit in 8 GB?</span>
+curl -s https://pai.ninabrekkerese.workers.dev/api/v1/models/qwen2.5:7b</pre>
+    </div>
+  </section>
+
+  <section class="section" id="pricing">
+    <div class="wrap">
+      <div class="section-head"><h2>Pricing</h2><p>PAI is free to download and run. So is the cloud companion.</p></div>
+      <div class="grid">
+        <div class="card price featured"><h3>Community</h3><div class="v">$0</div><ul><li>Unlimited ISO verifications</li><li>20 watched Bitcoin addresses</li><li>25 model loadouts</li><li>API keys with usage history</li></ul><a class="btn btn-primary" href="/platform/app/">Get started</a></div>
+        <div class="card price"><h3>Self-hosted</h3><div class="v">Your box</div><ul><li>Run the PAI ISO fully offline</li><li>No account at all</li><li>Build from source with the repo's build scripts</li></ul><a class="btn" href="https://github.com/nirholas/PAI" rel="noopener">View source</a></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <span>PAI · Private AI on a USB stick</span>
+    <span class="row"><a href="/">Desktop</a><a href="/apps/docs">Docs</a><a href="/platform/app/">Dashboard</a><a href="https://github.com/nirholas/PAI" rel="noopener">GitHub</a></span>
+  </div>
+</footer>
+<script type="module" src="/platform/landing.js"></script>
+</body>
+</html>

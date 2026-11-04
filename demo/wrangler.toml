@@ -1,0 +1,15 @@
+name = "pai"
+main = "src/worker.ts"
+compatibility_date = "2025-10-01"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+not_found_handling = "404-page"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "pai-demo"
+database_id = "24ff00b8-b02c-4b8e-b4bc-6e8028f8640a"

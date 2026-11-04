@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dashboard · PAI Cloud</title>
+<link rel="icon" href="/favicon.svg">
+<link rel="stylesheet" href="/kit/kit.css">
+<link rel="stylesheet" href="/platform/pai.css">
+</head>
+<body>
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="/platform/"><span class="logo-mark">PAI</span> PAI Cloud</a>
+    <nav class="nav-links"><a href="/platform/">Home</a><a href="/">PAI desktop</a><a href="/apps/flash">Flash USB</a></nav>
+    <div data-kit-auth></div>
+  </div>
+</header>
+
+<main class="app-main wrap">
+  <div id="app" hidden>
+    <div class="app-head"><h1>Dashboard</h1><span class="muted" id="who"></span></div>
+    <div class="tabs" role="tablist">
+      <button type="button" data-tab="overview" role="tab">Overview</button>
+      <button type="button" data-tab="verify" role="tab">Verify ISO</button>
+      <button type="button" data-tab="wallets" role="tab">Bitcoin</button>
+      <button type="button" data-tab="models" role="tab">Model loadouts</button>
+      <button type="button" data-tab="hardware" role="tab">Hardware</button>
+      <button type="button" data-tab="keys" role="tab">API keys</button>
+      <button type="button" data-tab="usage" role="tab">Usage</button>
+    </div>
+
+    <section data-panel="overview" class="stack">
+      <div class="ticker" id="kpis"></div>
+      <h2>Markets and networks</h2>
+      <div class="ticker" id="market"></div>
+    </section>
+
+    <section data-panel="verify" class="stack" hidden>
+      <div class="grid-2">
+        <div class="card stack">
+          <h3>Hash a file locally</h3>
+          <p class="muted">Pick the PAI ISO you downloaded. It is hashed in your browser in a background worker; only the 64-character SHA-256 is sent to PAI Cloud.</p>
+          <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose a file to hash">
+            <strong>Drop an ISO here</strong><br><span class="muted">or click to choose a file</span>
+            <input type="file" id="file" hidden>
+          </div>
+          <div id="hash-progress" hidden>
+            <div class="row"><span class="grow trunc" id="hash-name"></span><span class="muted nowrap" id="hash-pct"></span></div>
+            <div class="progress"><i id="hash-bar"></i></div>
+            <div class="row end"><button type="button" class="btn btn-sm btn-ghost" id="hash-cancel">Cancel</button></div>
+          </div>
+        </div>
+        <div class="card stack">
+          <h3>Or paste a hash</h3>
+          <p class="muted">From <code>sha256sum pai-amd64.iso</code> on Linux, <code>shasum -a 256</code> on macOS or <code>Get-FileHash</code> in PowerShell.</p>
+          <form id="paste-form" class="stack">
+            <label class="field">SHA-256<input class="input" name="sha256" required pattern="\s*[A-Fa-f0-9]{64}\s*" placeholder="e55b5b3c…" autocomplete="off" spellcheck="false"></label>
+            <label class="field">File name (optional)<input class="input" name="fileName" maxlength="200" placeholder="pai-amd64.iso"></label>
+            <div class="row end"><button class="btn btn-primary" type="submit">Check hash</button></div>
+          </form>
+        </div>
+      </div>
+      <div id="verify-result"></div>
+      <div class="card"><h3>Published checksums</h3><div id="checksums"></div></div>
+      <div class="card"><h3>Your verifications</h3><div id="history"></div></div>
+    </section>
+
+    <section data-panel="wallets" class="stack" hidden>
+      <div class="card stack">
+        <h3>Look up an address</h3>
+        <form id="lookup-form" class="form-grid">
+          <label class="field grow">Bitcoin address<input class="input" name="address" required placeholder="bc1q…" autocomplete="off" spellcheck="false"></label>
+          <button class="btn btn-primary" type="submit">Look up</button>
+        </form>
+        <div id="lookup"></div>
+      </div>
+      <div class="card stack">
+        <div class="row"><h3 class="grow">Watchlist</h3><span class="muted" id="watch-count"></span></div>
+        <form id="watch-form" class="form-grid">
+          <label class="field">Address<input class="input" name="address" required placeholder="bc1q…" autocomplete="off" spellcheck="false"></label>
+          <label class="field">Label (optional)<input class="input" name="label" maxlength="60" placeholder="Cold storage"></label>
+          <button class="btn btn-primary" type="submit">Add to watchlist</button>
+        </form>
+        <div id="watch"></div>
+      </div>
+    </section>
+
+    <section data-panel="models" class="stack" hidden>
+      <div class="card stack">
+        <h3>Check a model</h3>
+        <p class="muted">Any model in the <a href="https://ollama.com/library" rel="noopener">Ollama library</a>, as <code>name:tag</code>. Size comes from the registry manifest; RAM is estimated as weights × 1.2 + 0.5 GB.</p>
+        <form id="model-form" class="form-grid">
+          <label class="field grow">Model<input class="input" name="ref" required placeholder="llama3.2:3b" autocomplete="off" spellcheck="false" list="model-suggest"></label>
+          <button class="btn" type="submit">Check</button>
+        </form>
+        <datalist id="model-suggest">
+          <option value="llama3.2:3b"><option value="llama3.2:1b"><option value="llama3.1:8b"><option value="qwen2.5:7b"><option value="qwen2.5-coder:7b"><option value="mistral:7b"><option value="gemma2:2b"><option value="phi3:mini"><option value="deepseek-r1:7b"><option value="nomic-embed-text:latest">
+        </datalist>
+        <div id="model-info"></div>
+      </div>
+      <div class="card stack">
+        <h3>New loadout</h3>
+        <form id="loadout-form" class="stack">
+          <div class="form-grid">
+            <label class="field">Name<input class="input" name="name" required maxlength="60" placeholder="Laptop 16 GB"></label>
+            <label class="field">Machine RAM (GB)<input class="input" name="ramGb" type="number" min="1" max="1024" required value="16"></label>
+          </div>
+          <div>
+            <div class="chips" id="picked"></div>
+            <p class="muted" id="picked-empty">Check models above and add them here, up to 12.</p>
+          </div>
+          <div class="row end"><button class="btn btn-primary" type="submit">Save loadout</button></div>
+        </form>
+      </div>
+      <div id="loadouts"></div>
+    </section>
+
+    <section data-panel="hardware" class="stack" hidden>
+      <div class="card stack">
+        <h3>Report a machine</h3>
+        <form id="hw-form" class="stack">
+          <div class="form-grid">
+            <label class="field">Device<input class="input" name="device" required maxlength="80" placeholder="ThinkPad X1 Carbon Gen 9"></label>
+            <label class="field">CPU (optional)<input class="input" name="cpu" maxlength="80" placeholder="i7-1165G7"></label>
+            <label class="field">RAM GB (optional)<input class="input" name="ramGb" type="number" min="1" max="1024"></label>
+            <label class="field">Architecture<select class="input" name="arch"><option value="amd64">amd64</option><option value="arm64">arm64</option></select></label>
+            <label class="field">Boot mode<select class="input" name="boot"><option value="uefi">UEFI</option><option value="legacy">Legacy BIOS</option><option value="apple">Apple Silicon / Mac</option><option value="other">Other</option></select></label>
+            <label class="field">Result<select class="input" name="result"><option value="works">Works</option><option value="partial">Partial</option><option value="fails">Fails</option></select></label>
+          </div>
+          <label class="field">Notes (optional)<textarea class="input" name="notes" maxlength="500" rows="3" placeholder="Wi-Fi needed a firmware toggle, GPU acceleration works…"></textarea></label>
+          <div class="row end"><button class="btn btn-primary" type="submit">Submit report</button></div>
+        </form>
+      </div>
+      <div class="card stack">
+        <div class="row"><h3 class="grow">Compatibility reports</h3>
+          <label class="field nowrap">Filter <select class="input" id="hw-arch"><option value="">All</option><option value="amd64">amd64</option><option value="arm64">arm64</option></select></label>
+        </div>
+        <div id="hw-totals" class="chips"></div>
+        <div id="hw-list"></div>
+      </div>
+    </section>
+
+    <section data-panel="keys" hidden><div id="keys"></div></section>
+    <section data-panel="usage" hidden><div id="usage"></div></section>
+  </div>
+</main>
+<script type="module" src="/platform/app/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+.pai-cloud-link { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 50; display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px; background: #4d74ee; color: #fff; font: 600 14px/1 system-ui, sans-serif; text-decoration: none; box-shadow: 0 6px 24px rgb(0 0 0 / 25%); transition: transform .15s, background .15s; }
+.pai-cloud-link:hover { background: #3a5fd6; transform: translateY(-1px); }
+.pai-cloud-link:focus-visible { outline: 3px solid #bb9af7; outline-offset: 2px; }
+.pai-cloud-link:active { transform: translateY(0); }
