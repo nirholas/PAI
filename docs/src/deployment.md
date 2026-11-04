@@ -43,24 +43,63 @@ re-redistribute the ISO themselves.
 
 The website lives under [../website/](../website/) and is built with
 [Astro](https://astro.build). Deployment is driven by
-[.github/workflows/pages-deploy.yml](../.github/workflows/pages-deploy.yml).
+[.github/workflows/pages-deploy.yml](https://github.com/nirholas/PAI/blob/main/.github/workflows/pages-deploy.yml).
 
 - **Host:** Cloudflare Pages, project `pai-direct`.
-- **Build command:** `npm run build` run from `website/` on Node 22.
+- **Build command:** `npm run build` run from `website/` on Node 22
+  (the `prebuild` step syncs the flasher scripts and the imager
+  manifest into `public/`).
 - **Publish directory:** `website/dist/`.
-- **Production branch:** `main` → `https://pai.direct` (custom
-  domain).
-- **Preview deploys:** every PR gets a Cloudflare preview URL,
-  posted as a sticky comment by the workflow. Previews live on
-  `*.pai-direct.pages.dev`.
-- **MVP landing page:** an older `docs/`-only flow lives at
-  [mvp-deploy.yml](../.github/workflows/mvp-deploy.yml) and targets
-  the `pai-direct-mvp` project. Frozen; scheduled for removal.
+- **Production branch:** `main` → `https://pai.direct` and
+  `https://www.pai.direct` (custom domains).
+- **Routing:** `website/public/_redirects` holds the short links
+  (`/flash`, `/docs`, ...) and rewrites `/try` to `/try.sh`, so
+  `curl -fsSL https://pai.direct/try | bash` works.
+  `website/public/_headers` sets the security headers and the
+  `text/plain` content type for the flasher scripts.
+  `website/vercel.json` mirrors both for a Vercel fallback.
+
+### Documentation site
+
+The MkDocs site (`docs/mkdocs.yml`, sources in `docs/src/`) deploys to
+Cloudflare Pages project `pai-docs`, served at `https://docs.pai.direct`.
+Deployment is driven by
+[.github/workflows/docs-deploy.yml](https://github.com/nirholas/PAI/blob/main/.github/workflows/docs-deploy.yml).
+Security headers live in `docs/src/_headers`, which MkDocs copies into
+the build.
+
+```bash
+pip install -r docs/requirements.txt
+mkdocs build -f docs/mkdocs.yml            # output: docs/_site/
+npx wrangler@4 pages deploy docs/_site --project-name=pai-docs --branch=main
+```
+
+### Manual deploy
+
+Both workflows need the `CLOUDFLARE_API_TOKEN` and
+`CLOUDFLARE_ACCOUNT_ID` repository secrets. To deploy the website by
+hand with the same credentials exported in your environment:
+
+```bash
+cd website
+npm ci && npm run build
+npx wrangler@4 pages deploy dist --project-name=pai-direct --branch=main
+```
+
+### Verify
+
+```bash
+curl -sI https://pai.direct | head -1                     # 200
+curl -s https://pai.direct/try | head -1                  # #!/usr/bin/env bash
+curl -s -o /dev/null -w '%{http_code}\n' https://pai.direct/flash.ps1   # 200
+curl -sI https://docs.pai.direct | head -1                # 200
+```
 
 ### Custom domain
 
-`pai.direct` points at Cloudflare Pages via a CNAME managed in the
-Cloudflare dashboard for the same account. TLS is handled
+`pai.direct`, `www.pai.direct` and `docs.pai.direct` are Cloudflare
+Pages custom domains. The `pai.direct` zone's DNS lives in the same
+Cloudflare account (`docs` is a proxied CNAME to `pai-docs-c0h.pages.dev`). TLS is handled
 automatically by Cloudflare (Universal SSL). DNS and domain
 registration are tracked in [MAINTAINERS.md](MAINTAINERS.md).
 

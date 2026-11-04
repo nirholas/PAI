@@ -782,7 +782,7 @@ All rights reserved. See [LICENSE](LICENSE).
 
 ## Documentation
 
-Full documentation site: **https://nirholas.github.io/PAI/**
+Full documentation site: **https://docs.pai.direct**
 
 - [Getting started](docs/getting-started.md) covers install and first run.
 - [Examples](docs/examples.md) has copy-paste snippets.

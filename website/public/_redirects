@@ -11,3 +11,4 @@
 /changelog    /apps/changelog 301
 /faq          /apps/faq       301
 /files        /apps/files     301
+/try          /try.sh         200

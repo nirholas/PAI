@@ -41,7 +41,7 @@
 
 ## Quick Start
 
-> **Hosted downloads are temporarily offline** while the site moves hosts (`pai.direct` and `get.pai.direct` do not currently resolve). Until rehosting completes, **[building from source](#build-from-source)** with `Dockerfile.build` is the primary path:
+> **Prebuilt ISOs are not published yet.** The website at **[pai.direct](https://pai.direct)** and the docs at **[docs.pai.direct](https://docs.pai.direct)** are live, and the flasher scripts are served from `pai.direct`, but `get.pai.direct` (the ISO mirror) has no images to serve: the [v0.1.0 release](https://github.com/nirholas/PAI/releases/tag/v0.1.0) carries checksums only. Until ISOs are published, **[building from source](#build-from-source)** with `Dockerfile.build` is the primary path:
 >
 > ```bash
 > git clone https://github.com/nirholas/pai.git && cd pai
@@ -50,7 +50,7 @@
 > # ISO appears at output/live-image-amd64.hybrid.iso
 > ```
 >
-> Then flash it with the auto-flasher: `sudo bash scripts/flash.sh --local-iso output/live-image-amd64.hybrid.iso`. The download commands below are kept for reference and will work again once hosting is restored.
+> Then flash it with the auto-flasher: `sudo bash scripts/flash.sh --local-iso output/live-image-amd64.hybrid.iso`. The download commands below fetch the published ISO and work once one is released.
 
 ```bash
 # One-command download and flash (Linux/macOS):
@@ -370,7 +370,7 @@ qemu-system-x86_64 \
 
 ## Flash to USB
 
-> **Note:** the hosted ISO downloads used by the methods below are temporarily offline while the site moves hosts. [Build from source](#build-from-source) first, then use Method 1 with `--local-iso` (or Methods 2-4 with your locally built ISO). The download URLs will work again once rehosting completes.
+> **Note:** prebuilt ISOs are not published yet, so the download URLs used by the methods below have nothing to fetch. [Build from source](#build-from-source) first, then use Method 1 with `--local-iso` (or Methods 2-4 with your locally built ISO).
 
 ### Requirements
 
@@ -635,7 +635,7 @@ ollama run llama3.1 "Explain quantum computing in simple terms"
 - [ ] **Persistent encrypted storage** — opt-in LUKS partition on USB for saving models and chat history across sessions
 - [ ] **GPU passthrough** — detect and use discrete GPU for faster inference when available
 - [ ] **Model pre-bundling** — include a small model (e.g., Phi-3 Mini) in the ISO for instant offline use
-- [ ] **Landing page** — `pai.direct` with OS detection and one-click flash instructions (built, but temporarily offline while the site moves hosts)
+- [x] **Landing page** — [pai.direct](https://pai.direct) with OS detection and one-click flash instructions (Cloudflare Pages)
 - [ ] **GitHub Actions CI** — automated ISO builds on every tagged release
 - [ ] **Secure Boot support** — signed bootloader for machines with Secure Boot enabled
 - [ ] **ARM64 build** — Raspberry Pi and Apple Silicon support
@@ -778,7 +778,9 @@ All rights reserved. See [LICENSE](LICENSE).
 
 ## Documentation
 
-Full documentation site: **https://nirholas.github.io/PAI/**
+Full documentation site: **https://docs.pai.direct**
+
+Website: **https://pai.direct** · Cloud demo (wallet sign-in companion app): **https://pai.ninabrekkerese.workers.dev** ([demo/](demo/README.md)) · Hosting and deploys: [docs/src/deployment.md](docs/src/deployment.md)
 
 - [Getting started](docs/getting-started.md) covers install and first run.
 - [Examples](docs/examples.md) has copy-paste snippets.
