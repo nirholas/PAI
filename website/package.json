@@ -23,7 +23,7 @@
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.2",
     "@tailwindcss/vite": "^4.2.2",
-    "@vercel/og": "^0.11.1",
+    "@vercel/og": "^1.0.3",
     "astro": "^7.4.4",
     "tailwindcss": "^4.2.2"
   },
@@ -34,5 +34,8 @@
     "eslint-plugin-astro": "^1.7.0",
     "prettier": "^3.8.3",
     "prettier-plugin-astro": "^0.14.1"
+  },
+  "overrides": {
+    "minimatch@^10": "^11.0.4"
   }
 }
